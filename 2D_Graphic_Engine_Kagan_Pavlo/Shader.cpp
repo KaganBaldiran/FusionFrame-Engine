@@ -72,7 +72,6 @@ GLuint CompileShaderProgram(GLuint vertexshader , GLuint fragmentshader)
     glAttachShader(m_program, fragmentshader);
     glLinkProgram(m_program);
 
-
     glDeleteShader(vertexshader);
     glDeleteShader(fragmentshader);
 

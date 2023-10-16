@@ -8,6 +8,8 @@ out vec2 TexCoord;
 out vec3 VColor;
 
 uniform mat4 proj;
+uniform mat4 model;
+uniform mat4 ratioMat;
 
 void main()
 {
@@ -15,6 +17,6 @@ void main()
    TexCoord = VertexTexCoord;
    VColor = VertexColor;
 
-   gl_Position = proj * vec4(VertexPosition , 1.0f);
+   gl_Position = ratioMat * proj * model * vec4(VertexPosition , 1.0f);
 }
  

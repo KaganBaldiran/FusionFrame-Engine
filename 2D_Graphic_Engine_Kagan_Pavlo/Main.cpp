@@ -9,6 +9,8 @@
 #include "VectorMath.h"
 #include "Texture.h"
 #include "Initialize.h"
+#include "Camera.h"
+#include "Mesh.h"
 
 int main()
 {
@@ -20,6 +22,9 @@ int main()
 	std::unique_ptr<Shader> BasicShader = std::make_unique<Shader>("Shaders/Basic.vs", "Shaders/Basic.fs");
 
 	std::unique_ptr<Buffer> Triangle = std::make_unique<Buffer>();
+	std::unique_ptr<Buffer> Rectangle = std::make_unique<Buffer>();
+
+	Camera2D camera;
 
 	Triangle->Bind();
 
@@ -29,7 +34,7 @@ int main()
 	   0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f, 1.0f
 	};
 
-
+	
 	Triangle->BufferDataFill(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	Triangle->AttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	Triangle->AttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -37,8 +42,15 @@ int main()
 
 	Triangle->Unbind();
 
+	TextureObj raccon;
+
 	Texture2D texture("Resources/raccoon.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,true);
 	Vec2<int> WindowSize;
+	Vec2<double> mousePos;
+
+	glm::vec3 Target(0.0f);
+
+	raccon.Scale({ 0.5f,0.5f,1.0f });
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -48,20 +60,15 @@ int main()
 		glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
 		glViewport(0, 0, WindowSize.x, WindowSize.y);
 
-		glUseProgram(BasicShader->GetID());
-		Triangle->BindVAO();
+		glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+		Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
-		glm::mat4 projection(1.0f);
-		projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -0.1f, 100.0f);
-		glUniformMatrix4fv(glGetUniformLocation(BasicShader->GetID(), "proj"), 1, GL_FALSE, glm::value_ptr(projection));
+		camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
 
-		texture.Bind(0, BasicShader->GetID(), "texture0");
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		raccon.Draw(camera, BasicShader->GetID(), texture);
 
-		Triangle->UnbindVAO();
-		texture.Unbind();
-		glUseProgram(0);
+
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

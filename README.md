@@ -1,4 +1,4 @@
-# FusionFrame-Engine-Kagan-Pavlo
+# FusionFrame-Engine
 2D Engine for University project
 
 ## Team

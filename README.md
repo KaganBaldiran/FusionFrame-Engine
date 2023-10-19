@@ -5,7 +5,7 @@
 - Glew for function binding
 - GLFW for context creation
 - Glm for the math part
-- Sdbi for texture import
+- Stbi for texture import
 
 ## Team
 - https://github.com/KaganBaldiran (Kağan Baldıran)

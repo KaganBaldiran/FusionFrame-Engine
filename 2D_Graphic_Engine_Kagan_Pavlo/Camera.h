@@ -16,7 +16,7 @@ public:
 	void SetCameraMatrixUniformLocation(GLuint shader, const char* uniform);
 	Vec2<float> GetScreenRatio(Vec2<int> windowSize);
 	void SetRatioMatrixUniformLocation(GLuint shader, const char* uniform);
-
+    
 
 private:
 	glm::mat4 viewMat;

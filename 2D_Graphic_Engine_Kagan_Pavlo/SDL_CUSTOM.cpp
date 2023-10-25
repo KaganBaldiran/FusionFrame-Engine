@@ -50,9 +50,8 @@ std::pair<int, SDL_Window*> SDL_CUSTOM::init(const char* windowName , SDL_Render
 	return { SDL_SUCCESS,window };
 }
 
-int SDL_CUSTOM::HandleEvent(bool &isRunning)
+int SDL_CUSTOM::HandleEvent(bool &isRunning, SDL_Event& event)
 {
-	SDL_Event event;
 	SDL_PollEvent(&event);
 
 	if (event.type == SDL_QUIT)

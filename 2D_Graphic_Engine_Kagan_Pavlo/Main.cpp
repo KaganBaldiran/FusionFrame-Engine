@@ -12,6 +12,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "SDL_CUSTOM.hpp"
+#include "SDL_camera.hpp"
 
 #define SDL 
 #ifdef OPENGL
@@ -124,14 +125,28 @@ namespace KAGAN_PAVLO
 		Vec2<int> TextureSize;
 		SDL_Texture* texture0 = SDL_CUSTOM::LoadInTexture("Resources/raccoon.png", TextureSize,renderer);
 		Vec2<int> WindowSize;
+		Vec2<int> MousePos;
 		Vec4<float> clearColor({ 255, 255, 255, 255 });
+		SDL_Event GameEvent;
+
+		//SDL_CAMERA::Camera2D camera;
 
 		while (isGameRunning)
 		{
 			framestart = SDL_GetTicks64();
 
+			//camera.UpdateCamera();
+
 			SDL_GetWindowSize(window.second, &WindowSize.x, &WindowSize.y);
-			SDL_CUSTOM::HandleEvent(isGameRunning);
+			SDL_CUSTOM::HandleEvent(isGameRunning, GameEvent);
+
+			if (GameEvent.type == SDL_MOUSEMOTION)
+			{
+				SDL_GetMouseState(&MousePos.x, &MousePos.y);
+			}
+
+			LOG_INF("MOUSE POS: " << MousePos);
+
 			SDL_SetRenderDrawColor(renderer, clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 			SDL_RenderClear(renderer);
 
@@ -141,8 +156,6 @@ namespace KAGAN_PAVLO
 			SDL_RenderPresent(renderer);
 
 			frametime = SDL_GetTicks64() - framestart;
-
-			LOG_INF("Frame Delay: " << framedelay);
 
 			if (framedelay > frametime)
 			{

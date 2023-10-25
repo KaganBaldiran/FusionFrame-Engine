@@ -11,7 +11,7 @@
 namespace SDL_CUSTOM
 {
 	std::pair<int,SDL_Window*> init(const char* windowName, SDL_Renderer** Renderer, float width, float height, bool fullscreen, SDL_DisplayMode &dpm);
-	int HandleEvent(bool& isRunning);
+	int HandleEvent(bool& isRunning , SDL_Event& event);
 	SDL_Texture* LoadInTexture(const char* filesrc,Vec2<int> &TextureSize, SDL_Renderer* renderer);
 }
 

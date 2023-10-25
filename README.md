@@ -1,7 +1,13 @@
-# FusionFrame-Engine-Kagan-Pavlo
+# FusionFrame-Engine
 2D Engine for University project
 
-Team
+## Libraries 
+- Glew for function binding
+- GLFW for context creation
+- Glm for the math part
+- Stbi for texture import
 
-https://github.com/m0rningdawning (Pavlo Korolov)
-https://github.com/KaganBaldiran (Kağan Baldıran)
+## Team
+- https://github.com/KaganBaldiran (Kağan Baldıran)
+- https://github.com/m0rningdawning (Pavlo Korolov)
+  

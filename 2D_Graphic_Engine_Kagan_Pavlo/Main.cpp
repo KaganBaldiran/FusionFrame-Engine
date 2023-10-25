@@ -12,7 +12,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "SDL_CUSTOM.hpp"
-#include "SDL_camera.hpp"
+#include "SDL_camera2d.hpp"
 
 #define SDL 
 #ifdef OPENGL
@@ -98,7 +98,7 @@ namespace KAGAN_PAVLO
 		const int width = 1000;
 		const int height = 1000;
 
-		const int fps = 60;
+		const int fps = 144;
 		const int framedelay = 1000 / fps;
 
 		Uint32 framestart;
@@ -126,31 +126,54 @@ namespace KAGAN_PAVLO
 		SDL_Texture* texture0 = SDL_CUSTOM::LoadInTexture("Resources/raccoon.png", TextureSize,renderer);
 		Vec2<int> WindowSize;
 		Vec2<int> MousePos;
+		Vec2<float> MouseDelta;
+		float zoom = 1.0f;
+		float sensitivity = 0.2f;
+
 		Vec4<float> clearColor({ 255, 255, 255, 255 });
 		SDL_Event GameEvent;
 
-		//SDL_CAMERA::Camera2D camera;
+		SDL_CAMERA2D::SDLCamera2D camera;
 
 		while (isGameRunning)
 		{
+			MouseDelta({ 0,0 });
 			framestart = SDL_GetTicks64();
-
-			//camera.UpdateCamera();
 
 			SDL_GetWindowSize(window.second, &WindowSize.x, &WindowSize.y);
 			SDL_CUSTOM::HandleEvent(isGameRunning, GameEvent);
 
 			if (GameEvent.type == SDL_MOUSEMOTION)
 			{
+				Vec2<int> mouseTemp(MousePos);
 				SDL_GetMouseState(&MousePos.x, &MousePos.y);
+				MouseDelta((MousePos - mouseTemp).Cast<float>());
+					
+				//LOG("MouseDelta: " << MouseDelta);
 			}
-
-			LOG_INF("MOUSE POS: " << MousePos);
+			else if(GameEvent.type == SDL_MOUSEWHEEL)
+			{
+				if (GameEvent.wheel.y > 0)
+				{
+					zoom += sensitivity;
+				}
+				else if (GameEvent.wheel.y < 0)
+				{
+					zoom -= sensitivity;
+				}
+			}
+			
+			camera.UpdateCamera(MouseDelta, WindowSize, zoom);
 
 			SDL_SetRenderDrawColor(renderer, clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 			SDL_RenderClear(renderer);
 
-			SDL_Rect texture0DestRec = { 0 , 0, TextureSize.x,TextureSize.y };
+			SDL_Rect texture0DestRec = { (0 - camera.GetCameraFrustum().x) * zoom , (0 - camera.GetCameraFrustum().z) , (TextureSize.x / 2.0f) * zoom,(TextureSize.y / 2.0f) * zoom };
+			SDL_Rect Rectangle0 = { (700 - camera.GetCameraFrustum().x ) * zoom , 0 - camera.GetCameraFrustum().z, 200 * zoom,200 * zoom };
+
+			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+			SDL_RenderFillRect(renderer, &Rectangle0);
+
 			SDL_RenderCopy(renderer, texture0, NULL, &texture0DestRec);
 			
 			SDL_RenderPresent(renderer);

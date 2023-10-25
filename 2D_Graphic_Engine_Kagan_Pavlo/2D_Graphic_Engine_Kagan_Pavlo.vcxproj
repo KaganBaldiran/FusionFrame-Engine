@@ -147,7 +147,7 @@
     <ClInclude Include="Initialize.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="SDL_camera.hpp" />
+    <ClInclude Include="SDL_camera2d.hpp" />
     <ClInclude Include="SDL_CUSTOM.hpp" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />

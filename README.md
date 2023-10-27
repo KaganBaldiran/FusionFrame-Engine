@@ -1,9 +1,9 @@
 # FusionFrame-Engine
-2D Engine for University project
+2D Engine for a University Project
 
 ## Libraries 
 - Glew for function binding
-- GLFW for context creation
+- GLFW/SDL2 for context creation
 - Glm for the math part
 - Stbi for texture import
 

@@ -14,7 +14,7 @@
 #include "SDL_CUSTOM.hpp"
 #include "SDL_camera2d.hpp"
 
-#define SDL 
+#define OPENGL 
 #ifdef OPENGL
 
 namespace KAGAN_PAVLO
@@ -72,10 +72,12 @@ namespace KAGAN_PAVLO
 
 			camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
 
+			auto ShaderPrep = [&]()
+			{
+				glUniform2f(glGetUniformLocation(BasicShader->GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
+			};
 
-			raccon.Draw(camera, BasicShader->GetID(), texture);
-
-
+			raccon.Draw(camera, BasicShader->GetID(), texture , ShaderPrep);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);

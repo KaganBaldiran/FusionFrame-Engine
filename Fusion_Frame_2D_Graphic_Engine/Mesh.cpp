@@ -75,5 +75,26 @@ void TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
 	glUseProgram(0);
 }
 
+void TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations)
+{
+	glUseProgram(shader);
+	ObjectBuffer.BindVAO();
+
+	SetModelMatrixUniformLocation(shader, "model");
+
+	camera.SetProjMatrixUniformLocation(shader, "proj");
+	camera.SetRatioMatrixUniformLocation(shader, "ratioMat");
+
+	ShaderPreperations();
+
+	texture.Bind(0, shader, "texture0");
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	ObjectBuffer.UnbindVAO();
+	texture.Unbind();
+	glUseProgram(0);
+}
+
 
 

@@ -6,6 +6,7 @@
 #include "Buffer.h"
 #include "Camera.h"
 #include "Texture.h"
+#include <functional>
 
 class Mesh
 {
@@ -30,6 +31,8 @@ public:
 	~TextureObj();
 
 	void Draw(Camera2D& camera, GLuint shader, Texture2D& texture);
+	void Draw(Camera2D& camera, GLuint shader, Texture2D& texture , std::function<void()> ShaderPreperations);
+
 
 protected:
 

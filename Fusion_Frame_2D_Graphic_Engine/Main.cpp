@@ -13,8 +13,9 @@
 #include "Mesh.h"
 #include "SDL_CUSTOM.hpp"
 #include "SDL_camera2d.hpp"
+#include "DrawingFunctions.hpp"
 
-#define OPENGL 
+#define SDL 
 #ifdef OPENGL
 
 namespace KAGAN_PAVLO
@@ -27,6 +28,7 @@ namespace KAGAN_PAVLO
 		GLFWwindow* window = INIT::InitializeWindow(width, height, "FusionFrame Engine");
 
 		std::unique_ptr<Shader> BasicShader = std::make_unique<Shader>("Shaders/Basic.vs", "Shaders/Basic.fs");
+		std::unique_ptr<Shader> PixelShader = std::make_unique<Shader>("Shaders/PixelShader.vs", "Shaders/PixelShader.fs");
 
 		std::unique_ptr<Buffer> Triangle = std::make_unique<Buffer>();
 		std::unique_ptr<Buffer> Rectangle = std::make_unique<Buffer>();
@@ -59,6 +61,41 @@ namespace KAGAN_PAVLO
 
 		raccon.Scale({ 0.5f,0.5f,1.0f });
 
+		FusionDraw::Initialize();
+
+		for (size_t x = 0; x < 100; x++)
+		{
+			for (size_t y = 0; y < 100; y++)
+			{
+				FusionDraw::PutPixel(x, y, { 1.0f,0.0f,0.0f,1.0f });
+			}
+		}
+
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		// Generate 300x300 points
+		const int numPoints = 300 * 300;
+		GLfloat* points = new GLfloat[3 * numPoints]; // 3 components (x, y, z) per point
+		for (int i = 0; i < numPoints; i++) {
+			points[i * 3] = static_cast<float>(i % 300); // X coordinate
+			points[i * 3 + 1] = static_cast<float>(i / 300); // Y coordinate
+			points[i * 3 + 2] = 0.0f; // Z coordinate (set to 0)
+		}
+
+		// Create a buffer for the points
+		GLuint vbo;
+		glGenBuffers(1, &vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, 3 * numPoints * sizeof(GLfloat), points, GL_STATIC_DRAW);
+
+		// Specify the layout of the point data
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+
 		while (!glfwWindowShouldClose(window))
 		{
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -72,18 +109,32 @@ namespace KAGAN_PAVLO
 
 			camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
 
+			//FusionDraw::DrawPixel(PixelShader->GetID(),camera,WindowSize);
+			UseShaderProgram(PixelShader->GetID());
+			glBindVertexArray(vao);
+
+			glDrawArrays(GL_POINTS, 0, numPoints);
+
+			glBindVertexArray(0);
+			UseShaderProgram(0);
+
+
 			auto ShaderPrep = [&]()
 			{
 				glUniform2f(glGetUniformLocation(BasicShader->GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
 			};
 
-			raccon.Draw(camera, BasicShader->GetID(), texture , ShaderPrep);
+			//raccon.Draw(camera, BasicShader->GetID(), texture , ShaderPrep);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
 		}
 
 
+		delete[] points;
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);
+		DeleteShaderProgram(PixelShader->GetID());
 		DeleteShaderProgram(BasicShader->GetID());
 		glfwTerminate();
 		LOG_INF("Window terminated!");
@@ -137,6 +188,34 @@ namespace KAGAN_PAVLO
 
 		SDL_CAMERA2D::SDLCamera2D camera;
 
+		FusionDrawSDL::DrawCircle(200, 200, 50, { 255, 0, 0, 255 });
+
+		std::vector<Vec2<int>> polygon0;
+		std::vector<Vec2<int>> triangle;
+
+		std::vector<unsigned int> polygon0indices;
+
+		triangle.push_back({ 100, 400 });
+		triangle.push_back({ 300, 200 });
+		
+		triangle.push_back({ 500, 400 });
+		triangle.push_back({ 100, 400 });
+
+		int hexagonRadius = 50;
+		for (int i = 0; i < 6; ++i) {
+			float angle = i * (2 * M_PI / 6); 
+			int x = 200 + static_cast<int>(hexagonRadius * cos(angle));
+			int y = 200 + static_cast<int>(hexagonRadius * sin(angle));
+			polygon0.push_back({ x, y });
+		}
+
+		polygon0.push_back(polygon0[0]);
+
+		FusionDrawSDL::DrawPolygon(polygon0, polygon0indices, { 255, 0, 0, 255 });
+		FusionDrawSDL::DrawPolygon(triangle, polygon0indices, { 0, 255, 0, 255 });
+
+		FusionDrawSDL::DrawLine({ 100,300 }, { 200,200 }, { 0, 0, 255, 255 });
+
 		while (isGameRunning)
 		{
 			MouseDelta({ 0,0 });
@@ -173,6 +252,10 @@ namespace KAGAN_PAVLO
 			SDL_Rect texture0DestRec = { (0 - camera.GetCameraFrustum().x) * zoom , (0 - camera.GetCameraFrustum().z) , (TextureSize.x / 2.0f) * zoom,(TextureSize.y / 2.0f) * zoom };
 			SDL_Rect Rectangle0 = { (700 - camera.GetCameraFrustum().x ) * zoom , 0 - camera.GetCameraFrustum().z, 200 * zoom,200 * zoom };
 
+	
+			FusionDrawSDL::DrawPixelBuffer(renderer);
+				
+				
 			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 			SDL_RenderFillRect(renderer, &Rectangle0);
 

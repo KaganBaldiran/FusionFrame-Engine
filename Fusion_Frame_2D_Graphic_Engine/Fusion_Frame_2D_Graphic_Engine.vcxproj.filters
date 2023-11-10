@@ -31,6 +31,9 @@
     <ClCompile Include="VectorMath.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="DrawingFunctions.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">
@@ -69,12 +72,21 @@
     <ClInclude Include="SDL_CUSTOM.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="DrawingFunctions.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.fs">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Basic.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\PixelShader.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\PixelShader.fs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DrawingFunctions.cpp" />
     <ClCompile Include="Initialize.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="DrawingFunctions.hpp" />
     <ClInclude Include="Initialize.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Mesh.h" />
@@ -158,6 +160,8 @@
   <ItemGroup>
     <None Include="Shaders\Basic.fs" />
     <None Include="Shaders\Basic.vs" />
+    <None Include="Shaders\PixelShader.fs" />
+    <None Include="Shaders\PixelShader.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

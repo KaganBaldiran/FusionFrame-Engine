@@ -1,5 +1,5 @@
 # FusionFrame-Engine
-2D Engine for a University Project
+2D-3D Engine and 3D Flappy Bird Game using FusionFrame for a University Project 
 
 ## Libraries 
 - Glew for function binding

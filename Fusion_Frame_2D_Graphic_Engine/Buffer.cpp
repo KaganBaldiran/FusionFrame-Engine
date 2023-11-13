@@ -44,3 +44,33 @@ void Buffer::AttribPointer(GLuint index , GLuint size , GLenum type , GLboolean 
 	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 	glEnableVertexAttribArray(index);
 }
+
+Buffer3D::Buffer3D()
+{
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+	glGenVertexArrays(1, &vao);
+}
+
+Buffer3D::~Buffer3D()
+{
+	glDeleteBuffers(1, &ebo);
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
+}
+
+void Buffer3D::Bind()
+{
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+}
+
+void Buffer3D::Unbind()
+{
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+

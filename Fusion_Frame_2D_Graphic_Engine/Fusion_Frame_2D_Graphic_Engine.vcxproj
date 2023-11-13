@@ -118,15 +118,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Include\glfw-3.3.7.bin.WIN64\glfw-3.3.7.bin.WIN64\include\GLFW;$(SolutionDir)Include\SDL2-2.0.20\include;$(SolutionDir)Include\glew-2.1.0-win32\glew-2.1.0\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\assimp\include;$(SolutionDir)Include\glfw-3.3.7.bin.WIN64\glfw-3.3.7.bin.WIN64\include\GLFW;$(SolutionDir)Include\SDL2-2.0.20\include;$(SolutionDir)Include\glew-2.1.0-win32\glew-2.1.0\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Include\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;$(SolutionDir)Include\glfw-3.3.7.bin.WIN64\glfw-3.3.7.bin.WIN64\lib-vc2022;$(SolutionDir)Include\SDL2-2.0.20\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;SDL2.lib;SDL2_image.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\assimp\lib;$(SolutionDir)Include\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;$(SolutionDir)Include\glfw-3.3.7.bin.WIN64\glfw-3.3.7.bin.WIN64\lib-vc2022;$(SolutionDir)Include\SDL2-2.0.20\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;SDL2.lib;SDL2_image.lib;SDL2main.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -134,9 +134,11 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DrawingFunctions.cpp" />
     <ClCompile Include="Initialize.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="SDL_CUSTOM.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -147,8 +149,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DrawingFunctions.hpp" />
     <ClInclude Include="Initialize.h" />
+    <ClInclude Include="Light.hpp" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.hpp" />
     <ClInclude Include="SDL_camera2d.hpp" />
     <ClInclude Include="SDL_CUSTOM.hpp" />
     <ClInclude Include="Shader.h" />

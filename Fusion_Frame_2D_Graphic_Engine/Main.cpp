@@ -15,7 +15,7 @@
 #include "SDL_camera2d.hpp"
 #include "DrawingFunctions.hpp"
 
-#define SDL 
+#define OPENGL 
 #ifdef OPENGL
 
 namespace KAGAN_PAVLO
@@ -34,6 +34,7 @@ namespace KAGAN_PAVLO
 		std::unique_ptr<Buffer> Rectangle = std::make_unique<Buffer>();
 
 		Camera2D camera;
+		Camera3D camera3d;
 
 		Triangle->Bind();
 
@@ -59,43 +60,9 @@ namespace KAGAN_PAVLO
 
 		glm::vec3 Target(0.0f);
 
-		raccon.Scale({ 0.5f,0.5f,1.0f });
+		raccon.GetTransformation()->Scale({0.5f,0.5f,1.0f});
 
-		FusionDraw::Initialize();
-
-		for (size_t x = 0; x < 100; x++)
-		{
-			for (size_t y = 0; y < 100; y++)
-			{
-				FusionDraw::PutPixel(x, y, { 1.0f,0.0f,0.0f,1.0f });
-			}
-		}
-
-		GLuint vao;
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		// Generate 300x300 points
-		const int numPoints = 300 * 300;
-		GLfloat* points = new GLfloat[3 * numPoints]; // 3 components (x, y, z) per point
-		for (int i = 0; i < numPoints; i++) {
-			points[i * 3] = static_cast<float>(i % 300); // X coordinate
-			points[i * 3 + 1] = static_cast<float>(i / 300); // Y coordinate
-			points[i * 3 + 2] = 0.0f; // Z coordinate (set to 0)
-		}
-
-		// Create a buffer for the points
-		GLuint vbo;
-		glGenBuffers(1, &vbo);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, 3 * numPoints * sizeof(GLfloat), points, GL_STATIC_DRAW);
-
-		// Specify the layout of the point data
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-
+		
 		while (!glfwWindowShouldClose(window))
 		{
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -108,17 +75,8 @@ namespace KAGAN_PAVLO
 			Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
 			camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
-
-			//FusionDraw::DrawPixel(PixelShader->GetID(),camera,WindowSize);
-			UseShaderProgram(PixelShader->GetID());
-			glBindVertexArray(vao);
-
-			glDrawArrays(GL_POINTS, 0, numPoints);
-
-			glBindVertexArray(0);
-			UseShaderProgram(0);
-
-
+			camera3d.UpdateCameraMatrix(45.0f, WindowSize.x / WindowSize.y, 0.1f, 100.0f, glm::vec3(0.0f, 1.0f, 0.0f), WindowSize);
+			
 			auto ShaderPrep = [&]()
 			{
 				glUniform2f(glGetUniformLocation(BasicShader->GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
@@ -130,10 +88,6 @@ namespace KAGAN_PAVLO
 			glfwSwapBuffers(window);
 		}
 
-
-		delete[] points;
-		glDeleteBuffers(1, &vbo);
-		glDeleteVertexArrays(1, &vao);
 		DeleteShaderProgram(PixelShader->GetID());
 		DeleteShaderProgram(BasicShader->GetID());
 		glfwTerminate();

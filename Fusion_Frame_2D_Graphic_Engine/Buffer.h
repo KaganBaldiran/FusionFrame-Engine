@@ -15,9 +15,26 @@ public:
 	void BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 	void AttribPointer(GLuint index, GLuint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
 
-private:
+protected:
 
 	GLuint vao, vbo;
+
+};
+
+
+class Buffer3D : public Buffer
+{
+public:
+
+	Buffer3D();
+	~Buffer3D();
+
+	void Bind();
+	void Unbind();
+
+private:
+
+	GLuint ebo;
 
 };
 

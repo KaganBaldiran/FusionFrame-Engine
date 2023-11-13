@@ -34,6 +34,12 @@
     <ClCompile Include="DrawingFunctions.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">
@@ -73,6 +79,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="DrawingFunctions.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

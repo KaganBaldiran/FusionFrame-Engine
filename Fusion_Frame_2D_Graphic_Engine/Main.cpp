@@ -14,6 +14,7 @@
 #include "SDL_CUSTOM.hpp"
 #include "SDL_camera2d.hpp"
 #include "DrawingFunctions.hpp"
+#include "Model.hpp"
 
 #define OPENGL 
 #ifdef OPENGL
@@ -29,14 +30,18 @@ namespace KAGAN_PAVLO
 
 		std::unique_ptr<Shader> BasicShader = std::make_unique<Shader>("Shaders/Basic.vs", "Shaders/Basic.fs");
 		std::unique_ptr<Shader> PixelShader = std::make_unique<Shader>("Shaders/PixelShader.vs", "Shaders/PixelShader.fs");
+		std::unique_ptr<Shader> MeshBasicShader = std::make_unique<Shader>("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
 
 		std::unique_ptr<Buffer> Triangle = std::make_unique<Buffer>();
 		std::unique_ptr<Buffer> Rectangle = std::make_unique<Buffer>();
 
-		Camera2D camera;
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_STENCIL_TEST);
+
+		//Camera2D camera;
 		Camera3D camera3d;
 
-		Triangle->Bind();
+		/*Triangle->Bind();
 
 		float vertices[] = {
 		  -0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -50,9 +55,10 @@ namespace KAGAN_PAVLO
 		Triangle->AttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 		Triangle->AttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-		Triangle->Unbind();
+		Triangle->Unbind();*/
 
-		TextureObj raccon;
+		//TextureObj raccon;
+		FUSIONOPENGL::Model model0("C:/Users/kbald/Desktop/Models/canon/cannon_01_2k.fbx");
 
 		Texture2D texture("Resources/raccoon.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 		Vec2<int> WindowSize;
@@ -60,13 +66,18 @@ namespace KAGAN_PAVLO
 
 		glm::vec3 Target(0.0f);
 
-		raccon.GetTransformation()->Scale({0.5f,0.5f,1.0f});
+		//raccon.GetTransformation()->Scale({0.5f,0.5f,1.0f});
 
-		
+		//model0.GetTransformation().Scale(glm::vec3(1.0f, 1.0f, 1.0f));
+		//model0.GetTransformation().Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+
+		camera3d.SetPosition(glm::vec3(0.0f, 0.3f, 2.0f));
+		camera3d.SetOrientation(glm::vec3(0.0f, 0.0f, -1.0f));
+
 		while (!glfwWindowShouldClose(window))
 		{
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 			glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
 			glViewport(0, 0, WindowSize.x, WindowSize.y);
@@ -74,22 +85,37 @@ namespace KAGAN_PAVLO
 			glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 			Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
-			camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
-			camera3d.UpdateCameraMatrix(45.0f, WindowSize.x / WindowSize.y, 0.1f, 100.0f, glm::vec3(0.0f, 1.0f, 0.0f), WindowSize);
-			
-			auto ShaderPrep = [&]()
+			//camera.UpdateCameraMatrix(Target, 0.5f, WindowSize);
+			camera3d.HandleInputs(window, WindowSize);
+			camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 100.0f, WindowSize);
+
+			/*auto ShaderPrep = [&]()
 			{
 				glUniform2f(glGetUniformLocation(BasicShader->GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
-			};
+			};*/
 
 			//raccon.Draw(camera, BasicShader->GetID(), texture , ShaderPrep);
 
+			UseShaderProgram(MeshBasicShader->GetID());
+			auto shaderPrepe = [&](){
+				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader->GetID(), "model");
+				//camera3d.SetCameraMatrixUniformLocation(MeshBasicShader->GetID(), "cameramatrix");
+			};
+			LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
+			model0.Draw(camera3d,MeshBasicShader->GetID(), shaderPrepe);
+
+			
+			UseShaderProgram(0);
+
+			
 			glfwPollEvents();
 			glfwSwapBuffers(window);
 		}
 
 		DeleteShaderProgram(PixelShader->GetID());
 		DeleteShaderProgram(BasicShader->GetID());
+		DeleteShaderProgram(MeshBasicShader->GetID());
+
 		glfwTerminate();
 		LOG_INF("Window terminated!");
 		return 0;

@@ -10,9 +10,9 @@ class Light
 {
 public:
 	Light();
-	WorldTransform* GetTransformation() { return &this->transformation; };
+	FUSIONOPENGL::WorldTransform* GetTransformation() { return &this->transformation; };
 
 private:
-	WorldTransform transformation;
+	FUSIONOPENGL::WorldTransform transformation;
 	Buffer objectBuffer;
 };

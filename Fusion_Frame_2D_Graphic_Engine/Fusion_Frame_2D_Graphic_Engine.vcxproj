@@ -164,6 +164,8 @@
   <ItemGroup>
     <None Include="Shaders\Basic.fs" />
     <None Include="Shaders\Basic.vs" />
+    <None Include="Shaders\MeshBasic.fs" />
+    <None Include="Shaders\MeshBasic.vs" />
     <None Include="Shaders\PixelShader.fs" />
     <None Include="Shaders\PixelShader.vs" />
   </ItemGroup>

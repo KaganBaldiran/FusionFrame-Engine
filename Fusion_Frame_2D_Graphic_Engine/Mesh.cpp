@@ -1,11 +1,16 @@
 #include "Mesh.h"
 
-void WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
+FUSIONOPENGL::WorldTransform::WorldTransform()
+{
+	ModelMatrix = glm::mat4(1.0f);
+}
+
+void FUSIONOPENGL::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(ModelMatrix));
 }
 
-void WorldTransform::Translate(glm::vec3 v)
+void FUSIONOPENGL::WorldTransform::Translate(glm::vec3 v)
 {
 	ModelMatrix = glm::translate(ModelMatrix, v);
 
@@ -14,17 +19,17 @@ void WorldTransform::Translate(glm::vec3 v)
 	Position.z = ModelMatrix[3][2];
 }
 
-void WorldTransform::Scale(glm::vec3 v)
+void FUSIONOPENGL::WorldTransform::Scale(glm::vec3 v)
 {
 	ModelMatrix = glm::scale(ModelMatrix, v);
 }
 
-void WorldTransform::Rotate(glm::vec3 v , float angle)
+void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v , float angle)
 {
 	ModelMatrix = glm::rotate(ModelMatrix, glm::radians(angle), v);
 }
 
-TextureObj::TextureObj()
+FUSIONOPENGL::TextureObj::TextureObj()
 {
 	ObjectBuffer.Bind();
 
@@ -47,11 +52,11 @@ TextureObj::TextureObj()
 	ObjectBuffer.Unbind();
 }
 
-TextureObj::~TextureObj()
+FUSIONOPENGL::TextureObj::~TextureObj()
 {
 }
 
-void TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
+void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
 {
 	glUseProgram(shader);
 	ObjectBuffer.BindVAO();
@@ -70,7 +75,7 @@ void TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
 	glUseProgram(0);
 }
 
-void TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations)
+void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations)
 {
 	glUseProgram(shader);
 	ObjectBuffer.BindVAO();
@@ -91,14 +96,15 @@ void TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::
 	glUseProgram(0);
 }
 
-Mesh3D::Mesh3D(std::vector<Vertex> vertices_i, std::vector<unsigned int> indices_i)
+FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> vertices_i, std::vector<unsigned int> indices_i)
 {
-	this->vertices = vertices_i;
-	this->indices = indices_i;
+	this->vertices.assign(vertices_i.begin(), vertices_i.end());
+	this->indices.assign(indices_i.begin(), indices_i.end());
 
 	ObjectBuffer.Bind();
 
 	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+	ObjectBuffer.BindEBO();
 	ObjectBuffer.BufferDataFill(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 	ObjectBuffer.AttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
@@ -110,14 +116,18 @@ Mesh3D::Mesh3D(std::vector<Vertex> vertices_i, std::vector<unsigned int> indices
 	ObjectBuffer.Unbind();
 }
 
-void Mesh3D::Draw(Camera3D& camera, GLuint shader, std::function<void()> ShaderPreperations)
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, GLuint shader, std::function<void()> ShaderPreperations)
 {
+	UseShaderProgram(shader);
 	ObjectBuffer.BindVAO();
-	glUseProgram(shader);
-	ShaderPreperations();
+    ShaderPreperations();
+	ObjectBuffer.BindEBO();
+	camera.Matrix(shader, "cameramatrix");
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 
-	glUseProgram(0);
 	ObjectBuffer.UnbindVAO();
+	ObjectBuffer.Unbind();
+	UseShaderProgram(0);
+
 }

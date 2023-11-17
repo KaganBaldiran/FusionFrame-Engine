@@ -29,7 +29,7 @@ public:
 	Buffer3D();
 	~Buffer3D();
 
-	void Bind();
+	void BindEBO();
 	void Unbind();
 
 private:

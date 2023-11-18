@@ -9,5 +9,5 @@ in vec3 CurrentPos;
 
 void main()
 {
-   OutColor = vec4(1.0f,1.0f,0.0f,1.0f);
+   OutColor = vec4(Normal,1.0f);
 }

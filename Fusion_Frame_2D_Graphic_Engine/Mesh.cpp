@@ -1,10 +1,5 @@
 #include "Mesh.h"
 
-FUSIONOPENGL::WorldTransform::WorldTransform()
-{
-	ModelMatrix = glm::mat4(1.0f);
-}
-
 void FUSIONOPENGL::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(ModelMatrix));
@@ -54,6 +49,7 @@ FUSIONOPENGL::TextureObj::TextureObj()
 
 FUSIONOPENGL::TextureObj::~TextureObj()
 {
+	this->ObjectBuffer.clean();
 }
 
 void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
@@ -75,7 +71,7 @@ void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D&
 	glUseProgram(0);
 }
 
-void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations)
+void FUSIONOPENGL::TextureObj::Draw(Camera3D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations)
 {
 	glUseProgram(shader);
 	ObjectBuffer.BindVAO();
@@ -84,6 +80,7 @@ void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& 
 
 	camera.SetProjMatrixUniformLocation(shader, "proj");
 	camera.SetRatioMatrixUniformLocation(shader, "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader, "view");
 
 	ShaderPreperations();
 
@@ -96,38 +93,40 @@ void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& 
 	glUseProgram(0);
 }
 
-FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> vertices_i, std::vector<unsigned int> indices_i)
+FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> &vertices_i, std::vector<unsigned int> &indices_i, std::vector<Texture2D>& textures_i)
 {
 	this->vertices.assign(vertices_i.begin(), vertices_i.end());
 	this->indices.assign(indices_i.begin(), indices_i.end());
+	this->textures.assign(textures_i.begin(), textures_i.end());
 
 	ObjectBuffer.Bind();
 
-	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, vertices.size() * sizeof(FUSIONOPENGL::Vertex), &vertices[0], GL_STATIC_DRAW);
 	ObjectBuffer.BindEBO();
 	ObjectBuffer.BufferDataFill(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
-	ObjectBuffer.AttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-	ObjectBuffer.AttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,Normal));
-	ObjectBuffer.AttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-	ObjectBuffer.AttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-	ObjectBuffer.AttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+	ObjectBuffer.AttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)0);
+	ObjectBuffer.AttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex,Normal));
+	ObjectBuffer.AttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, TexCoords));
+	ObjectBuffer.AttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, Tangent));
+	ObjectBuffer.AttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, Bitangent));
 
 	ObjectBuffer.Unbind();
 }
 
-void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, GLuint shader, std::function<void()> ShaderPreperations)
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
 {
-	UseShaderProgram(shader);
+	shader.use();
 	ObjectBuffer.BindVAO();
     ShaderPreperations();
-	ObjectBuffer.BindEBO();
-	camera.Matrix(shader, "cameramatrix");
+
+	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
+	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 
-	ObjectBuffer.UnbindVAO();
-	ObjectBuffer.Unbind();
 	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
 
 }

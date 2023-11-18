@@ -30,8 +30,8 @@ namespace FUSIONOPENGL
 	class WorldTransform
 	{
 	public:
-		WorldTransform();
-		glm::mat4 ModelMatrix;
+
+		glm::mat4 ModelMatrix = glm::mat4(1.0f);
 		glm::vec3 ObjectScales;
 		glm::vec3 Position;
 		float scale_avg;
@@ -48,31 +48,28 @@ namespace FUSIONOPENGL
 	class Mesh3D
 	{
 	public:
-		Mesh3D(std::vector<Vertex> vertices_i, std::vector<unsigned int> indices_i);
-		void Draw(Camera3D& camera, GLuint shader, std::function<void()> ShaderPreperations);
-		/*~Mesh3D()
+
+		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
+		unsigned int VAO;
+
+		void Clean()
 		{
-			glDeleteVertexArrays(1, &VAO);
+			/*glDeleteVertexArrays(1, &VAO);
 			glDeleteBuffers(1, &VBO);
-			glDeleteBuffers(1, &EBO);
-		}*/
-		Buffer3D ObjectBuffer;
-		std::vector<unsigned int> indices;
+			glDeleteBuffers(1, &EBO);*/
 
-		WorldTransform GetTransformation() { return this->transformation; };
-
+			ObjectBuffer.clean();
+		}
 
 	private:
+		unsigned int VBO, EBO;
 
-		std::vector<Vertex> vertices;
+		Buffer3D ObjectBuffer;
+
 		std::vector<Texture2D> textures;
-
-		WorldTransform transformation;
-
-
-		GLuint VBO, EBO, VAO;
-
-
+		std::vector<unsigned int> indices;
+		std::vector<Vertex> vertices;
 	};
 
 	class TextureObj
@@ -83,7 +80,7 @@ namespace FUSIONOPENGL
 		~TextureObj();
 
 		void Draw(Camera2D& camera, GLuint shader, Texture2D& texture);
-		void Draw(Camera2D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations);
+		void Draw(Camera3D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations);
 		WorldTransform* GetTransformation() { return &this->transformation; };
 
 	protected:

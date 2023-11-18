@@ -6,7 +6,7 @@ Buffer::Buffer()
 	glGenVertexArrays(1, &vao);
 }
 
-Buffer::~Buffer()
+void Buffer::clean()
 {
 	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
@@ -41,8 +41,8 @@ void Buffer::BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GL
 
 void Buffer::AttribPointer(GLuint index , GLuint size , GLenum type , GLboolean normalized , GLsizei stride,const void* pointer)
 {
-	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 	glEnableVertexAttribArray(index);
+	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
 Buffer3D::Buffer3D()
@@ -52,7 +52,7 @@ Buffer3D::Buffer3D()
 	glGenVertexArrays(1, &vao);
 }
 
-Buffer3D::~Buffer3D()
+void Buffer3D::clean()
 {
 	glDeleteBuffers(1, &ebo);
 	glDeleteBuffers(1, &vbo);

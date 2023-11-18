@@ -20,7 +20,7 @@
  void main()
  {
    CurrentPos = vec3(model * vec4(vertexdata,1.0f));
-   gl_Position = cameramatrix * vec4(CurrentPos,1.0f);
+   gl_Position = proj * view * vec4(CurrentPos,1.0f);
 
    vec3 T = normalize(vec3(model* vec4(tangentnormal,0.0f)));
    vec3 B = normalize(vec3(model* vec4(bitangentnormal,0.0f)));

@@ -20,6 +20,7 @@ public:
 	std::string GetFilePath();
 	int GetChannelCount();
 
+	std::string PbrMapType;
 
 private:
 	GLuint id;

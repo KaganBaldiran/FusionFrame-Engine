@@ -88,13 +88,13 @@ Camera3D::Camera3D()
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
 	this->viewMat = glm::mat4(1.0f);
+	this->CameraMat = glm::mat4(1.0f);
+
 	targetPosition = glm::vec3(0.0f);
 }
 
 void Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
 {
-	
-
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->RatioMat = glm::scale(glm::mat4(1.0f), glm::vec3(GetScreenRatio(windowSize).x, GetScreenRatio(windowSize).y, 1.0f));
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);

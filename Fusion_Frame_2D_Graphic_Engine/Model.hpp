@@ -13,6 +13,7 @@
 #include <string>
 #include "Mesh.h"
 #include <functional>
+#include <map>
 
 namespace FUSIONOPENGL
 {
@@ -50,6 +51,18 @@ namespace FUSIONOPENGL
         WorldTransform transformation;
         unsigned int ModelID;
         std::string directory;
+
+        std::map<std::string, BoneInfo> Bones;
+        int boneCounter = 0;
+
+        inline void SetVertexBoneDataDefault(Vertex& vertex)
+        {
+            for (size_t i = 0; i < MAX_BONE_INFLUENCE; i++)
+            {
+                vertex.m_BoneIDs[i] = -1;
+                vertex.m_Weights[i] = 0.0f;
+            }
+        }
         
         inline void loadModel(std::string const& path)
         {
@@ -94,11 +107,12 @@ namespace FUSIONOPENGL
             std::vector<unsigned int> indices;
             std::vector<Texture2D> textures;
 
-           
             for (unsigned int i = 0; i < mesh->mNumVertices; i++)
             {
                 Vertex vertex;
                 glm::vec3 vector; 
+
+                SetVertexBoneDataDefault(vertex);
                 
                 vector.x = mesh->mVertices[i].x;
                 vector.y = mesh->mVertices[i].y;
@@ -136,7 +150,7 @@ namespace FUSIONOPENGL
 
                 vertices.push_back(vertex);
             }
-
+            
             for (unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
                 aiFace face = mesh->mFaces[i];
@@ -164,6 +178,50 @@ namespace FUSIONOPENGL
             return Mesh3D(vertices, indices, textures);
         }
 
+        inline void ExtractBones(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene)
+        {
+            for (size_t i = 0; i < mesh->mNumBones; i++)
+            {
+                int boneID = -1;
+                std::string boneName = mesh->mBones[i]->mName.C_Str();
+                if (Bones.find(boneName) == Bones.end())
+                {
+                    BoneInfo newBone;
+                    newBone.id = boneCounter;
+                    newBone.OffsetMat = this->ConvertMatrixToGLMFormat(mesh->mBones[i]->mOffsetMatrix);
+                    Bones[boneName] = newBone;
+                    boneID = boneCounter;
+                    boneCounter++;
+                }
+                else
+                {
+                    boneID = Bones[boneName].id;
+                }
+                assert(boneID != -1);
+                auto weights = mesh->mBones[i]->mWeights;
+                int NumberWeights = mesh->mBones[i]->mNumWeights;
+
+                for (size_t x = 0; x < NumberWeights; x++)
+                {
+                    int vertexID = weights[x].mVertexId;
+                    float weight = weights[x].mWeight;
+
+                    assert(vertexID <= vertices.size());
+
+                    auto &vertextemp = vertices[vertexID];
+                    for (size_t e = 0; e < MAX_BONE_INFLUENCE; e++)
+                    {
+                        if (vertextemp.m_BoneIDs[e] < 0)
+                        {
+                            vertextemp.m_Weights[e] = weight;
+                            vertextemp.m_BoneIDs[e] = boneID;
+                            break;
+                        }
+                    }
+                }
+            
+            }
+        }
         
         inline std::vector<Texture2D> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
         {
@@ -193,6 +251,17 @@ namespace FUSIONOPENGL
                 }
             }
             return textures;
+        }
+
+        static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
+        {
+            glm::mat4 to;
+            
+            to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+            to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+            to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+            to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+            return to;
         }
 
     };

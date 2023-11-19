@@ -26,6 +26,11 @@ namespace FUSIONOPENGL
 		float m_Weights[MAX_BONE_INFLUENCE];
 	};
 
+	struct BoneInfo
+	{
+		int id;
+		glm::mat4 OffsetMat;
+	};
 
 	class WorldTransform
 	{

@@ -38,8 +38,6 @@ namespace KAGAN_PAVLO
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
-		//glEnable(GL_STENCIL_TEST);
-		glEnable(GL_CULL_FACE);
 		Camera2D camera;
 		Camera3D camera3d;
 
@@ -52,11 +50,12 @@ namespace KAGAN_PAVLO
 		glm::vec3 Target(0.0f);
 
 		raccon.GetTransformation()->Scale({0.5f,0.5f,1.0f});
+		raccon.GetTransformation()->Translate({ 0.0f,0.0f,4.0f });
 
-		camera3d.SetPosition(glm::vec3(0.0f, 0.3f, 2.0f));
-		camera3d.SetOrientation(glm::vec3(0.0f, 0.0f, -1.0f));
-		FUSIONOPENGL::Model model0("C:\\Users\\Lenovo\\Desktop\\Desktop\\Models\\Gun\\art\\AK-103.fbx");
-		model0.GetTransformation().Scale(glm::vec3(20.0f,20.0f, 20.0f));
+		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
+		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
+		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
+		model0.GetTransformation().Scale(glm::vec3(0.5f, 0.5f, 0.5f));
 
 		while (!glfwWindowShouldClose(window))
 		{
@@ -93,8 +92,6 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(PixelShader.GetID());
 		DeleteShaderProgram(BasicShader.GetID());
 		DeleteShaderProgram(MeshBasicShader.GetID());
-
-		
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");

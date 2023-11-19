@@ -123,6 +123,7 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
 	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setVec3("CameraPos", camera.Position);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 

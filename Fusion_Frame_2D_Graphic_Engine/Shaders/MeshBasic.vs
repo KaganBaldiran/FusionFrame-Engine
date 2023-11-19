@@ -15,6 +15,8 @@
  uniform mat4 model;
  uniform mat4 proj;
  uniform mat4 view;
+ uniform mat4 ratioMat;
+
  uniform mat4 cameramatrix;
 
  void main()

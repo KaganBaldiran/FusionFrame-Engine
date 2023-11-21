@@ -2,7 +2,7 @@
 2D-3D Engine and 3D Flappy Bird Game using FusionFrame for a University Project 
 ## Current Look
 
-![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/ee8f7178-089a-4b8d-b124-ff6a2db45c0d)
+![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/03b5d224-3ed9-4ea3-983e-6906fdcde812)
 
 ## Libraries 
 - Glew for function binding

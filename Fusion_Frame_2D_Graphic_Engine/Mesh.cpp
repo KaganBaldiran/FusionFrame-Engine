@@ -124,10 +124,32 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<
 	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
 
+}
+
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations)
+{
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
+	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
+	material.SetMaterialShader(shader);
+
+	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
 }

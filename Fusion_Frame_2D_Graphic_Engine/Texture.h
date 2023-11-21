@@ -9,6 +9,8 @@
 class Texture2D
 {
 public:
+	Texture2D() = default;
+
 	Texture2D(const char* filePath, GLenum target, GLenum type, GLuint Mag_filter, GLuint Min_filter, GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip);
 	~Texture2D();
 

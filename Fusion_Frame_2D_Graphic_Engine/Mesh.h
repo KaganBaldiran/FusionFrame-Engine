@@ -11,6 +11,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "Shader.h"
+#include "Material.hpp"
 #define MAX_BONE_INFLUENCE 4
 namespace FUSIONOPENGL
 {
@@ -56,6 +57,8 @@ namespace FUSIONOPENGL
 
 		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
+		void Draw(Camera3D& camera, Shader& shader , Material& material, std::function<void()>& ShaderPreperations);
+
 		unsigned int VAO;
 
 		void Clean()
@@ -86,6 +89,7 @@ namespace FUSIONOPENGL
 
 		void Draw(Camera2D& camera, GLuint shader, Texture2D& texture);
 		void Draw(Camera3D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations);
+
 		WorldTransform* GetTransformation() { return &this->transformation; };
 
 	protected:

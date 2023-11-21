@@ -50,6 +50,8 @@ public:
 
 	glm::vec3 Orientation;
 	glm::vec3 Position;
+	float FarPlane;
+	float NearPlane;
 
 private:
 	

@@ -1,0 +1,25 @@
+﻿  Buffer.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Buffer.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Camera.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Camera.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  DrawingFunctions.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\DrawingFunctions.hpp(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Initialize.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Initialize.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Light.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Light.hpp(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Log.cpp
+  Main.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Main.cpp(1,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Mesh.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Mesh.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Model.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Model.hpp(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  SDL_CUSTOM.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\SDL_CUSTOM.hpp(2,10): fatal  error C1083: Cannot open include file: 'SDL.h': No such file or directory
+  Shader.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Shader.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  Texture.cpp
+C:\Users\kbald\source\repos\Fusion_Frame_2D_Graphic_Engine\Fusion_Frame_2D_Graphic_Engine\Texture.h(2,10): fatal  error C1083: Cannot open include file: 'glew.h': No such file or directory
+  VectorMath.cpp
+  Generating Code...

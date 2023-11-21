@@ -40,6 +40,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Bone.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">
@@ -85,6 +88,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Light.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Bone.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

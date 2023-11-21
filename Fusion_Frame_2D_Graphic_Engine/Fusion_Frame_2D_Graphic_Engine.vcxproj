@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DrawingFunctions.cpp" />
@@ -145,12 +146,14 @@
     <ClCompile Include="VectorMath.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bone.hpp" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DrawingFunctions.hpp" />
     <ClInclude Include="Initialize.h" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Material.hpp" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.hpp" />
     <ClInclude Include="SDL_camera2d.hpp" />

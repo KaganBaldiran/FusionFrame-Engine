@@ -37,6 +37,8 @@ namespace KAGAN_PAVLO
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		Camera2D camera;
 		Camera3D camera3d;
@@ -44,6 +46,10 @@ namespace KAGAN_PAVLO
 		FUSIONOPENGL::TextureObj raccon;
 
 		Texture2D texture("Resources/raccoon.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+		Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+
 		Vec2<int> WindowSize;
 		Vec2<double> mousePos;
 
@@ -54,8 +60,18 @@ namespace KAGAN_PAVLO
 
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
+
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
-		model0.GetTransformation().Scale(glm::vec3(0.5f, 0.5f, 0.5f));
+		Material shovelMaterial;
+		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
+		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
+		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
+
+		model0.GetTransformation().Scale(glm::vec3(0.15f, 0.15f, 0.15f));
+
+		MeshBasicShader.use();
+		MeshBasicShader.setFloat("FogIntesityUniform", 5.0f);
+		UseShaderProgram(0);
 
 		while (!glfwWindowShouldClose(window))
 		{
@@ -79,11 +95,12 @@ namespace KAGAN_PAVLO
 
 			raccon.Draw(camera3d, BasicShader.GetID(), texture , ShaderPrep);
 
+			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.1f);
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 			};
 			LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
-			model0.Draw(camera3d,MeshBasicShader, shaderPrepe);
+			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);

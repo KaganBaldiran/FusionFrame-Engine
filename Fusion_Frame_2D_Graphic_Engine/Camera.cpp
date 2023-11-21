@@ -95,6 +95,9 @@ Camera3D::Camera3D()
 
 void Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
 {
+	this->FarPlane = far;
+	this->NearPlane = near;
+
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->RatioMat = glm::scale(glm::mat4(1.0f), glm::vec3(GetScreenRatio(windowSize).x, GetScreenRatio(windowSize).y, 1.0f));
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);

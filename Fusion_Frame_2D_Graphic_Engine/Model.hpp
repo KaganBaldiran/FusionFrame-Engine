@@ -31,6 +31,8 @@ namespace FUSIONOPENGL
 
         unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
+        void Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations);
+
         WorldTransform& GetTransformation() { return this->transformation; };
         std::vector<Mesh3D> Meshes;
         std::vector<Texture2D> textures_loaded;
@@ -146,7 +148,9 @@ namespace FUSIONOPENGL
                     vertex.Bitangent = vector;
                 }
                 else
+                {
                     vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+                }
 
                 vertices.push_back(vertex);
             }
@@ -158,7 +162,10 @@ namespace FUSIONOPENGL
                 for (unsigned int j = 0; j < face.mNumIndices; j++)
                     indices.push_back(face.mIndices[j]);
             }
-            
+           
+
+            ExtractBones(vertices, mesh, scene);
+
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
             
            

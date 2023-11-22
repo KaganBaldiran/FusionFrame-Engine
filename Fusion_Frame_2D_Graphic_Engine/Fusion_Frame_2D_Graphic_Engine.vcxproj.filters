@@ -118,6 +118,12 @@
     <None Include="Shaders\MeshBasic.fs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\Light.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Light.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

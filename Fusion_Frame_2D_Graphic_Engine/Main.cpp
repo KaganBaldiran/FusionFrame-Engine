@@ -15,6 +15,7 @@
 #include "SDL_camera2d.hpp"
 #include "DrawingFunctions.hpp"
 #include "Model.hpp"
+#include "Light.hpp"
 
 #define OPENGL 
 #ifdef OPENGL
@@ -31,6 +32,9 @@ namespace KAGAN_PAVLO
 		Shader BasicShader("Shaders/Basic.vs", "Shaders/Basic.fs");
 		Shader PixelShader("Shaders/PixelShader.vs", "Shaders/PixelShader.fs");
 		Shader MeshBasicShader("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
+		Shader LightShader("Shaders/Light.vs", "Shaders/Light.fs");
+
+		FUSIONOPENGL::LightIcon = std::make_unique<FUSIONOPENGL::Model>("Resources/LightIcon.fbx");
 
 		Camera2D camera;
 		Camera3D camera3d;
@@ -53,8 +57,11 @@ namespace KAGAN_PAVLO
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
+		FUSIONOPENGL::Light light0({ 0.0f,1.0f,0.0f }, { 0.0f,1.0f,0.0f }, 1.0f);
+
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
 		FUSIONOPENGL::Model model1("Resources\\shovel2.obj");
+		//FUSIONOPENGL::Model light("Resources/LightIcon.fbx");
 
 		Material shovelMaterial;
 		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
@@ -102,7 +109,10 @@ namespace KAGAN_PAVLO
 			std::function<void()> shaderPrepe1 = [&]() {
 				model1.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 			};
+			
 			//LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
+			light0.Draw(camera3d, LightShader);
+		
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 			model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
 
@@ -113,6 +123,7 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(PixelShader.GetID());
 		DeleteShaderProgram(BasicShader.GetID());
 		DeleteShaderProgram(MeshBasicShader.GetID());
+		DeleteShaderProgram(LightShader.GetID());
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");

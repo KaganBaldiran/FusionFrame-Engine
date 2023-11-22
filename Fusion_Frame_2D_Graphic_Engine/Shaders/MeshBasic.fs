@@ -24,6 +24,13 @@ uniform vec4 albedo;
 uniform float metallic;
 uniform float roughness;
 
+#define MAX_LIGHT_COUNT 100
+
+uniform vec3 LightPositions[MAX_LIGHT_COUNT];
+uniform vec3 LightColors[MAX_LIGHT_COUNT];
+uniform float LightIntensities[MAX_LIGHT_COUNT];
+uniform int LightCount;
+
 uniform float FogIntesityUniform;
 uniform vec3 FogColor;
 

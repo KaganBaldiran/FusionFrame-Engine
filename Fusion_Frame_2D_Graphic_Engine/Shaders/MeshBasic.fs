@@ -98,12 +98,15 @@ void main()
    vec3 H = normalize(L + V);
 
    float diffuse = max(dot(N,LDR),0.0f);
-   vec3 specular = pow(max(dot(N,H),0.0f),32.0f) * specularColor;
+   vec3 specular = pow(max(dot(N,H),0.0f),32.0f) * specularColor * roughnessmap;
 
    float DeltaPlane = FarPlane - NearPlane;
    float distanceFromCamera = distance(CameraPos,CurrentPos) / DeltaPlane;
 
    float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
-   OutColor = vec4((texturecolor * LightColor * ((diffuse  * intensity + Ambient) + roughnessmap * specular  * intensity)) + (FogColor * FogIntensity),1.0f);
+   vec3 F0 = vec3(0.04);
+   vec3 fresnel = F0 + (max(vec3(1.0 - roughnessmap), F0) - F0) * pow(clamp(1.0 - max(dot(N,V),0.0f),0.0,1.0),5.0);
+
+   OutColor = vec4((texturecolor * LightColor * ((diffuse  * intensity + Ambient) + roughnessmap * specular  * intensity)) + fresnel + (FogColor * FogIntensity),1.0f);
 }

@@ -32,14 +32,6 @@ namespace KAGAN_PAVLO
 		Shader PixelShader("Shaders/PixelShader.vs", "Shaders/PixelShader.fs");
 		Shader MeshBasicShader("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
 
-		std::unique_ptr<Buffer> Triangle = std::make_unique<Buffer>();
-		std::unique_ptr<Buffer> Rectangle = std::make_unique<Buffer>();
-
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		Camera2D camera;
 		Camera3D camera3d;
 
@@ -62,21 +54,27 @@ namespace KAGAN_PAVLO
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
+		FUSIONOPENGL::Model model1("Resources\\shovel2.obj");
+
 		Material shovelMaterial;
 		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
+		model1.GetTransformation().Translate({ 4.0f,0.0f,0.0f });
 		model0.GetTransformation().Scale(glm::vec3(0.15f, 0.15f, 0.15f));
+
+		model0.PushChild(&model1);
 
 		MeshBasicShader.use();
 		MeshBasicShader.setFloat("FogIntesityUniform", 5.0f);
+		MeshBasicShader.setVec3("FogColor", glm::vec3(1.0f, 1.0f, 1.0f));
 		UseShaderProgram(0);
 
 		while (!glfwWindowShouldClose(window))
 		{
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
 			glViewport(0, 0, WindowSize.x, WindowSize.y);
@@ -95,12 +93,18 @@ namespace KAGAN_PAVLO
 
 			raccon.Draw(camera3d, BasicShader.GetID(), texture , ShaderPrep);
 
-			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.1f);
+			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.05f);
+			model0.UpdateChildren();
+
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 			};
-			LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
+			std::function<void()> shaderPrepe1 = [&]() {
+				model1.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
+			};
+			//LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
+			model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);

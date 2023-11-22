@@ -1,5 +1,6 @@
 #include "Light.hpp"
 
-Light::Light()
+FUSIONOPENGL::Light::Light()
 {
+	//LightMesh = std::make_unique<Mesh3D>()
 }

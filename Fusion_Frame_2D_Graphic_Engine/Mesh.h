@@ -12,6 +12,7 @@
 #include <assimp/postprocess.h>
 #include "Shader.h"
 #include "Material.hpp"
+#include <queue>
 #define MAX_BONE_INFLUENCE 4
 namespace FUSIONOPENGL
 {
@@ -33,15 +34,39 @@ namespace FUSIONOPENGL
 		glm::mat4 OffsetMat;
 	};
 
+	struct TransformAction
+	{
+		glm::vec3 Transformation;
+	};
+
+	struct RotateAction
+	{
+		float Degree;
+		glm::vec3 Vector;
+	};
+
+	struct ScaleAction
+	{
+		glm::vec3 Scale;
+	};
+
 	class WorldTransform
 	{
 	public:
+
+		WorldTransform()
+		{
+			Position = glm::vec3(0.0f, 0.0f, 0.0f);
+		}
 
 		glm::mat4 ModelMatrix = glm::mat4(1.0f);
 		glm::vec3 ObjectScales;
 		glm::vec3 Position;
 		float scale_avg;
 		float dynamic_scale_avg;
+		std::vector<TransformAction> LastTransforms;
+		std::vector<RotateAction> LastRotations;
+		std::vector<ScaleAction> LastScales;
 
 		void SetModelMatrixUniformLocation(GLuint shader, const char* uniform);
 		void Translate(glm::vec3 v);
@@ -63,10 +88,6 @@ namespace FUSIONOPENGL
 
 		void Clean()
 		{
-			/*glDeleteVertexArrays(1, &VAO);
-			glDeleteBuffers(1, &VBO);
-			glDeleteBuffers(1, &EBO);*/
-
 			ObjectBuffer.clean();
 		}
 

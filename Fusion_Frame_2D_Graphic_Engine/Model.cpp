@@ -16,4 +16,3 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material& mater
 	}
 }
 
-

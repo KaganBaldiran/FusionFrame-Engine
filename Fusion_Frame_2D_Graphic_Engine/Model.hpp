@@ -14,11 +14,12 @@
 #include "Mesh.h"
 #include <functional>
 #include <map>
+#include "Object.hpp"
 
 namespace FUSIONOPENGL
 {
-
-    class Model
+   
+    class Model : public Object
     {
     public:
         Model(std::string const& filePath)
@@ -33,7 +34,6 @@ namespace FUSIONOPENGL
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations);
 
-        WorldTransform& GetTransformation() { return this->transformation; };
         std::vector<Mesh3D> Meshes;
         std::vector<Texture2D> textures_loaded;
 
@@ -50,7 +50,6 @@ namespace FUSIONOPENGL
 
         std::string path;
         std::vector<Texture2D> Textures;
-        WorldTransform transformation;
         unsigned int ModelID;
         std::string directory;
 

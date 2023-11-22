@@ -25,6 +25,7 @@ uniform float metallic;
 uniform float roughness;
 
 uniform float FogIntesityUniform;
+uniform vec3 FogColor;
 
 uniform int disableclaymaterial[4];
 
@@ -102,7 +103,6 @@ void main()
    float DeltaPlane = FarPlane - NearPlane;
    float distanceFromCamera = distance(CameraPos,CurrentPos) / DeltaPlane;
 
-   vec3 FogColor = vec3(1.0f,1.0f,1.0f);
    float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
    OutColor = vec4((texturecolor * LightColor * ((diffuse  * intensity + Ambient) + roughnessmap * specular  * intensity)) + (FogColor * FogIntensity),1.0f);

@@ -140,6 +140,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="SDL_CUSTOM.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.hpp" />
+    <ClInclude Include="Object.hpp" />
     <ClInclude Include="SDL_camera2d.hpp" />
     <ClInclude Include="SDL_CUSTOM.hpp" />
     <ClInclude Include="Shader.h" />

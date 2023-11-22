@@ -41,5 +41,10 @@ GLFWwindow* INIT::InitializeWindow(int width, int height, const char* WindowName
 	LOG_INF("Glew initialized!");
 	LOG_INF("OpenGL version : 3.3 core");
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     return window;
 }

@@ -5,14 +5,19 @@
 #include "VectorMath.h"
 #include "Buffer.h"
 #include "Mesh.h"
+#include "Object.hpp"
+#include <memory>
 
-class Light
+namespace FUSIONOPENGL
 {
-public:
-	Light();
-	FUSIONOPENGL::WorldTransform* GetTransformation() { return &this->transformation; };
+	class Light : public Object
+	{
+	public:
+		Light();
+		WorldTransform* GetTransformation() { return &this->transformation; };
 
-private:
-	FUSIONOPENGL::WorldTransform transformation;
-	Buffer objectBuffer;
-};
+	private:
+		WorldTransform transformation;
+		std::unique_ptr<Mesh3D> LightMesh;
+	};
+}

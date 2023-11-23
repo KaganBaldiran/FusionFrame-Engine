@@ -151,6 +151,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DrawingFunctions.hpp" />
+    <ClInclude Include="Engine.hpp" />
     <ClInclude Include="Framebuffer.hpp" />
     <ClInclude Include="Initialize.h" />
     <ClInclude Include="Light.hpp" />

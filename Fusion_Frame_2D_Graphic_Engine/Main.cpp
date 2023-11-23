@@ -75,7 +75,7 @@ namespace KAGAN_PAVLO
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
 		FUSIONOPENGL::Model model1("Resources\\shovel2.obj");
 
-		Material shovelMaterial;
+		FUSIONOPENGL::Material shovelMaterial;
 		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
@@ -88,8 +88,8 @@ namespace KAGAN_PAVLO
 		glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 
 		MeshBasicShader.use();
-		MeshBasicShader.setFloat("FogIntesityUniform", 5.0f);
-		MeshBasicShader.setVec3("FogColor", glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
+		FUSIONOPENGL::SetEnvironment(MeshBasicShader,5.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z),
+		                             glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 		UseShaderProgram(0);
 
 		while (!glfwWindowShouldClose(window))
@@ -139,7 +139,7 @@ namespace KAGAN_PAVLO
 			ScreenFrameBuffer.Unbind();
 
 			auto fboPrep = [&]() {};
-			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,0.09f);
+			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,true,0.09f,2.0f);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
@@ -149,6 +149,7 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(BasicShader.GetID());
 		DeleteShaderProgram(MeshBasicShader.GetID());
 		DeleteShaderProgram(LightShader.GetID());
+		DeleteShaderProgram(FBOShader.GetID());
 		ScreenFrameBuffer.clean();
 
 		glfwTerminate();

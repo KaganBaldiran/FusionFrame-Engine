@@ -56,6 +56,8 @@ namespace FUSIONOPENGL
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
+			LOG_INF("Completed the frameBuffer[ID:" << ID << "]!");
+
 			float quadVertices[] = {
 				// positions   // texCoords
 				-1.0f,  1.0f,  0.0f, 1.0f,
@@ -84,7 +86,7 @@ namespace FUSIONOPENGL
 		void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize , float DOFdistance)
+		void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize ,bool DOFenabled = false, float DOFdistance = 0.09f , float DOFintensity = 1.0f)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -107,6 +109,8 @@ namespace FUSIONOPENGL
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
 			shader.setFloat("DOFdistance", DOFdistance);
+			shader.setBool("DOFenabled", DOFenabled);
+			shader.setFloat("DOFintensity", DOFintensity);
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 

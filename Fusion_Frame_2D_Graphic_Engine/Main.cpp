@@ -16,6 +16,13 @@
 #include "DrawingFunctions.hpp"
 #include "Model.hpp"
 #include "Light.hpp"
+#include "Framebuffer.hpp"
+
+#define ENGINE_DEBUG
+
+#ifndef ENGINE_DEBUG
+#define ENGINE_RELEASE
+#endif 
 
 #define OPENGL 
 #ifdef OPENGL
@@ -33,6 +40,10 @@ namespace KAGAN_PAVLO
 		Shader PixelShader("Shaders/PixelShader.vs", "Shaders/PixelShader.fs");
 		Shader MeshBasicShader("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
 		Shader LightShader("Shaders/Light.vs", "Shaders/Light.fs");
+		Shader FBOShader("Shaders/FBO.vs", "Shaders/FBO.fs");
+
+		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		FUSIONOPENGL::FrameBuffer ScreenFrameBuffer(mode->width, mode->height);
 
 		FUSIONOPENGL::LightIcon = std::make_unique<FUSIONOPENGL::Model>("Resources/LightIcon.fbx");
 
@@ -57,11 +68,12 @@ namespace KAGAN_PAVLO
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
-		FUSIONOPENGL::Light light0({ 0.0f,1.0f,0.0f }, { 0.0f,1.0f,0.0f }, 1.0f);
+		FUSIONOPENGL::Light light0({ 0.0f,2.0f,0.0f }, { 1.0f,1.0f,1.0f }, 6.0f);
+		FUSIONOPENGL::Light light1({ 0.0f,2.0f,2.0f }, { 1.0f,0.0f,0.0f }, 3.0f);
+		FUSIONOPENGL::Light light2({ 2.0f,-2.0f,0.0f }, { 1.0f,0.5f,0.9f }, 3.0f);
 
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
 		FUSIONOPENGL::Model model1("Resources\\shovel2.obj");
-		//FUSIONOPENGL::Model light("Resources/LightIcon.fbx");
 
 		Material shovelMaterial;
 		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
@@ -73,14 +85,17 @@ namespace KAGAN_PAVLO
 
 		model0.PushChild(&model1);
 
+		glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
+
 		MeshBasicShader.use();
 		MeshBasicShader.setFloat("FogIntesityUniform", 5.0f);
-		MeshBasicShader.setVec3("FogColor", glm::vec3(1.0f, 1.0f, 1.0f));
+		MeshBasicShader.setVec3("FogColor", glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 		UseShaderProgram(0);
 
 		while (!glfwWindowShouldClose(window))
 		{
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			ScreenFrameBuffer.Bind();
+			glClearColor(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z, BackGroundColor.w);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
@@ -105,16 +120,26 @@ namespace KAGAN_PAVLO
 
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
+				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
 			};
 			std::function<void()> shaderPrepe1 = [&]() {
 				model1.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
+				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
 			};
 			
-			//LOG("POSITION: " << Vec3<float>(camera3d.Position) << " ORIENTATION: " << Vec3<float>(camera3d.Orientation));
+            #ifdef ENGINE_DEBUG
 			light0.Draw(camera3d, LightShader);
+			light1.Draw(camera3d, LightShader);
+			light2.Draw(camera3d, LightShader);
+            #endif
 		
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 			model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
+
+			ScreenFrameBuffer.Unbind();
+
+			auto fboPrep = [&]() {};
+			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,0.09f);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
@@ -124,6 +149,7 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(BasicShader.GetID());
 		DeleteShaderProgram(MeshBasicShader.GetID());
 		DeleteShaderProgram(LightShader.GetID());
+		ScreenFrameBuffer.clean();
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");

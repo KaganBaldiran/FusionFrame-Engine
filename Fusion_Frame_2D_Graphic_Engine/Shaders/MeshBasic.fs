@@ -1,6 +1,7 @@
 #version 330 core
 
-out vec4 OutColor;
+layout (location = 0) out vec4 OutColor;
+layout (location = 1) out vec4 Depth;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
@@ -35,6 +36,31 @@ uniform float FogIntesityUniform;
 uniform vec3 FogColor;
 
 uniform int disableclaymaterial[4];
+
+vec3 PointLight(vec3 texturecolor,float roughnessmap,vec3 resultnormal,vec3 LightColor,vec3 LightPosition , float LightIntensity)
+{
+   float Ambient = 0.20f;
+
+   vec3 specularColor = LightColor;
+
+   vec3 N = resultnormal;
+   vec3 L = LightPosition - CurrentPos;
+   vec3 LDR = normalize(L);
+
+   float LightDistance = length(L);
+   float a = 0.2f;
+   float b = 0.1f;
+   float intensity = LightIntensity / (a * LightDistance * LightDistance + b * LightDistance + 1.0f);
+   
+   vec3 V = CameraPos - CurrentPos;
+   vec3 H = normalize(L + V);
+
+   float diffuse = max(dot(N,LDR),0.0f);
+   vec3 specular = pow(max(dot(N,H),0.0f),32.0f) * specularColor * roughnessmap;
+
+   return texturecolor * LightColor * ((diffuse  * intensity + Ambient) + roughnessmap * specular  * intensity);
+};
+
 
 void main()
 {
@@ -85,35 +111,23 @@ void main()
       metalicmap = texture(texture_metalic0, FinalTexCoord).r;
     }
 
-
-   vec3 LightPosition = vec3(0.0f, 1.9f,0.0f);
-   vec3 LightColor = vec3(1.0f,1.0f,1.0f);
-   float Ambient = 0.20f;
-
-   vec3 specularColor = LightColor;
-
-   vec3 N = resultnormal;
-   vec3 L = LightPosition - CurrentPos;
-   vec3 LDR = normalize(L);
-
-   float LightDistance = length(L);
-   float a = 0.2f;
-   float b = 0.1f;
-   float intensity = 6.0f / (a * LightDistance * LightDistance + b * LightDistance + 1.0f);
-   
-   vec3 V = CameraPos - CurrentPos;
-   vec3 H = normalize(L + V);
-
-   float diffuse = max(dot(N,LDR),0.0f);
-   vec3 specular = pow(max(dot(N,H),0.0f),32.0f) * specularColor * roughnessmap;
+   vec3 totalRadiance = vec3(0.0f);
+   for(int lightID = 0;lightID < LightCount;lightID++)
+   {
+      totalRadiance += PointLight(texturecolor,roughnessmap,resultnormal,LightColors[lightID],LightPositions[lightID],LightIntensities[lightID]);
+   }
 
    float DeltaPlane = FarPlane - NearPlane;
    float distanceFromCamera = distance(CameraPos,CurrentPos) / DeltaPlane;
 
    float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
+   vec3 V = CameraPos - CurrentPos;
+   vec3 N = resultnormal;
+
    vec3 F0 = vec3(0.04);
    vec3 fresnel = F0 + (max(vec3(1.0 - roughnessmap), F0) - F0) * pow(clamp(1.0 - max(dot(N,V),0.0f),0.0,1.0),5.0);
 
-   OutColor = vec4((texturecolor * LightColor * ((diffuse  * intensity + Ambient) + roughnessmap * specular  * intensity)) + fresnel + (FogColor * FogIntensity),1.0f);
+   Depth = vec4(CurrentPos,1.0f);
+   OutColor = vec4(totalRadiance + fresnel + (FogColor * FogIntensity),1.0f);
 }

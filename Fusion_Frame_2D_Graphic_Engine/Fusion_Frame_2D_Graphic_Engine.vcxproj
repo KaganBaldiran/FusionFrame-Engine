@@ -151,6 +151,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DrawingFunctions.hpp" />
+    <ClInclude Include="Framebuffer.hpp" />
     <ClInclude Include="Initialize.h" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Log.h" />
@@ -169,6 +170,8 @@
   <ItemGroup>
     <None Include="Shaders\Basic.fs" />
     <None Include="Shaders\Basic.vs" />
+    <None Include="Shaders\FBO.fs" />
+    <None Include="Shaders\FBO.vs" />
     <None Include="Shaders\Light.fs" />
     <None Include="Shaders\Light.vs" />
     <None Include="Shaders\MeshBasic.fs" />

@@ -43,7 +43,9 @@
     <ClCompile Include="Bone.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Object.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">
@@ -97,7 +99,12 @@
     <ClInclude Include="Material.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Object.hpp" />
+    <ClInclude Include="Object.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Framebuffer.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.fs">
@@ -122,6 +129,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Light.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\FBO.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\FBO.fs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -5,29 +5,30 @@
 #include "Log.h"
 #include <string>
 
-
-class Texture2D
+namespace FUSIONOPENGL
 {
-public:
-	Texture2D() = default;
+	class Texture2D
+	{
+	public:
+		Texture2D() = default;
 
-	Texture2D(const char* filePath, GLenum target, GLenum type, GLuint Mag_filter, GLuint Min_filter, GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip);
-	~Texture2D();
+		Texture2D(const char* filePath, GLenum target, GLenum type, GLuint Mag_filter, GLuint Min_filter, GLuint Wrap_S_filter, GLuint Wrap_T_filter, bool Flip);
+		~Texture2D();
 
-	GLuint GetTexture();
-	int GetWidth();
-	int GetHeight();
-	void Bind(GLuint slot, GLuint shader, const char* uniform);
-	void Unbind();
-	std::string GetFilePath();
-	int GetChannelCount();
+		GLuint GetTexture();
+		int GetWidth();
+		int GetHeight();
+		void Bind(GLuint slot, GLuint shader, const char* uniform);
+		void Unbind();
+		std::string GetFilePath();
+		int GetChannelCount();
 
-	std::string PbrMapType;
+		std::string PbrMapType;
 
-private:
-	GLuint id;
-	int width, height , channels;
-	std::string PathData;
+	private:
+		GLuint id;
+		int width, height, channels;
+		std::string PathData;
 
-};
-
+	};
+}

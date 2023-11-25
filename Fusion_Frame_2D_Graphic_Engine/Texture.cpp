@@ -2,7 +2,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-Texture2D::Texture2D(const char* filePath , GLenum target , GLenum type , GLuint Mag_filter , GLuint Min_filter , GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip)
+FUSIONOPENGL::Texture2D::Texture2D(const char* filePath , GLenum target , GLenum type , GLuint Mag_filter , GLuint Min_filter , GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip)
 {
 	PathData = std::string(filePath);
 
@@ -54,46 +54,46 @@ Texture2D::Texture2D(const char* filePath , GLenum target , GLenum type , GLuint
 	LOG_INF("Texture Imported : " << PathData);
 }
 
-Texture2D::~Texture2D()
+FUSIONOPENGL::Texture2D::~Texture2D()
 {
 	glDeleteTextures(1, &id);
 	LOG_INF("Texture Cleaned : " << PathData);
 }
 
-GLuint Texture2D::GetTexture()
+GLuint FUSIONOPENGL::Texture2D::GetTexture()
 {
 	return this->id;
 }
 
-int Texture2D::GetWidth()
+int FUSIONOPENGL::Texture2D::GetWidth()
 {
 	return this->width;
 }
 
-int Texture2D::GetHeight()
+int FUSIONOPENGL::Texture2D::GetHeight()
 {
 	return this->height;
 }
 
-void Texture2D::Bind(GLuint slot , GLuint shader , const char* uniform)
+void FUSIONOPENGL::Texture2D::Bind(GLuint slot , GLuint shader , const char* uniform)
 {
 	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, id);
 	glUniform1i(glGetUniformLocation(shader, uniform), slot);
 }
 
-void Texture2D::Unbind()
+void FUSIONOPENGL::Texture2D::Unbind()
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
 }
 
-std::string Texture2D::GetFilePath()
+std::string FUSIONOPENGL::Texture2D::GetFilePath()
 {
 	return this->PathData;
 }
 
-int Texture2D::GetChannelCount()
+int FUSIONOPENGL::Texture2D::GetChannelCount()
 {
 	return this->channels;
 }

@@ -36,7 +36,6 @@ void main()
 
 			result = result / vec3(4.0f * 4.0f);
 			FragColor = vec4(pow(result.xyz.xyz,vec3(0.9)),1.0f);
-
 		}
 		else
 		{ 
@@ -49,5 +48,4 @@ void main()
       vec4 OutColor = texture(Viewport, TexCoords);
       FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w);
     }
-    
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include <glew.h>
 #include <glfw3.h>
 #include "Log.h"
@@ -19,6 +20,7 @@ namespace FUSIONOPENGL
         void PushChild(Object* child);
         void PopChild();
         void UpdateChildren();
+        virtual void Update();
         Object* GetChild(int index);
         int GetChildrenCount();
         WorldTransform& GetTransformation() { return this->transformation; };

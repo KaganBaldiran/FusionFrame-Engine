@@ -39,6 +39,11 @@ void FUSIONOPENGL::Object::UpdateChildren()
 	lastTransforms.clear();
 }
 
+void FUSIONOPENGL::Object::Update()
+{
+
+}
+
 FUSIONOPENGL::Object* FUSIONOPENGL::Object::GetChild(int index)
 {
 	return Children.at(index);

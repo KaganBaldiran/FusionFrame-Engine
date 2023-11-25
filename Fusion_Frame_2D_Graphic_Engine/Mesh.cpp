@@ -20,6 +20,8 @@ void FUSIONOPENGL::WorldTransform::Translate(glm::vec3 v)
 void FUSIONOPENGL::WorldTransform::Scale(glm::vec3 v)
 {
 	ModelMatrix = glm::scale(ModelMatrix, v);
+	ObjectScales *= v;
+
 	ScaleAction action;
 	action.Scale = v;
 	this->LastScales.push_back(action);

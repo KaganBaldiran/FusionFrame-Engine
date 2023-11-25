@@ -25,6 +25,7 @@ namespace FUSIONOPENGL
         Model(std::string const& filePath)
         {
             this->loadModel(filePath);
+            FindGlobalMeshScales();
             static unsigned int counter = 0;
             this->ModelID = counter;
             counter++;
@@ -33,7 +34,8 @@ namespace FUSIONOPENGL
         unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations);
-
+        void FindGlobalMeshScales();
+        
         std::vector<Mesh3D> Meshes;
         std::vector<Texture2D> textures_loaded;
 
@@ -52,6 +54,8 @@ namespace FUSIONOPENGL
         std::vector<Texture2D> Textures;
         unsigned int ModelID;
         std::string directory;
+        Vec3<double> originpoint;
+        glm::vec3 dynamic_origin;
 
         std::map<std::string, BoneInfo> Bones;
         int boneCounter = 0;
@@ -71,7 +75,7 @@ namespace FUSIONOPENGL
             Assimp::Importer importer;
             const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
             
-            if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+            if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
             {
                 std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
                 return;
@@ -79,6 +83,44 @@ namespace FUSIONOPENGL
             
             directory = path.substr(0, path.find_last_of('/'));
 
+            std::vector<glm::vec3> originPoints;
+            for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+                aiMesh* mesh = scene->mMeshes[i];
+
+
+                float minX = mesh->mVertices[0].x, minY = mesh->mVertices[0].y, minZ = mesh->mVertices[0].z;
+                float maxX = mesh->mVertices[0].x, maxY = mesh->mVertices[0].y, maxZ = mesh->mVertices[0].z;
+                for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
+                    if (mesh->mVertices[j].x < minX) minX = mesh->mVertices[j].x;
+                    if (mesh->mVertices[j].y < minY) minY = mesh->mVertices[j].y;
+                    if (mesh->mVertices[j].z < minZ) minZ = mesh->mVertices[j].z;
+                    if (mesh->mVertices[j].x > maxX) maxX = mesh->mVertices[j].x;
+                    if (mesh->mVertices[j].y > maxY) maxY = mesh->mVertices[j].y;
+                    if (mesh->mVertices[j].z > maxZ) maxZ = mesh->mVertices[j].z;
+                }
+                float centerX = (minX + maxX) / 2.0f;
+                float centerY = (minY + maxY) / 2.0f;
+                float centerZ = (minZ + maxZ) / 2.0f;
+
+                originPoints.push_back(glm::vec3(centerX, centerY, centerZ));
+            }
+
+            
+            float overallCenterX = 0.0f, overallCenterY = 0.0f, overallCenterZ = 0.0f;
+            for (unsigned int i = 0; i < originPoints.size(); i++) {
+                overallCenterX += originPoints[i].x;
+                overallCenterY += originPoints[i].y;
+                overallCenterZ += originPoints[i].z;
+            }
+            overallCenterX /= originPoints.size();
+            overallCenterY /= originPoints.size();
+            overallCenterZ /= originPoints.size();
+
+            originpoint = { overallCenterX,overallCenterY,overallCenterZ };
+            transformation.Position = glm::vec3(originpoint.x,originpoint.y,originpoint.z);
+            dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
+
+            std::cout << "Overall origin point: (" << overallCenterX << ", " << overallCenterY << ", " << overallCenterZ << ")" << std::endl;
             
             processNode(scene->mRootNode, scene);
         }

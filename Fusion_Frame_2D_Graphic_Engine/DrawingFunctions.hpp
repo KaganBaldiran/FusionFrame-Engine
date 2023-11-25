@@ -37,7 +37,7 @@ namespace FusionDrawOpengl
 	void PutPixel(int x, int y, Vec4<float> Color);
 	void PopPixel();
 	void ClearPixelBuffer();
-	void DrawPixel(GLuint shader,Camera2D& camera, Vec2<int> WindowSize);
+	void DrawPixel(GLuint shader, FUSIONOPENGL::Camera2D& camera, Vec2<int> WindowSize);
 }
 
 

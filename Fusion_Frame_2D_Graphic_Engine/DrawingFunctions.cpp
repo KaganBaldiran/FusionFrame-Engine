@@ -38,7 +38,7 @@ void FusionDrawOpengl::ClearPixelBuffer()
 	pixels.clear();
 }
 
-void FusionDrawOpengl::DrawPixel(GLuint shader, Camera2D& camera , Vec2<int> WindowSize)
+void FusionDrawOpengl::DrawPixel(GLuint shader, FUSIONOPENGL::Camera2D& camera , Vec2<int> WindowSize)
 {
 	pixelBuffer->Bind();
 	UseShaderProgram(shader);

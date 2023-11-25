@@ -17,6 +17,7 @@
 #include "Model.hpp"
 #include "Light.hpp"
 #include "Framebuffer.hpp"
+#include "Physics.hpp"
 
 #define ENGINE_DEBUG
 
@@ -47,23 +48,18 @@ namespace KAGAN_PAVLO
 
 		FUSIONOPENGL::LightIcon = std::make_unique<FUSIONOPENGL::Model>("Resources/LightIcon.fbx");
 
-		Camera2D camera;
-		Camera3D camera3d;
+		FUSIONOPENGL::Camera2D camera;
+		FUSIONOPENGL::Camera3D camera3d;
 
-		FUSIONOPENGL::TextureObj raccon;
-
-		Texture2D texture("Resources/raccoon.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-		Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-		Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-		Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		FUSIONOPENGL::Texture2D texture("Resources/raccoon.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+		FUSIONOPENGL::Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		FUSIONOPENGL::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		FUSIONOPENGL::Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 
 		Vec2<int> WindowSize;
 		Vec2<double> mousePos;
 
 		glm::vec3 Target(0.0f);
-
-		raccon.GetTransformation()->Scale({0.5f,0.5f,1.0f});
-		raccon.GetTransformation()->Translate({ 0.0f,0.0f,4.0f });
 
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
@@ -80,10 +76,14 @@ namespace KAGAN_PAVLO
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
-		model1.GetTransformation().Translate({ 4.0f,0.0f,0.0f });
+		model1.GetTransformation().Translate({ 0.0f,0.0f,3.0f });
 		model0.GetTransformation().Scale(glm::vec3(0.15f, 0.15f, 0.15f));
 
 		model0.PushChild(&model1);
+		model0.UpdateChildren();
+
+		FUSIONPHYSICS::CollisionBox3DAABB Box0(model0.GetTransformation(),{1.0f,1.1f,1.0f});
+		FUSIONPHYSICS::CollisionBox3DAABB Box1(model1.GetTransformation(), { 1.0f,1.1f,1.0f });
 
 		glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 
@@ -113,10 +113,10 @@ namespace KAGAN_PAVLO
 				glUniform2f(glGetUniformLocation(BasicShader.GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
 			};
 
-			raccon.Draw(camera3d, BasicShader.GetID(), texture , ShaderPrep);
+			//model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.05f);
+			//model0.UpdateChildren();
 
-			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.05f);
-			model0.UpdateChildren();
+			LOG("CAMERA POS: " << Vec3<float>(camera3d.Position));
 
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
@@ -131,8 +131,15 @@ namespace KAGAN_PAVLO
 			light0.Draw(camera3d, LightShader);
 			light1.Draw(camera3d, LightShader);
 			light2.Draw(camera3d, LightShader);
+			Box0.DrawBoxMesh(camera3d, LightShader);
+			Box1.DrawBoxMesh(camera3d, LightShader);
             #endif
 		
+			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1))
+			{
+				LOG("INTERSECT!!");
+			}
+
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 			model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
 
@@ -151,6 +158,7 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(LightShader.GetID());
 		DeleteShaderProgram(FBOShader.GetID());
 		ScreenFrameBuffer.clean();
+		Box0.GetBoxMesh()->Clean();
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");

@@ -5,7 +5,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtx/vector_angle.hpp"
 
-Camera::Camera()
+FUSIONOPENGL::Camera::Camera()
 {
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
@@ -13,26 +13,26 @@ Camera::Camera()
 
 }
 
-Camera::~Camera()
+FUSIONOPENGL::Camera::~Camera()
 {
 }
 
-void Camera::SetViewMatrixUniformLocation(GLuint shader, const char* uniform)
+void FUSIONOPENGL::Camera::SetViewMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(this->viewMat));
 }
 
-void Camera::SetProjMatrixUniformLocation(GLuint shader, const char* uniform)
+void FUSIONOPENGL::Camera::SetProjMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(this->projMat));
 }
 
-void Camera::SetCameraMatrixUniformLocation(GLuint shader, const char* uniform)
+void FUSIONOPENGL::Camera::SetCameraMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(this->CameraMat));
 }
 
-Vec2<float> Camera::GetScreenRatio(Vec2<int> windowSize)
+Vec2<float> FUSIONOPENGL::Camera::GetScreenRatio(Vec2<int> windowSize)
 {
 	float ratio_minmax = NULL;
 
@@ -62,19 +62,19 @@ Vec2<float> Camera::GetScreenRatio(Vec2<int> windowSize)
 	return Vec2<float>{ratio_minmax_x, ratio_minmax_y};
 }
 
-void Camera::SetRatioMatrixUniformLocation(GLuint shader, const char* uniform)
+void FUSIONOPENGL::Camera::SetRatioMatrixUniformLocation(GLuint shader, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(this->RatioMat));
 }
 
-Camera2D::Camera2D()
+FUSIONOPENGL::Camera2D::Camera2D()
 {
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
 	this->viewMat = glm::mat4(1.0f);
 }
 
-void Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2<int> windowSize)
+void FUSIONOPENGL::Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2<int> windowSize)
 {
 	RatioMat = glm::mat4(1.0f);
 	projMat = glm::ortho((-1.0f + target.x) / zoom, (1.0f + target.x) / zoom, (-1.0f + target.y) / zoom, (1.0f + target.y) / zoom, -5.0f, 5.0f);
@@ -83,7 +83,7 @@ void Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2<int> window
 	this->CameraMat = RatioMat * projMat;
 }
 
-Camera3D::Camera3D()
+FUSIONOPENGL::Camera3D::Camera3D()
 {
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
@@ -93,7 +93,7 @@ Camera3D::Camera3D()
 	targetPosition = glm::vec3(0.0f);
 }
 
-void Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
+void FUSIONOPENGL::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
 {
 	this->FarPlane = far;
 	this->NearPlane = near;
@@ -105,7 +105,7 @@ void Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, flo
 	this->CameraMat = this->RatioMat * projMat * viewMat;
 }
 
-void Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
+void FUSIONOPENGL::Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
 {
 
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, uniform), 1, GL_FALSE, glm::value_ptr(CameraMat));
@@ -115,18 +115,18 @@ void Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
 }
 
 
-void Camera3D::SetOrientation(glm::vec3 Orien)
+void FUSIONOPENGL::Camera3D::SetOrientation(glm::vec3 Orien)
 {
 	this->Orientation = Orien;
 }
 
-void Camera3D::SetPosition(glm::vec3 Pos)
+void FUSIONOPENGL::Camera3D::SetPosition(glm::vec3 Pos)
 {
 	this->Position = Pos;
 }
 
 
-void Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize)
+void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize)
 {
 
 	

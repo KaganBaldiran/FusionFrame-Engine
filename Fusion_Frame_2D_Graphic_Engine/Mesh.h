@@ -83,6 +83,7 @@ namespace FUSIONOPENGL
 		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader , Material& material, std::function<void()>& ShaderPreperations);
+		std::vector<Vertex>& GetVertexArray() { return vertices; };
 
 		unsigned int VAO;
 

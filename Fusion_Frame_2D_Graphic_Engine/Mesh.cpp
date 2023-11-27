@@ -36,6 +36,26 @@ void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v , float angle)
 	this->LastRotations.push_back(action);
 }
 
+void FUSIONOPENGL::WorldTransform::TranslateNoTraceBack(glm::vec3 v)
+{
+	ModelMatrix = glm::translate(ModelMatrix, v);
+	
+	Position.x = ModelMatrix[3][0];
+	Position.y = ModelMatrix[3][1];
+	Position.z = ModelMatrix[3][2];
+}
+
+void FUSIONOPENGL::WorldTransform::ScaleNoTraceBack(glm::vec3 v)
+{
+	ModelMatrix = glm::scale(ModelMatrix, v);
+	ObjectScales *= v;
+}
+
+void FUSIONOPENGL::WorldTransform::RotateNoTraceBack(glm::vec3 v, float angle)
+{
+	ModelMatrix = glm::rotate(ModelMatrix, glm::radians(angle), v);
+}
+
 FUSIONOPENGL::TextureObj::TextureObj()
 {
 	ObjectBuffer.Bind();

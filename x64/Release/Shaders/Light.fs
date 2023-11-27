@@ -1,6 +1,7 @@
 #version 330 core
 
-out vec4 OutColor;
+layout (location = 0) out vec4 OutColor;
+layout (location = 1) out vec4 Depth;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
@@ -31,4 +32,5 @@ uniform int disableclaymaterial[4];
 void main()
 {
    OutColor = vec4(LightColor,1.0f);
+   Depth = vec4(CurrentPos,1.0f);
 }

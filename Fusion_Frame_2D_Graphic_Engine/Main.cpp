@@ -18,6 +18,10 @@
 #include "Light.hpp"
 #include "Framebuffer.hpp"
 #include "Physics.hpp"
+#include <chrono>
+#include <thread>
+
+#define TARGET_FPS 144
 
 #define ENGINE_DEBUG
 
@@ -64,7 +68,7 @@ namespace KAGAN_PAVLO
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
-		FUSIONOPENGL::Light light0({ 0.0f,2.0f,0.0f }, { 1.0f,1.0f,1.0f }, 6.0f);
+		FUSIONOPENGL::Light light0({ 0.0f,2.0f,0.0f }, { 1.0f,1.0f,1.0f }, 8.0f);
 		FUSIONOPENGL::Light light1({ 0.0f,2.0f,2.0f }, { 1.0f,0.0f,0.0f }, 3.0f);
 		FUSIONOPENGL::Light light2({ 2.0f,-2.0f,0.0f }, { 1.0f,0.5f,0.9f }, 3.0f);
 
@@ -76,14 +80,18 @@ namespace KAGAN_PAVLO
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
-		model1.GetTransformation().Translate({ 0.0f,0.0f,3.0f });
-		model0.GetTransformation().Scale(glm::vec3(0.15f, 0.15f, 0.15f));
+		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,3.9f });
+		model1.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
+		model0.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 
-		model0.PushChild(&model1);
-		model0.UpdateChildren();
-
-		FUSIONPHYSICS::CollisionBox3DAABB Box0(model0.GetTransformation(),{1.0f,1.1f,1.0f});
 		FUSIONPHYSICS::CollisionBox3DAABB Box1(model1.GetTransformation(), { 1.0f,1.1f,1.0f });
+		FUSIONPHYSICS::CollisionBox3DAABB Box0(model0.GetTransformation(), { 1.0f,1.1f,1.0f });
+
+		model1.PushChild(&Box1);
+        //model0.PushChild(&model1);
+		model0.PushChild(&Box0);
+
+		model0.UpdateChildren();
 
 		glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 
@@ -92,8 +100,13 @@ namespace KAGAN_PAVLO
 		                             glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 		UseShaderProgram(0);
 
+		const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
+
 		while (!glfwWindowShouldClose(window))
 		{
+
+			auto start_time = std::chrono::high_resolution_clock::now();
+
 			ScreenFrameBuffer.Bind();
 			glClearColor(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z, BackGroundColor.w);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -114,10 +127,12 @@ namespace KAGAN_PAVLO
 			};
 
 			//model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.05f);
-			//model0.UpdateChildren();
+			model0.GetTransformation().Translate({ 0.0f,0.0f,1.0f});
 
-			LOG("CAMERA POS: " << Vec3<float>(camera3d.Position));
+			model0.UpdateChildren();
+			//model1.UpdateChildren();
 
+			//LOG("CAMERA POS: " << Vec3<float>(camera3d.Position));
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
@@ -137,11 +152,11 @@ namespace KAGAN_PAVLO
 		
 			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1))
 			{
-				LOG("INTERSECT!!");
+				model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
+
 			}
 
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
-			model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
 
 			ScreenFrameBuffer.Unbind();
 
@@ -150,6 +165,14 @@ namespace KAGAN_PAVLO
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
+
+
+			auto end_time = std::chrono::high_resolution_clock::now();
+			auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1e6;
+
+			if (elapsed_time < TARGET_FRAME_TIME) {
+				std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>((TARGET_FRAME_TIME - elapsed_time) * 1e6)));
+			}
 		}
 
 		DeleteShaderProgram(PixelShader.GetID());

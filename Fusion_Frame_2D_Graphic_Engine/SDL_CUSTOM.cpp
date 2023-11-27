@@ -72,3 +72,34 @@ SDL_Texture* SDL_CUSTOM::LoadInTexture(const char* filesrc, Vec2<int>& TextureSi
 	
 	return Texture;
 }
+
+SDL_CUSTOM::Object::Object()
+{
+
+}
+
+void SDL_CUSTOM::Object::TranslateTo(int x ,int y)
+{
+	DestRec.x = x;
+	DestRec.y = y;
+}
+
+void SDL_CUSTOM::Object::Rotate(float angles)
+{
+	float radians = angles * (std::_Pi_val / 180.0f);
+	//glm::rotate()
+
+	//DestRec.x = std::cos(radians) * DestRec.x - std::sin(radians) * DestRec.y;
+	//DestRec.y = std::sin(radians) * DestRec.x + std::cos(radians) * DestRec.y;
+
+	//w = 2 * max(abs(x1', x2'))
+	//h = 2 * max(abs(y1', y2'))
+}
+
+void SDL_CUSTOM::Object::Scale()
+{
+}
+
+void SDL_CUSTOM::Object::Draw()
+{
+}

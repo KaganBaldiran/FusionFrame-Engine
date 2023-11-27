@@ -165,6 +165,7 @@
     <ClInclude Include="SDL_camera2d.hpp" />
     <ClInclude Include="SDL_CUSTOM.hpp" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShadowMaps.hpp" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Thread.h" />

@@ -112,11 +112,99 @@ void FUSIONPHYSICS::CollisionBox3DAABB::DrawBoxMesh(FUSIONOPENGL::Camera3D& came
 	std::function<void()> boxprep = [&]() 
 	{
 		shader.setVec3("LightColor", MeshColor);
-		shader.setMat4("model", glm::mat4(1.0f));
+		shader.setMat4("model", this->GetTransformation().ModelMatrix);
 	};
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	BoxMesh->Draw(camera, shader, boxprep);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void FUSIONPHYSICS::CollisionBox3DAABB::Update()
+{
+
+	auto& lastScales = this->Parent->GetTransformation().LastScales;
+	auto& lastRotations = this->Parent->GetTransformation().LastRotations;
+	auto& lastTransforms = this->Parent->GetTransformation().LastTransforms;
+
+	
+	/*glm::vec4 tempMin(Min.x,
+		              Min.y,
+		              Min.z,
+		              1.0f);
+
+	glm::vec4 tempMax(Max.x,
+		              Max.y,
+		              Max.z,
+		              1.0f);
+
+	for (size_t i = 0; i < lastScales.size(); i++)
+	{
+		tempMin = glm::scale(lastScales[i].Scale) * tempMin;
+	}
+	for (size_t i = 0; i < lastRotations.size(); i++)
+	{
+		tempMin = glm::translate(this->Parent->GetTransformation().Position) * tempMin;
+		tempMin = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempMin;
+		tempMin = glm::translate(-this->Parent->GetTransformation().Position) * tempMin;
+
+		tempMax = glm::translate(this->Parent->GetTransformation().Position) * tempMax;
+		tempMax = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempMax;
+		tempMax = glm::translate(-this->Parent->GetTransformation().Position) * tempMax;
+	}
+	for (size_t i = 0; i < lastTransforms.size(); i++)
+	{
+		tempMin = glm::translate(lastTransforms[i].Transformation) * tempMin;
+		tempMax = glm::translate(lastTransforms[i].Transformation) * tempMax;
+
+	}
+
+	Min = glm::vec3(tempMin.x, tempMin.y, tempMin.z);
+	Max = glm::vec3(tempMax.x, tempMax.y, tempMax.z);*/
+	Min = Max = BoxVertices[0].Position;
+	for (auto& vertex : BoxVertices)
+	{
+		glm::vec4 tempVertex = glm::vec4(vertex.Position, 1.0f);
+
+		for (size_t i = 0; i < lastScales.size(); i++)
+		{
+			tempVertex = glm::scale(lastScales[i].Scale) * tempVertex;
+		}
+
+		for (size_t i = 0; i < lastRotations.size(); i++)
+		{
+			// Apply rotation around the object's local origin
+			tempVertex = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempVertex;
+		}
+
+		for (size_t i = 0; i < lastTransforms.size(); i++)
+		{
+			tempVertex = glm::translate(lastTransforms[i].Transformation) * tempVertex;
+		}
+
+		vertex.Position = glm::vec3(tempVertex.x, tempVertex.y, tempVertex.z);
+
+		// Update Min and Max based on the updated vertex
+		Min = glm::min(Min, vertex.Position);
+		Max = glm::max(Max, vertex.Position);
+	}
+
+	for (size_t i = 0; i < lastScales.size(); i++)
+	{
+		this->transformation.Scale(lastScales[i].Scale);
+	}
+	for (size_t i = 0; i < lastRotations.size(); i++)
+	{
+		this->transformation.Translate(this->Parent->GetTransformation().Position);
+		this->transformation.Rotate(lastRotations[i].Vector, lastRotations[i].Degree);
+		this->transformation.Translate(-this->Parent->GetTransformation().Position);
+	}
+	for (size_t i = 0; i < lastTransforms.size(); i++)
+	{
+		this->transformation.Translate(lastTransforms[i].Transformation);
+	}
+
+
+	UpdateChildren();
 }
 
 bool FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)

@@ -15,6 +15,8 @@ namespace FUSIONPHYSICS
 		CollisionBox3DAABB(FUSIONOPENGL::WorldTransform& transformation, glm::vec3 BoxSizeCoeff);
 		void DrawBoxMesh(FUSIONOPENGL::Camera3D& camera, Shader& shader);
 		FUSIONOPENGL::Mesh3D* GetBoxMesh() { return BoxMesh.get(); };
+		
+		void Update();
 
 		glm::vec3 Min;
 		glm::vec3 Max;

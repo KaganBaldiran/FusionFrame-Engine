@@ -114,6 +114,9 @@
     <ClInclude Include="Physics.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ShadowMaps.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.fs">

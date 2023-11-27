@@ -34,6 +34,7 @@ uniform int LightCount;
 
 uniform float FogIntesityUniform;
 uniform vec3 FogColor;
+uniform vec3 EnvironmentRadiance;
 
 uniform int disableclaymaterial[4];
 
@@ -129,5 +130,6 @@ void main()
    vec3 fresnel = F0 + (max(vec3(1.0 - roughnessmap), F0) - F0) * pow(clamp(1.0 - max(dot(N,V),0.0f),0.0,1.0),5.0);
 
    Depth = vec4(CurrentPos,1.0f);
-   OutColor = vec4(totalRadiance + fresnel + (FogColor * FogIntensity),1.0f);
+   float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
+   OutColor = vec4(totalRadiance * (EnvironmentRadiance * EnvironmentRadianceIntensity) + fresnel + (FogColor * FogIntensity),1.0f);
 }

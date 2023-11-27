@@ -73,6 +73,11 @@ namespace FUSIONOPENGL
 		void Scale(glm::vec3 v);
 		void Rotate(glm::vec3 v, float angle);
 
+		//No transform history for children
+		void TranslateNoTraceBack(glm::vec3 v);
+		void ScaleNoTraceBack(glm::vec3 v);
+		void RotateNoTraceBack(glm::vec3 v, float angle);
+
 		glm::mat4* GetModelMat4() { return &ModelMatrix; };
 	};
 

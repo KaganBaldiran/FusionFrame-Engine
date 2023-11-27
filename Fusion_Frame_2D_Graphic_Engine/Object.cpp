@@ -2,6 +2,7 @@
 
 void FUSIONOPENGL::Object::PushChild(Object* child)
 {
+	child->Parent = this;
 	this->Children.push_back(child);
 }
 
@@ -12,36 +13,45 @@ void FUSIONOPENGL::Object::PopChild()
 
 void FUSIONOPENGL::Object::UpdateChildren()
 {
-	auto& lastScales = this->transformation.LastScales;
-	auto& lastRotations = this->transformation.LastRotations;
-	auto& lastTransforms = this->transformation.LastTransforms;
-
-	for (auto& child : this->Children)
+	if (!Children.empty())
 	{
-		for (size_t i = 0; i < lastScales.size(); i++)
+		auto& lastScales = this->transformation.LastScales;
+		auto& lastRotations = this->transformation.LastRotations;
+		auto& lastTransforms = this->transformation.LastTransforms;
+
+		for (auto& child : this->Children)
 		{
-			child->transformation.Scale(lastScales[i].Scale);
+			child->Update();
 		}
-		for (size_t i = 0; i < lastRotations.size(); i++)
-		{
-			child->transformation.Translate(this->transformation.Position);
-			child->transformation.Rotate(lastRotations[i].Vector, lastRotations[i].Degree);
-			child->transformation.Translate(-this->transformation.Position);
-		}
-		for (size_t i = 0; i < lastTransforms.size(); i++)
-		{
-			child->transformation.Translate(lastTransforms[i].Transformation);
-		}
-		child->UpdateChildren();
+
+		lastScales.clear();
+		lastRotations.clear();
+		lastTransforms.clear();
 	}
-	lastScales.clear();
-	lastRotations.clear();
-	lastTransforms.clear();
 }
 
 void FUSIONOPENGL::Object::Update()
 {
+	auto& lastScales = this->Parent->transformation.LastScales;
+	auto& lastRotations = this->Parent->transformation.LastRotations;
+	auto& lastTransforms = this->Parent->transformation.LastTransforms;
 
+	for (size_t i = 0; i < lastScales.size(); i++)
+	{
+		this->transformation.Scale(lastScales[i].Scale);
+	}
+	for (size_t i = 0; i < lastRotations.size(); i++)
+	{
+		this->transformation.Translate(this->Parent->transformation.Position);
+		this->transformation.Rotate(lastRotations[i].Vector, lastRotations[i].Degree);
+		this->transformation.Translate(-this->Parent->transformation.Position);
+	}
+	for (size_t i = 0; i < lastTransforms.size(); i++)
+	{
+		this->transformation.Translate(lastTransforms[i].Transformation);
+	}
+
+	UpdateChildren();
 }
 
 FUSIONOPENGL::Object* FUSIONOPENGL::Object::GetChild(int index)

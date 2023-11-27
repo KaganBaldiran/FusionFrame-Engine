@@ -57,6 +57,7 @@ namespace FUSIONOPENGL
 		WorldTransform()
 		{
 			Position = glm::vec3(0.0f, 0.0f, 0.0f);
+			ScaleFactor = glm::vec3(1.0f, 1.0f, 1.0f);
 		}
 
 		glm::mat4 ModelMatrix = glm::mat4(1.0f);
@@ -67,6 +68,8 @@ namespace FUSIONOPENGL
 		std::vector<TransformAction> LastTransforms;
 		std::vector<RotateAction> LastRotations;
 		std::vector<ScaleAction> LastScales;
+
+		glm::vec3 ScaleFactor;
 
 		void SetModelMatrixUniformLocation(GLuint shader, const char* uniform);
 		void Translate(glm::vec3 v);

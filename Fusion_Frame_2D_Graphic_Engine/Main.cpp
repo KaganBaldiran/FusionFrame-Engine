@@ -80,16 +80,15 @@ namespace KAGAN_PAVLO
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
-		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,3.9f });
+		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,8.0f });
 		model1.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 		model0.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 
 		FUSIONPHYSICS::CollisionBox3DAABB Box1(model1.GetTransformation(), { 1.0f,1.1f,1.0f });
 		FUSIONPHYSICS::CollisionBox3DAABB Box0(model0.GetTransformation(), { 1.0f,1.1f,1.0f });
 
-		model1.PushChild(&Box1);
-        //model0.PushChild(&model1);
 		model0.PushChild(&Box0);
+		model1.PushChild(&Box1);
 
 		model0.UpdateChildren();
 
@@ -101,6 +100,8 @@ namespace KAGAN_PAVLO
 		UseShaderProgram(0);
 
 		const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
+
+		glm::vec3 translateVector(0.0f, 0.0f, 0.01f);
 
 		while (!glfwWindowShouldClose(window))
 		{
@@ -126,10 +127,7 @@ namespace KAGAN_PAVLO
 				glUniform2f(glGetUniformLocation(BasicShader.GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
 			};
 
-			//model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, 0.05f);
-			model0.GetTransformation().Translate({ 0.0f,0.0f,1.0f});
-
-			model0.UpdateChildren();
+			
 			//model1.UpdateChildren();
 
 			//LOG("CAMERA POS: " << Vec3<float>(camera3d.Position));
@@ -150,11 +148,13 @@ namespace KAGAN_PAVLO
 			Box1.DrawBoxMesh(camera3d, LightShader);
             #endif
 		
-			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1))
+			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1).first)
 			{
 				model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
-
 			}
+			
+			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f}, std::sin(time(0)));
+			model0.UpdateChildren();
 
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 

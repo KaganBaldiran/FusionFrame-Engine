@@ -121,72 +121,9 @@ void FUSIONPHYSICS::CollisionBox3DAABB::DrawBoxMesh(FUSIONOPENGL::Camera3D& came
 
 void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 {
-
 	auto& lastScales = this->Parent->GetTransformation().LastScales;
 	auto& lastRotations = this->Parent->GetTransformation().LastRotations;
 	auto& lastTransforms = this->Parent->GetTransformation().LastTransforms;
-
-	
-	/*glm::vec4 tempMin(Min.x,
-		              Min.y,
-		              Min.z,
-		              1.0f);
-
-	glm::vec4 tempMax(Max.x,
-		              Max.y,
-		              Max.z,
-		              1.0f);
-
-	for (size_t i = 0; i < lastScales.size(); i++)
-	{
-		tempMin = glm::scale(lastScales[i].Scale) * tempMin;
-	}
-	for (size_t i = 0; i < lastRotations.size(); i++)
-	{
-		tempMin = glm::translate(this->Parent->GetTransformation().Position) * tempMin;
-		tempMin = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempMin;
-		tempMin = glm::translate(-this->Parent->GetTransformation().Position) * tempMin;
-
-		tempMax = glm::translate(this->Parent->GetTransformation().Position) * tempMax;
-		tempMax = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempMax;
-		tempMax = glm::translate(-this->Parent->GetTransformation().Position) * tempMax;
-	}
-	for (size_t i = 0; i < lastTransforms.size(); i++)
-	{
-		tempMin = glm::translate(lastTransforms[i].Transformation) * tempMin;
-		tempMax = glm::translate(lastTransforms[i].Transformation) * tempMax;
-
-	}
-
-	Min = glm::vec3(tempMin.x, tempMin.y, tempMin.z);
-	Max = glm::vec3(tempMax.x, tempMax.y, tempMax.z);*/
-	Min = Max = BoxVertices[0].Position;
-	for (auto& vertex : BoxVertices)
-	{
-		glm::vec4 tempVertex = glm::vec4(vertex.Position, 1.0f);
-
-		for (size_t i = 0; i < lastScales.size(); i++)
-		{
-			tempVertex = glm::scale(lastScales[i].Scale) * tempVertex;
-		}
-
-		for (size_t i = 0; i < lastRotations.size(); i++)
-		{
-			// Apply rotation around the object's local origin
-			tempVertex = glm::rotate(lastRotations[i].Degree, lastRotations[i].Vector) * tempVertex;
-		}
-
-		for (size_t i = 0; i < lastTransforms.size(); i++)
-		{
-			tempVertex = glm::translate(lastTransforms[i].Transformation) * tempVertex;
-		}
-
-		vertex.Position = glm::vec3(tempVertex.x, tempVertex.y, tempVertex.z);
-
-		// Update Min and Max based on the updated vertex
-		Min = glm::min(Min, vertex.Position);
-		Max = glm::max(Max, vertex.Position);
-	}
 
 	for (size_t i = 0; i < lastScales.size(); i++)
 	{
@@ -203,16 +140,80 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 		this->transformation.Translate(lastTransforms[i].Transformation);
 	}
 
+	float maxX = -std::numeric_limits<float>::infinity();
+	float maxY = -std::numeric_limits<float>::infinity();
+	float maxZ = -std::numeric_limits<float>::infinity();
+	float minX = std::numeric_limits<float>::infinity();
+	float minY = std::numeric_limits<float>::infinity();
+	float minZ = std::numeric_limits<float>::infinity();
+
+	auto& VertexArray = this->BoxVertices;
+
+	for (unsigned int k = 0; k < VertexArray.size(); k++) {
+
+		glm::vec4 transformed = this->GetTransformation().ModelMatrix * glm::vec4(VertexArray[k].Position, 1.0f);
+
+		maxX = std::max(maxX, transformed.x);
+		maxY = std::max(maxY, transformed.y);
+		maxZ = std::max(maxZ, transformed.z);
+		minX = std::min(minX, transformed.x);
+		minY = std::min(minY, transformed.y);
+		minZ = std::min(minZ, transformed.z);
+	}
+
+	Min.x = minX;
+	Min.y = minY;
+	Min.z = minZ;
+
+	Max.x = maxX;
+	Max.y = maxY;
+	Max.z = maxZ;
 
 	UpdateChildren();
 }
 
-bool FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)
+
+std::pair<int,glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targetVector , glm::mat4 Entity1ModelMatrix)
 {
-	return Box1.Min.x <= Box2.Max.x &&
-     	   Box1.Max.x >= Box2.Min.x &&
+	glm::vec3 Directions[] = {
+		glm::vec3(0.0f, 1.0f,0.0f),	    // Up
+		glm::vec3(0.0f, -1.0f,0.0f),	// Down
+		glm::vec3(1.0f, 0.0f , 0.0f),	// Right
+		glm::vec3(-1.0f, 0.0f , 0.0f),	// Left
+		glm::vec3(0.0f, 0.0 , 1.0f),	// Forward
+		glm::vec3(0.0f, 0.0 , -1.0f)	// Backward
+	};
+
+	float max = 0.0f;
+	int Chosen = -1;
+	glm::vec3 ChosenAxis = glm::vec3(0.0f);
+
+	glm::vec4 transformed;
+	for (size_t i = 0; i < 6; i++)
+	{
+		transformed = Entity1ModelMatrix * glm::vec4(Directions[i], 1.0f);
+		float dotProduct = glm::dot(glm::vec3(transformed.x, transformed.y, transformed.z),targetVector);
+
+		if (dotProduct > max)
+		{
+			max = dotProduct;
+			Chosen = i;
+			ChosenAxis = Directions[i];
+		}
+	}
+
+	return { Chosen,ChosenAxis };
+}
+
+std::pair<bool,int> FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)
+{
+	auto direction = CheckCollisionDirection(Box1.GetTransformation().Position - Box2.GetTransformation().Position,
+		                                     Box1.GetTransformation().ModelMatrix);
+
+	return{ Box1.Min.x <= Box2.Max.x &&
+		   Box1.Max.x >= Box2.Min.x &&
 		   Box1.Min.y <= Box2.Max.y &&
 		   Box1.Max.y >= Box2.Min.y &&
 		   Box1.Min.z <= Box2.Max.z &&
-		   Box1.Max.z >= Box2.Min.z;
+		   Box1.Max.z >= Box2.Min.z , direction.first };
 }

@@ -6,6 +6,12 @@
 #include "Object.hpp"
 #include "Buffer.h"
 #include <memory>
+#define FF_TOP_SIDE 0
+#define FF_BOTTOM_SIDE 1
+#define FF_RIGHT_SIDE 2
+#define FF_LEFT_SIDE 3
+#define FF_FRONT_SIDE 4
+#define FF_BEHIND_SIDE 5
 
 namespace FUSIONPHYSICS
 {
@@ -28,5 +34,6 @@ namespace FUSIONPHYSICS
 		glm::vec3 MeshColor;
 	};
 
-	bool BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
+	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, glm::mat4 Entity1ModelMatrix);
+	std::pair<bool, int> BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
 }

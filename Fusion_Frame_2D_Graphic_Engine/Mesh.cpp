@@ -7,7 +7,7 @@ void FUSIONOPENGL::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, 
 
 void FUSIONOPENGL::WorldTransform::Translate(glm::vec3 v)
 {
-	ModelMatrix = glm::translate(ModelMatrix, v);
+	ModelMatrix = glm::translate(ModelMatrix, v / ScaleFactor);
 	TransformAction action;
 	action.Transformation = v;
 	this->LastTransforms.push_back(action);
@@ -21,6 +21,7 @@ void FUSIONOPENGL::WorldTransform::Scale(glm::vec3 v)
 {
 	ModelMatrix = glm::scale(ModelMatrix, v);
 	ObjectScales *= v;
+	ScaleFactor *= v;
 
 	ScaleAction action;
 	action.Scale = v;
@@ -38,7 +39,7 @@ void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v , float angle)
 
 void FUSIONOPENGL::WorldTransform::TranslateNoTraceBack(glm::vec3 v)
 {
-	ModelMatrix = glm::translate(ModelMatrix, v);
+	ModelMatrix = glm::translate(ModelMatrix, v / ScaleFactor);
 	
 	Position.x = ModelMatrix[3][0];
 	Position.y = ModelMatrix[3][1];
@@ -49,6 +50,7 @@ void FUSIONOPENGL::WorldTransform::ScaleNoTraceBack(glm::vec3 v)
 {
 	ModelMatrix = glm::scale(ModelMatrix, v);
 	ObjectScales *= v;
+	ScaleFactor *= v;
 }
 
 void FUSIONOPENGL::WorldTransform::RotateNoTraceBack(glm::vec3 v, float angle)

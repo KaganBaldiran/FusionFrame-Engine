@@ -144,6 +144,7 @@
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="SDL_CUSTOM.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShadowMaps.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VectorMath.cpp" />
   </ItemGroup>

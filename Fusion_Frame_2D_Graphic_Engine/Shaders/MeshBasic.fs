@@ -2,6 +2,7 @@
 
 layout (location = 0) out vec4 OutColor;
 layout (location = 1) out vec4 Depth;
+layout (location = 2) out float ID;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
@@ -37,6 +38,8 @@ uniform vec3 FogColor;
 uniform vec3 EnvironmentRadiance;
 
 uniform int disableclaymaterial[4];
+
+uniform float ModelID;
 
 vec3 PointLight(vec3 texturecolor,float roughnessmap,vec3 resultnormal,vec3 LightColor,vec3 LightPosition , float LightIntensity)
 {
@@ -129,6 +132,7 @@ void main()
    vec3 F0 = vec3(0.04);
    vec3 fresnel = F0 + (max(vec3(1.0 - roughnessmap), F0) - F0) * pow(clamp(1.0 - max(dot(N,V),0.0f),0.0,1.0),5.0);
 
+   ID = ModelID;
    Depth = vec4(CurrentPos,1.0f);
    float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
    OutColor = vec4(totalRadiance * (EnvironmentRadiance * EnvironmentRadianceIntensity) + fresnel + (FogColor * FogIntensity),1.0f);

@@ -70,6 +70,7 @@ void FUSIONOPENGL::Model::FindGlobalMeshScales()
 	transformation.ObjectScales.y = transformation.ObjectScales.y;
 	transformation.ObjectScales.z = transformation.ObjectScales.z;
 
+	transformation.InitialObjectScales = transformation.ObjectScales;
 
 	std::cout << "Model width: " << transformation.ObjectScales.x << " Model height: " << transformation.ObjectScales.y << " Model Depth: " << transformation.ObjectScales.z << "\n";
 	std::cout << "Scale avg: " << transformation.scale_avg << "\n";

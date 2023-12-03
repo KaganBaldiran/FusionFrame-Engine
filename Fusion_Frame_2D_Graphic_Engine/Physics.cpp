@@ -15,59 +15,61 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONOPENGL::WorldTransfo
 	MeshColor.y = RandomFloats(engine);
 	MeshColor.z = RandomFloats(engine);
 
-	float Xsize = (transformation.ObjectScales.x / 2.0f) * BoxSizeCoeff.x;
-	float Ysize = (transformation.ObjectScales.y / 2.0f) * BoxSizeCoeff.y;
-	float Zsize = (transformation.ObjectScales.z / 2.0f) * BoxSizeCoeff.z;
+	float Xsize = (transformation.InitialObjectScales.x / 2.0f) * BoxSizeCoeff.x;
+	float Ysize = (transformation.InitialObjectScales.y / 2.0f) * BoxSizeCoeff.y;
+	float Zsize = (transformation.InitialObjectScales.z / 2.0f) * BoxSizeCoeff.z;
+
+	auto OriginPosition = FF_ORIGIN;
 
     //Upper Part
-	vertex.Position.x = transformation.Position.x + Xsize;
-	vertex.Position.y = transformation.Position.y + Ysize;
-	vertex.Position.z = transformation.Position.z + Zsize;
+	vertex.Position.x = OriginPosition.x + Xsize;
+	vertex.Position.y = OriginPosition.y + Ysize;
+	vertex.Position.z = OriginPosition.z + Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x + Xsize;
-	vertex.Position.y = transformation.Position.y + Ysize;
-	vertex.Position.z = transformation.Position.z - Zsize;
+	vertex.Position.x = OriginPosition.x + Xsize;
+	vertex.Position.y = OriginPosition.y + Ysize;
+	vertex.Position.z = OriginPosition.z - Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x - Xsize;
-	vertex.Position.y = transformation.Position.y + Ysize;
-	vertex.Position.z = transformation.Position.z + Zsize;
+	vertex.Position.x = OriginPosition.x - Xsize;
+	vertex.Position.y = OriginPosition.y + Ysize;
+	vertex.Position.z = OriginPosition.z + Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x - Xsize;
-	vertex.Position.y = transformation.Position.y + Ysize;
-	vertex.Position.z = transformation.Position.z - Zsize;
+	vertex.Position.x = OriginPosition.x - Xsize;
+	vertex.Position.y = OriginPosition.y + Ysize;
+	vertex.Position.z = OriginPosition.z - Zsize;
 
 	BoxVertices.push_back(vertex);
 
 
 
 	//Bottom Part
-	vertex.Position.x = transformation.Position.x + Xsize;
-	vertex.Position.y = transformation.Position.y - Ysize;
-	vertex.Position.z = transformation.Position.z + Zsize;
+	vertex.Position.x = OriginPosition.x + Xsize;
+	vertex.Position.y = OriginPosition.y - Ysize;
+	vertex.Position.z = OriginPosition.z + Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x + Xsize;
-	vertex.Position.y = transformation.Position.y - Ysize;
-	vertex.Position.z = transformation.Position.z - Zsize;
+	vertex.Position.x = OriginPosition.x + Xsize;
+	vertex.Position.y = OriginPosition.y - Ysize;
+	vertex.Position.z = OriginPosition.z - Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x - Xsize;
-	vertex.Position.y = transformation.Position.y - Ysize;
-	vertex.Position.z = transformation.Position.z + Zsize;
+	vertex.Position.x = OriginPosition.x - Xsize;
+	vertex.Position.y = OriginPosition.y - Ysize;
+	vertex.Position.z = OriginPosition.z + Zsize;
 
 	BoxVertices.push_back(vertex);
 
-	vertex.Position.x = transformation.Position.x - Xsize;
-	vertex.Position.y = transformation.Position.y - Ysize;
-	vertex.Position.z = transformation.Position.z - Zsize;
+	vertex.Position.x = OriginPosition.x - Xsize;
+	vertex.Position.y = OriginPosition.y - Ysize;
+	vertex.Position.z = OriginPosition.z - Zsize;
 
 	BoxVertices.push_back(vertex);
 
@@ -95,13 +97,38 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONOPENGL::WorldTransfo
 
 	BoxIndices.assign(indices, indices + sizeof(indices) / sizeof(indices[0]));
 
-	Min.x = transformation.Position.x - Xsize;
-	Min.y = transformation.Position.y - Ysize;
-	Min.z = transformation.Position.z - Zsize;
+	this->GetTransformation().TranslationMatrix = transformation.TranslationMatrix;
+	this->GetTransformation().ScalingMatrix = transformation.ScalingMatrix;
+	this->GetTransformation().RotationMatrix = transformation.RotationMatrix;
 
-	Max.x = transformation.Position.x + Xsize;
-	Max.y = transformation.Position.y + Ysize;
-	Max.z = transformation.Position.z + Zsize;
+	float maxX = -std::numeric_limits<float>::infinity();
+	float maxY = -std::numeric_limits<float>::infinity();
+	float maxZ = -std::numeric_limits<float>::infinity();
+	float minX = std::numeric_limits<float>::infinity();
+	float minY = std::numeric_limits<float>::infinity();
+	float minZ = std::numeric_limits<float>::infinity();
+
+	auto& VertexArray = this->BoxVertices;
+
+	for (unsigned int k = 0; k < VertexArray.size(); k++) {
+
+		glm::vec4 transformed = this->GetTransformation().GetModelMat4() * glm::vec4(VertexArray[k].Position, 1.0f);
+
+		maxX = std::max(maxX, transformed.x);
+		maxY = std::max(maxY, transformed.y);
+		maxZ = std::max(maxZ, transformed.z);
+		minX = std::min(minX, transformed.x);
+		minY = std::min(minY, transformed.y);
+		minZ = std::min(minZ, transformed.z);
+	}
+
+	Min.x = minX;
+	Min.y = minY;
+	Min.z = minZ;
+
+	Max.x = maxX;
+	Max.y = maxY;
+	Max.z = maxZ;
 
 	std::vector<FUSIONOPENGL::Texture2D> textures;
 	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices, textures);
@@ -112,7 +139,7 @@ void FUSIONPHYSICS::CollisionBox3DAABB::DrawBoxMesh(FUSIONOPENGL::Camera3D& came
 	std::function<void()> boxprep = [&]() 
 	{
 		shader.setVec3("LightColor", MeshColor);
-		shader.setMat4("model", this->GetTransformation().ModelMatrix);
+		shader.setMat4("model", this->GetTransformation().GetModelMat4());
 	};
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	BoxMesh->Draw(camera, shader, boxprep);
@@ -131,9 +158,7 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 	}
 	for (size_t i = 0; i < lastRotations.size(); i++)
 	{
-		this->transformation.Translate(this->Parent->GetTransformation().Position);
 		this->transformation.Rotate(lastRotations[i].Vector, lastRotations[i].Degree);
-		this->transformation.Translate(-this->Parent->GetTransformation().Position);
 	}
 	for (size_t i = 0; i < lastTransforms.size(); i++)
 	{
@@ -151,7 +176,7 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 
 	for (unsigned int k = 0; k < VertexArray.size(); k++) {
 
-		glm::vec4 transformed = this->GetTransformation().ModelMatrix * glm::vec4(VertexArray[k].Position, 1.0f);
+		glm::vec4 transformed = this->GetTransformation().GetModelMat4() * glm::vec4(VertexArray[k].Position, 1.0f);
 
 		maxX = std::max(maxX, transformed.x);
 		maxY = std::max(maxY, transformed.y);
@@ -208,7 +233,10 @@ std::pair<int,glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 target
 std::pair<bool,int> FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)
 {
 	auto direction = CheckCollisionDirection(Box1.GetTransformation().Position - Box2.GetTransformation().Position,
-		                                     Box1.GetTransformation().ModelMatrix);
+		                                     Box1.GetTransformation().GetModelMat4());
+
+	LOG("BOX 1 min: " << Vec3<float>(Box1.Min) << "  max : " << Vec3<float>(Box1.Max));
+	LOG("BOX 2 min: " << Vec3<float>(Box2.Min) << "  max : " << Vec3<float>(Box2.Max));
 
 	return{ Box1.Min.x <= Box2.Max.x &&
 		   Box1.Max.x >= Box2.Min.x &&

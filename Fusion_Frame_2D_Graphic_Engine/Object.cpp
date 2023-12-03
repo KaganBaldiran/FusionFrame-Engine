@@ -42,9 +42,9 @@ void FUSIONOPENGL::Object::Update()
 	}
 	for (size_t i = 0; i < lastRotations.size(); i++)
 	{
-		this->transformation.Translate(this->Parent->transformation.Position);
+		this->transformation.Translate(FF_ORIGIN);
 		this->transformation.Rotate(lastRotations[i].Vector, lastRotations[i].Degree);
-		this->transformation.Translate(-this->Parent->transformation.Position);
+		this->transformation.Translate(-FF_ORIGIN);
 	}
 	for (size_t i = 0; i < lastTransforms.size(); i++)
 	{

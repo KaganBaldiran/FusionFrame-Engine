@@ -38,8 +38,16 @@ namespace FUSIONOPENGL
 
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fboDepth, 0);
 
-			unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-			glDrawBuffers(2, attachments);
+			glGenTextures(1, &fboID);
+			glBindTexture(GL_TEXTURE_2D, fboID);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, fboID, 0);
+
+			unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 };
+			glDrawBuffers(3, attachments);
 
 			glGenRenderbuffers(1, &rbo);
 			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -81,6 +89,7 @@ namespace FUSIONOPENGL
 		GLuint GetFBOimage() { return fboImage; };
 		GLuint GetFBO() { return fbo; };
 		GLuint GetFBODepth() { return fboDepth; };
+		GLuint GetFBOID() { return fboID; };
 		Vec2<int> GetFBOSize() { return FBOSize; };
 
 		void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
@@ -105,6 +114,10 @@ namespace FUSIONOPENGL
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
 			shader.setInt("DepthAttac", 1);
 
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, fboID);
+			shader.setInt("ID", 2);
+
 			shader.setVec3("CamPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
@@ -125,6 +138,7 @@ namespace FUSIONOPENGL
 		{
 			glDeleteTextures(1, &fboImage);
 			glDeleteTextures(1, &fboDepth);
+			glDeleteTextures(1, &fboID);
 			glDeleteRenderbuffers(1, &rbo);
 			glDeleteFramebuffers(1, &fbo);
 
@@ -135,7 +149,7 @@ namespace FUSIONOPENGL
 
 	private:
 
-		GLuint fbo, fboImage, fboDepth , rbo;
+		GLuint fbo, fboImage, fboDepth ,fboID, rbo;
 		Buffer ObjectBuffer;
 		Vec2<int> FBOSize;
 		int ID;

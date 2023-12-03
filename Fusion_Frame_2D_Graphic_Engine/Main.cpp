@@ -80,7 +80,7 @@ namespace KAGAN_PAVLO
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
-		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,8.0f });
+		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,13.0f });
 		model1.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 		model0.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 
@@ -100,12 +100,13 @@ namespace KAGAN_PAVLO
 		UseShaderProgram(0);
 
 		const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
+		auto startTimePerSecond = std::chrono::high_resolution_clock::now();
+		int fpsCounter = 0;
 
 		glm::vec3 translateVector(0.0f, 0.0f, 0.01f);
 
 		while (!glfwWindowShouldClose(window))
 		{
-
 			auto start_time = std::chrono::high_resolution_clock::now();
 
 			ScreenFrameBuffer.Bind();
@@ -134,10 +135,12 @@ namespace KAGAN_PAVLO
 			std::function<void()> shaderPrepe = [&]() {
 				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
+				MeshBasicShader.setFloat("ModelID", model0.GetModelID());
 			};
 			std::function<void()> shaderPrepe1 = [&]() {
 				model1.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
 				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
+				MeshBasicShader.setFloat("ModelID", (float)model1.GetModelID());
 			};
 			
             #ifdef ENGINE_DEBUG
@@ -147,21 +150,21 @@ namespace KAGAN_PAVLO
 			Box0.DrawBoxMesh(camera3d, LightShader);
 			Box1.DrawBoxMesh(camera3d, LightShader);
             #endif
-		
+
+			model1.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
+			model1.UpdateChildren();
+
 			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1).first)
 			{
 				model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
 			}
-			
-			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f}, std::sin(time(0)));
-			model0.UpdateChildren();
 
 			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
 
 			ScreenFrameBuffer.Unbind();
 
 			auto fboPrep = [&]() {};
-			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,true,0.09f,2.0f);
+			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,false,0.09f,2.0f);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
@@ -170,9 +173,23 @@ namespace KAGAN_PAVLO
 			auto end_time = std::chrono::high_resolution_clock::now();
 			auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1e6;
 
+
 			if (elapsed_time < TARGET_FRAME_TIME) {
+
 				std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>((TARGET_FRAME_TIME - elapsed_time) * 1e6)));
 			}
+
+			fpsCounter++;
+			auto overAllElapsedPerSecond = std::chrono::duration_cast<std::chrono::seconds>(end_time - startTimePerSecond).count();
+
+			if (overAllElapsedPerSecond >= 1.0)
+			{
+				double fps = fpsCounter / overAllElapsedPerSecond;
+				LOG("FPS: " <<fps);
+				fpsCounter = 0;
+				startTimePerSecond = std::chrono::high_resolution_clock::now();
+			}
+
 		}
 
 		DeleteShaderProgram(PixelShader.GetID());
@@ -182,6 +199,7 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(FBOShader.GetID());
 		ScreenFrameBuffer.clean();
 		Box0.GetBoxMesh()->Clean();
+		Box1.GetBoxMesh()->Clean();
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");

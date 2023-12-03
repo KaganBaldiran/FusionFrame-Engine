@@ -49,6 +49,7 @@
     <ClCompile Include="Physics.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMaps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">

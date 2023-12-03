@@ -29,7 +29,7 @@
 #define ENGINE_RELEASE
 #endif 
 
-#define OPENGL 
+#define SDL 
 #ifdef OPENGL
 
 namespace KAGAN_PAVLO
@@ -164,7 +164,7 @@ namespace KAGAN_PAVLO
 			ScreenFrameBuffer.Unbind();
 
 			auto fboPrep = [&]() {};
-			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,false,0.09f,2.0f);
+			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,true,0.09f,2.0f);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
@@ -241,7 +241,27 @@ namespace KAGAN_PAVLO
 		}
 
 		Vec2<int> TextureSize;
+		Vec2<int> ScarfySize;
+
 		SDL_Texture* texture0 = SDL_CUSTOM::LoadInTexture("Resources/raccoon.png", TextureSize,renderer);
+		SDL_Texture* scarfy = SDL_CUSTOM::LoadInTexture("Resources/scarfy.png", ScarfySize, renderer);
+
+		Vec2<int> indiciesLeft[] = {
+			{0,0},
+			{1,0},
+			{2,0},
+			{3,0},
+			{4,0},
+			{5,0},
+		};
+
+		std::vector<Vec2<int>> scarfyIndiciesLeft(indiciesLeft, indiciesLeft + 6);
+
+		SDL_CUSTOM::TextureObject scarfyObj(scarfy, ScarfySize);
+		scarfyObj.DestRec = { width / 2, height / 2 , (int)(ScarfySize.x / 12.0f) , ScarfySize.y };
+		SDL_RendererFlip flipScarfy = SDL_FLIP_NONE;
+		bool ScarfyPlayAnimation = true;
+
 		Vec2<int> WindowSize;
 		Vec2<int> MousePos;
 		Vec2<float> MouseDelta;
@@ -281,8 +301,11 @@ namespace KAGAN_PAVLO
 
 		FusionDrawSDL::DrawLine({ 100,300 }, { 200,200 }, { 0, 0, 255, 255 });
 
+		int speed = 5;
+
 		while (isGameRunning)
 		{
+			ScarfyPlayAnimation = false;
 			MouseDelta({ 0,0 });
 			framestart = SDL_GetTicks64();
 
@@ -308,6 +331,36 @@ namespace KAGAN_PAVLO
 					zoom -= sensitivity;
 				}
 			}
+
+			if (GameEvent.type == SDL_KEYDOWN)
+			{
+				switch (GameEvent.key.keysym.sym)
+				{
+				case SDLK_UP:
+					
+					break;
+
+				case SDLK_DOWN:
+					
+					break;
+
+				case SDLK_LEFT:
+					flipScarfy = SDL_FLIP_HORIZONTAL;
+					scarfyObj.Translate(-speed, 0);
+					ScarfyPlayAnimation = true;
+					break;
+
+				case SDLK_RIGHT:
+					flipScarfy = SDL_FLIP_NONE;
+					scarfyObj.Translate(speed, 0);
+					ScarfyPlayAnimation = true;
+					break;
+
+				default:
+					
+					break;
+				}
+			}
 			
 			camera.UpdateCamera(MouseDelta, WindowSize, zoom);
 
@@ -317,14 +370,15 @@ namespace KAGAN_PAVLO
 			SDL_Rect texture0DestRec = { (0 - camera.GetCameraFrustum().x) * zoom , (0 - camera.GetCameraFrustum().z) , (TextureSize.x / 2.0f) * zoom,(TextureSize.y / 2.0f) * zoom };
 			SDL_Rect Rectangle0 = { (700 - camera.GetCameraFrustum().x ) * zoom , 0 - camera.GetCameraFrustum().z, 200 * zoom,200 * zoom };
 
-	
 			FusionDrawSDL::DrawPixelBuffer(renderer);
-				
 				
 			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 			SDL_RenderFillRect(renderer, &Rectangle0);
 
 			SDL_RenderCopy(renderer, texture0, NULL, &texture0DestRec);
+
+			//scarfyObj.Rotate(0.1f);
+			scarfyObj.Draw(scarfyIndiciesLeft, ScarfySize.x / 12.0f, ScarfySize.y, 6, renderer, 10 , flipScarfy,ScarfyPlayAnimation);
 			
 			SDL_RenderPresent(renderer);
 

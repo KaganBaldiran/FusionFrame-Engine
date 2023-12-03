@@ -5,6 +5,7 @@
 #include <math.h>
 
 std::vector<FusionDrawOpengl::pixel> pixels;
+
 std::map<std::string,FusionDrawSDL::pixelSDL> pixelsSDL;
 
 std::unique_ptr<Buffer> pixelBuffer;

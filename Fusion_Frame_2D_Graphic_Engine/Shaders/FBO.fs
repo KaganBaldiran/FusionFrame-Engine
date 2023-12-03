@@ -46,10 +46,10 @@ void main()
 	}
     else
 	{
-      //vec4 OutColor = texture(Viewport, TexCoords);
-      //FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w);
+      vec4 OutColor = texture(Viewport, TexCoords);
+      FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w);
 
-	  float OutColor = texture(ID , TexCoords).r / 10.0f;
-      FragColor = vec4(pow(vec3(OutColor),vec3(0.9)),1.0f);
+	  //float OutColor = texture(ID , TexCoords).r / 10.0f;
+      //FragColor = vec4(pow(vec3(OutColor),vec3(0.9)),1.0f);
     }
 }

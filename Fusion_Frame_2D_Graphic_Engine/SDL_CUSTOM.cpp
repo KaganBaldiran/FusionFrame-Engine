@@ -1,5 +1,6 @@
 #include "SDL_CUSTOM.hpp"
 #include "Log.h"
+#include <cmath>
 
 std::pair<int, SDL_Window*> SDL_CUSTOM::init(const char* windowName , SDL_Renderer** Renderer, float width , float height, bool fullscreen, SDL_DisplayMode &dpm)
 {
@@ -78,28 +79,78 @@ SDL_CUSTOM::Object::Object()
 
 }
 
-void SDL_CUSTOM::Object::TranslateTo(int x ,int y)
+void SDL_CUSTOM::Object::TranslateTo(int x, int y)
 {
 	DestRec.x = x;
 	DestRec.y = y;
 }
 
+void SDL_CUSTOM::Object::Translate(int x, int y)
+{
+	DestRec.x += x;
+	DestRec.y += y;
+}
+
 void SDL_CUSTOM::Object::Rotate(float angles)
 {
-	float radians = angles * (std::_Pi_val / 180.0f);
-	//glm::rotate()
-
-	//DestRec.x = std::cos(radians) * DestRec.x - std::sin(radians) * DestRec.y;
-	//DestRec.y = std::sin(radians) * DestRec.x + std::cos(radians) * DestRec.y;
-
-	//w = 2 * max(abs(x1', x2'))
-	//h = 2 * max(abs(y1', y2'))
+	this->angles += angles;
 }
 
-void SDL_CUSTOM::Object::Scale()
+void SDL_CUSTOM::Object::Scale(float scaleX, float scaleY)
 {
+	DestRec.w *= scaleX;
+	DestRec.h *= scaleY;
 }
 
-void SDL_CUSTOM::Object::Draw()
+void SDL_CUSTOM::Object::Draw(SDL_Renderer* renderer)
 {
+	SDL_SetRenderDrawColor(renderer, Color.x, Color.y, Color.z, Color.w);
+	SDL_RenderFillRect(renderer, &this->DestRec);
+}
+
+SDL_CUSTOM::TextureObject::TextureObject(SDL_Texture* texture , Vec2<int> TextureSize)
+{
+	this->texture = texture;
+	this->Size = TextureSize;
+	SourceRec.x = 0;
+	SourceRec.y = 0;
+	SourceRec.w = Size.x;
+	SourceRec.h = Size.y;
+
+	DestRec = SourceRec;
+}
+
+void SDL_CUSTOM::TextureObject::Draw(SDL_Renderer* renderer)
+{
+	SDL_RenderCopy(renderer, texture, &SourceRec, &DestRec);
+}
+
+void SDL_CUSTOM::TextureObject::Draw(std::vector<Vec2<int>> AtlasIndicies, int XincrementSize, int YincrementSize, int SubtextureCount ,
+	SDL_Renderer* renderer , int FrameDelay , SDL_RendererFlip flip , bool PlayAnimation)
+{
+	static int CurrentIndex = 0;
+	static int FrameCounter = 0;
+
+	FrameCounter++;
+    
+	auto& AtlasIndex = AtlasIndicies[CurrentIndex];
+	SourceRec.x = AtlasIndex.x * XincrementSize;
+	SourceRec.y = AtlasIndex.y * YincrementSize;
+
+	SourceRec.w = XincrementSize;
+	SourceRec.h = YincrementSize;
+
+	SDL_Point center = { DestRec.w / 2, DestRec.h / 2 };
+	SDL_RenderCopyEx(renderer, texture, &SourceRec, &DestRec,this->angles,&center, flip);
+
+	if (FrameCounter >= FrameDelay && PlayAnimation)
+	{
+		CurrentIndex++;
+		if (CurrentIndex == SubtextureCount)
+		{
+			CurrentIndex = 0;
+		}
+
+		FrameCounter = 0;
+	}
 }

@@ -15,6 +15,20 @@
 
 namespace FUSIONPHYSICS
 {
+	class CollisionState
+	{
+	public:
+		bool state;
+		glm::vec3 directionVector;
+		int direction;
+		CollisionState(bool state, glm::vec3 directionVector, int direction)
+		{
+			this->state = state;
+			this->directionVector = directionVector;
+			this->direction = direction;
+		}
+	};
+
 	class CollisionBox3DAABB : public FUSIONOPENGL::Object
 	{
 	public:

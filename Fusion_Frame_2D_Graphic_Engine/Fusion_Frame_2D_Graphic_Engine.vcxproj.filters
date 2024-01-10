@@ -49,7 +49,15 @@
     <ClCompile Include="Physics.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMaps.cpp" />
+    <ClCompile Include="Color.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowMaps.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h">
@@ -118,6 +126,15 @@
     <ClInclude Include="ShadowMaps.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="SSLS.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.fs">
@@ -148,6 +165,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\FBO.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\PBR.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\PBR.vs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

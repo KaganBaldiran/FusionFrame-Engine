@@ -13,10 +13,19 @@
 #include "Shader.h"
 #include "Material.hpp"
 #include <queue>
+#include <memory>
+#include <array>
 #define MAX_BONE_INFLUENCE 4
 #define FF_ORIGIN glm::vec3(0.0f,0.0f,0.0f)
 namespace FUSIONOPENGL
 {
+
+	inline glm::vec3 TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos)
+	{
+		glm::vec4 transformed = Matrix * glm::vec4(VertexPos, 1.0f);
+		return glm::vec3(transformed.x, transformed.y, transformed.z);
+	}
+
 	struct Vertex {
 
 		glm::vec3 Position;
@@ -51,6 +60,58 @@ namespace FUSIONOPENGL
 		glm::vec3 Scale;
 	};
 
+	template<std::size_t size>
+	class Face
+	{
+	public:
+
+		Face(Vertex Vertices[size], glm::vec3 Normal = { 0.0f ,0.0f,0.0f})
+		{
+			this->Normal = Normal;
+			this->Vertices.assign(Vertices);
+		}
+
+		Face(std::vector<Vertex> Vertices, glm::vec3 Normal = { 0.0f ,0.0f,0.0f })
+		{
+			this->Normal = Normal;
+			std::copy_n(Vertices.begin(), size, this->Vertices.begin());
+		}
+
+		Face()
+		{
+			Normal = glm::vec3(0.0f);
+			std::fill_n(Vertices, Vertices.size(), Vertex());
+		}
+
+		void SetVertices(Vertex Vertices[size])
+		{
+			this->Vertices.assign(Vertices, Vertices + size);
+		}
+
+		void SetNormal(glm::vec3 Normal)
+		{
+			this->Normal = Normal;
+		}
+
+		void FindNormal()
+		{
+			Normal = glm::cross((Vertices[1].Position - Vertices[0].Position), (Vertices[2].Position - Vertices[0].Position));
+			Normal = glm::normalize(glm::abs(Normal));
+		}
+
+		void FindNormal(glm::mat4 ModelMatrix)
+		{
+			Normal = glm::cross((TranslateVertex(ModelMatrix, Vertices[1].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)), (TranslateVertex(ModelMatrix, Vertices[2].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)));
+			Normal = glm::normalize(glm::abs(Normal));
+		}
+
+		std::array<Vertex, size> GetVertices() { return Vertices; };
+		glm::vec3 GetNormal() { return Normal; };
+	private:
+		glm::vec3 Normal;
+		std::array<Vertex, size> Vertices;
+	};
+
 	class WorldTransform
 	{
 	public:
@@ -69,6 +130,8 @@ namespace FUSIONOPENGL
 		glm::vec3 InitialObjectScales;
 
 		glm::vec3 Position;
+		glm::vec3 *OriginPoint;
+
 		float scale_avg;
 		float dynamic_scale_avg;
 		std::vector<TransformAction> LastTransforms;
@@ -99,7 +162,7 @@ namespace FUSIONOPENGL
 
 		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
-		void Draw(Camera3D& camera, Shader& shader , Material& material, std::function<void()>& ShaderPreperations);
+		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		std::vector<Vertex>& GetVertexArray() { return vertices; };
 
 		unsigned int VAO;

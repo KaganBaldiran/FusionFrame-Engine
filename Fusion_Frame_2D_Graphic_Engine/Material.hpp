@@ -32,8 +32,12 @@ namespace FUSIONOPENGL
 	{
 	public:
 
-		Material() : roughness(0.5f), metalic(0.0f), Albedo(1.0f, 1.0f, 1.0f, 1.0f)
+
+		Material(float roughness = 0.5f,float metalic = 0.0f, glm::vec4 Albedo = { 1.0f, 1.0f, 1.0f, 1.0f })
 		{
+			this->roughness = roughness;
+			this->metalic = metalic;
+			this->Albedo = Albedo;
 			std::fill_n(this->DisableClayMaterial, 4, 1);
 		}
 
@@ -124,5 +128,7 @@ namespace FUSIONOPENGL
 		std::map<std::string, Texture2D*> TextureMaps;
 		int DisableClayMaterial[4];
 	};
+
 }
+
 

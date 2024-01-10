@@ -26,7 +26,7 @@ FUSIONOPENGL::Light::Light(glm::vec3 Position, glm::vec3 Color, float intensity)
 	LightColors.push_back(Color);
 	LightIntensity.push_back(intensity);
 
-	transformation.Scale({2.0f,2.0f,2.0f});
+	transformation.Scale({ 0.1f,0.1f,0.1f});
 	transformation.Translate(Position);
 
 	LightCount++;
@@ -34,7 +34,6 @@ FUSIONOPENGL::Light::Light(glm::vec3 Position, glm::vec3 Color, float intensity)
 
 void FUSIONOPENGL::Light::SetAttrib(glm::vec3 Position, glm::vec3 Color, float intensity)
 {
-
 	LightPositions[LightID] ;
 	LightColors.push_back(Color);
 	LightIntensity.push_back(intensity);

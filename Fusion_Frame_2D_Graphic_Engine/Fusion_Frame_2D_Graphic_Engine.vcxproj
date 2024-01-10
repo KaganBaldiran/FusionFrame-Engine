@@ -133,11 +133,13 @@
     <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="DrawingFunctions.cpp" />
     <ClCompile Include="Initialize.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -152,6 +154,8 @@
     <ClInclude Include="Bone.hpp" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Collision.hpp" />
+    <ClInclude Include="Color.hpp" />
     <ClInclude Include="DrawingFunctions.hpp" />
     <ClInclude Include="Engine.hpp" />
     <ClInclude Include="Framebuffer.hpp" />
@@ -167,6 +171,7 @@
     <ClInclude Include="SDL_CUSTOM.hpp" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMaps.hpp" />
+    <ClInclude Include="SSLS.hpp" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Thread.h" />
@@ -181,6 +186,8 @@
     <None Include="Shaders\Light.vs" />
     <None Include="Shaders\MeshBasic.fs" />
     <None Include="Shaders\MeshBasic.vs" />
+    <None Include="Shaders\PBR.fs" />
+    <None Include="Shaders\PBR.vs" />
     <None Include="Shaders\PixelShader.fs" />
     <None Include="Shaders\PixelShader.vs" />
   </ItemGroup>

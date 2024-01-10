@@ -168,7 +168,7 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<
 
 }
 
-void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations)
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();

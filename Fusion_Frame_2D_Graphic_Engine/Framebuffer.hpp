@@ -32,11 +32,19 @@ namespace FUSIONOPENGL
 
 			glGenTextures(1, &fboDepth);
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fboDepth, 0);
+
+			glGenTextures(1, &SSLStexture);
+			glBindTexture(GL_TEXTURE_2D, SSLStexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, SSLStexture, 0);
 
 			glGenTextures(1, &fboID);
 			glBindTexture(GL_TEXTURE_2D, fboID);
@@ -44,10 +52,10 @@ namespace FUSIONOPENGL
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, fboID, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, fboID, 0);
 
-			unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 };
-			glDrawBuffers(3, attachments);
+			unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2  , GL_COLOR_ATTACHMENT3 };
+			glDrawBuffers(4, attachments);
 
 			glGenRenderbuffers(1, &rbo);
 			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -139,6 +147,7 @@ namespace FUSIONOPENGL
 			glDeleteTextures(1, &fboImage);
 			glDeleteTextures(1, &fboDepth);
 			glDeleteTextures(1, &fboID);
+			glDeleteTextures(1, &SSLStexture);
 			glDeleteRenderbuffers(1, &rbo);
 			glDeleteFramebuffers(1, &fbo);
 
@@ -149,7 +158,7 @@ namespace FUSIONOPENGL
 
 	private:
 
-		GLuint fbo, fboImage, fboDepth ,fboID, rbo;
+		GLuint fbo, fboImage, fboDepth ,fboID, rbo , SSLStexture;
 		Buffer ObjectBuffer;
 		Vec2<int> FBOSize;
 		int ID;

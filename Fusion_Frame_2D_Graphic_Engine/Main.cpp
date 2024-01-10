@@ -20,6 +20,7 @@
 #include "Physics.hpp"
 #include <chrono>
 #include <thread>
+#include "Color.hpp"
 
 #define TARGET_FPS 144
 
@@ -29,7 +30,7 @@
 #define ENGINE_RELEASE
 #endif 
 
-#define SDL 
+#define OPENGL 
 #ifdef OPENGL
 
 namespace KAGAN_PAVLO
@@ -46,6 +47,7 @@ namespace KAGAN_PAVLO
 		Shader MeshBasicShader("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
 		Shader LightShader("Shaders/Light.vs", "Shaders/Light.fs");
 		Shader FBOShader("Shaders/FBO.vs", "Shaders/FBO.fs");
+		Shader PBRShader("Shaders/PBR.vs", "Shaders/PBR.fs");
 
 		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		FUSIONOPENGL::FrameBuffer ScreenFrameBuffer(mode->width, mode->height);
@@ -59,6 +61,7 @@ namespace KAGAN_PAVLO
 		FUSIONOPENGL::Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 		FUSIONOPENGL::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 		FUSIONOPENGL::Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+		FUSIONOPENGL::Texture2D KnightDiffuse("C:\\Users\\kbald\\Desktop\\Models\\texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 
 		Vec2<int> WindowSize;
 		Vec2<double> mousePos;
@@ -68,24 +71,34 @@ namespace KAGAN_PAVLO
 		camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 		camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
-		FUSIONOPENGL::Light light0({ 0.0f,2.0f,0.0f }, { 1.0f,1.0f,1.0f }, 8.0f);
-		FUSIONOPENGL::Light light1({ 0.0f,2.0f,2.0f }, { 1.0f,0.0f,0.0f }, 3.0f);
-		FUSIONOPENGL::Light light2({ 2.0f,-2.0f,0.0f }, { 1.0f,0.5f,0.9f }, 3.0f);
+		FUSIONOPENGL::Light light0({ 0.0f,2.0f,0.0f }, FUSIONOPENGL::Color(FF_COLOR_CINNAMON).GetRGB(), 9.0f);
+		FUSIONOPENGL::Light light1({ 0.0f,2.0f,2.0f }, FUSIONOPENGL::Color(FF_COLOR_LIME).GetRGB(), 5.0f);
+		FUSIONOPENGL::Light light2({ 2.0f,-4.0f,0.0f }, FUSIONOPENGL::Color(FF_COLOR_AMETHYST).GetRGB(), 5.0f);
+		FUSIONOPENGL::Light light3({ 1.0f,-4.0f,2.0f }, FUSIONOPENGL::Color(FF_COLOR_LIME_SHERBET).GetRGB(), 5.0f);
 
 		FUSIONOPENGL::Model model0("Resources\\shovel2.obj");
 		FUSIONOPENGL::Model model1("Resources\\shovel2.obj");
+		FUSIONOPENGL::Model WateringPot("Resources\\shovel2.obj");
 
 		FUSIONOPENGL::Material shovelMaterial;
 		shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
 		shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
 		shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
 
-		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,13.0f });
+		FUSIONOPENGL::Material knightMaterial;
+		knightMaterial.PushTextureMap(TEXTURE_DIFFUSE0, KnightDiffuse);
+
+		model1.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 		model1.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 		model0.GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
+		model0.GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f) , 100.0f);
+
+		WateringPot.GetTransformation().ScaleNoTraceBack(glm::vec3(0.1f, 0.1f, 0.1f));
+		WateringPot.GetTransformation().TranslateNoTraceBack({ -10.0f,0.0f,10.0f });
 
 		FUSIONPHYSICS::CollisionBox3DAABB Box1(model1.GetTransformation(), { 1.0f,1.1f,1.0f });
 		FUSIONPHYSICS::CollisionBox3DAABB Box0(model0.GetTransformation(), { 1.0f,1.1f,1.0f });
+		FUSIONPHYSICS::CollisionBox3DAABB WateringPotBox(WateringPot.GetTransformation(), { 1.0f,1.0f,1.0f });
 
 		model0.PushChild(&Box0);
 		model1.PushChild(&Box1);
@@ -94,9 +107,9 @@ namespace KAGAN_PAVLO
 
 		glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 
-		MeshBasicShader.use();
-		FUSIONOPENGL::SetEnvironment(MeshBasicShader,5.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z),
-		                             glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
+		PBRShader.use();
+		FUSIONOPENGL::SetEnvironment(PBRShader, 5.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z),
+			glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 		UseShaderProgram(0);
 
 		const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
@@ -128,43 +141,55 @@ namespace KAGAN_PAVLO
 				glUniform2f(glGetUniformLocation(BasicShader.GetID(), "ScreenSize"), WindowSize.x, WindowSize.y);
 			};
 
-			
-			//model1.UpdateChildren();
-
-			//LOG("CAMERA POS: " << Vec3<float>(camera3d.Position));
 			std::function<void()> shaderPrepe = [&]() {
-				model0.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
-				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
-				MeshBasicShader.setFloat("ModelID", model0.GetModelID());
+				model0.GetTransformation().SetModelMatrixUniformLocation(PBRShader.GetID(), "model");
+				FUSIONOPENGL::SendLightsShader(PBRShader);
+				PBRShader.setFloat("ModelID", model0.GetModelID());
 			};
 			std::function<void()> shaderPrepe1 = [&]() {
-				model1.GetTransformation().SetModelMatrixUniformLocation(MeshBasicShader.GetID(), "model");
-				FUSIONOPENGL::SendLightsShader(MeshBasicShader);
-				MeshBasicShader.setFloat("ModelID", (float)model1.GetModelID());
+				model1.GetTransformation().SetModelMatrixUniformLocation(PBRShader.GetID(), "model");
+				FUSIONOPENGL::SendLightsShader(PBRShader);
+				PBRShader.setFloat("ModelID", (float)model1.GetModelID());
 			};
+
+			std::function<void()> shaderPrepe2 = [&]() {
+				WateringPot.GetTransformation().SetModelMatrixUniformLocation(PBRShader.GetID(), "model");
+				FUSIONOPENGL::SendLightsShader(PBRShader);
+				PBRShader.setFloat("ModelID", (float)WateringPot.GetModelID());
+			};
+
+			WateringPot.Draw(camera3d, PBRShader, knightMaterial, shaderPrepe2);
+
 			
             #ifdef ENGINE_DEBUG
 			light0.Draw(camera3d, LightShader);
 			light1.Draw(camera3d, LightShader);
 			light2.Draw(camera3d, LightShader);
+			light3.Draw(camera3d, LightShader);
 			Box0.DrawBoxMesh(camera3d, LightShader);
 			Box1.DrawBoxMesh(camera3d, LightShader);
+			WateringPotBox.DrawBoxMesh(camera3d, LightShader);
             #endif
 
-			model1.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
+			model1.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)) );
 			model1.UpdateChildren();
+			model0.GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)) );
+			//model0.GetTransformation().Translate({ 0.0f,0.0f,std::sin(time(0)) / 5.0f });
+			model0.UpdateChildren();
 
-			if (FUSIONPHYSICS::BoxBoxIntersect(Box0, Box1).first)
+			//LOG("LOCATION : " << Vec3<float>(camera3d.Position) << " " << Vec3<float>(WateringPot.GetTransformation().Position));
+
+			if (FUSIONPHYSICS::IsCollidingSAT(Box1, Box0))
 			{
-				model1.Draw(camera3d, MeshBasicShader, shovelMaterial, shaderPrepe1);
+				model1.Draw(camera3d, PBRShader, shovelMaterial, shaderPrepe1);
 			}
 
-			model0.Draw(camera3d,MeshBasicShader,shovelMaterial, shaderPrepe);
+			model0.Draw(camera3d,PBRShader,shovelMaterial, shaderPrepe);
 
 			ScreenFrameBuffer.Unbind();
 
 			auto fboPrep = [&]() {};
-			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,true,0.09f,2.0f);
+			ScreenFrameBuffer.Draw(camera3d,FBOShader, fboPrep,WindowSize,false,0.09f,2.0f);
 
 			glfwPollEvents();
 			glfwSwapBuffers(window);
@@ -185,7 +210,7 @@ namespace KAGAN_PAVLO
 			if (overAllElapsedPerSecond >= 1.0)
 			{
 				double fps = fpsCounter / overAllElapsedPerSecond;
-				LOG("FPS: " <<fps);
+				//LOG("FPS: " <<fps);
 				fpsCounter = 0;
 				startTimePerSecond = std::chrono::high_resolution_clock::now();
 			}
@@ -197,9 +222,12 @@ namespace KAGAN_PAVLO
 		DeleteShaderProgram(MeshBasicShader.GetID());
 		DeleteShaderProgram(LightShader.GetID());
 		DeleteShaderProgram(FBOShader.GetID());
+		DeleteShaderProgram(PBRShader.GetID());
+
 		ScreenFrameBuffer.clean();
 		Box0.GetBoxMesh()->Clean();
 		Box1.GetBoxMesh()->Clean();
+		WateringPotBox.GetBoxMesh()->Clean();
 
 		glfwTerminate();
 		LOG_INF("Window terminated!");
@@ -242,7 +270,6 @@ namespace KAGAN_PAVLO
 
 		Vec2<int> TextureSize;
 		Vec2<int> ScarfySize;
-
 		SDL_Texture* texture0 = SDL_CUSTOM::LoadInTexture("Resources/raccoon.png", TextureSize,renderer);
 		SDL_Texture* scarfy = SDL_CUSTOM::LoadInTexture("Resources/scarfy.png", ScarfySize, renderer);
 
@@ -262,6 +289,7 @@ namespace KAGAN_PAVLO
 		SDL_RendererFlip flipScarfy = SDL_FLIP_NONE;
 		bool ScarfyPlayAnimation = true;
 
+		
 		Vec2<int> WindowSize;
 		Vec2<int> MousePos;
 		Vec2<float> MouseDelta;
@@ -377,8 +405,8 @@ namespace KAGAN_PAVLO
 
 			SDL_RenderCopy(renderer, texture0, NULL, &texture0DestRec);
 
-			//scarfyObj.Rotate(0.1f);
-			scarfyObj.Draw(scarfyIndiciesLeft, ScarfySize.x / 12.0f, ScarfySize.y, 6, renderer, 10 , flipScarfy,ScarfyPlayAnimation);
+			//scarfyObj.Rotate(0.5f);
+			scarfyObj.Draw(scarfyIndiciesLeft, ScarfySize.x / 12.0f, ScarfySize.y, 6, renderer, 5 , flipScarfy,ScarfyPlayAnimation);
 			
 			SDL_RenderPresent(renderer);
 

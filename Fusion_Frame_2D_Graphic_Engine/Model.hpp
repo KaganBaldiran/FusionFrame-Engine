@@ -33,7 +33,7 @@ namespace FUSIONOPENGL
 
         unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
-        void Draw(Camera3D& camera, Shader& shader, Material& material, std::function<void()>& ShaderPreperations);
+        void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
         void FindGlobalMeshScales();
         
         std::vector<Mesh3D> Meshes;
@@ -54,7 +54,7 @@ namespace FUSIONOPENGL
         std::vector<Texture2D> Textures;
         unsigned int ModelID;
         std::string directory;
-        Vec3<double> originpoint;
+        glm::vec3 originpoint;
         glm::vec3 dynamic_origin;
 
         std::map<std::string, BoneInfo> Bones;
@@ -73,7 +73,7 @@ namespace FUSIONOPENGL
         {
             
             Assimp::Importer importer;
-            const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+            const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
             
             if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
             {
@@ -117,6 +117,7 @@ namespace FUSIONOPENGL
             overallCenterZ /= originPoints.size();
 
             originpoint = { overallCenterX,overallCenterY,overallCenterZ };
+            transformation.OriginPoint = &this->originpoint;
             transformation.Position = glm::vec3(originpoint.x,originpoint.y,originpoint.z);
             dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
 

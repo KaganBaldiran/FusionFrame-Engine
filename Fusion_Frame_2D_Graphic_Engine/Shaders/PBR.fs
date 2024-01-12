@@ -36,13 +36,19 @@ uniform int LightCount;
 uniform float FogIntesityUniform;
 uniform vec3 FogColor;
 uniform vec3 EnvironmentRadiance;
+uniform bool IBLfog;
+
+uniform samplerCube ConvDiffCubeMap;
+uniform samplerCube prefilteredMap;
+uniform sampler2D LUT;
+uniform bool EnableIBL;
+uniform float ao;
 
 uniform int disableclaymaterial[4];
 
 uniform float ModelID;
 
 const float PI = 3.14159265359;
-const float ao = 0.2f;
 
 float DistributionGGX(vec3 N , vec3 H, float roughness)
   {
@@ -170,26 +176,54 @@ void main()
           Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
       }
 
-      vec3 ambient = vec3(0.03) * texturecolor * ao;
-      vec3 color = ambient + Lo;
-	
+      vec3 color;
+      vec3 ambient;
+
+      if(EnableIBL)
+      {
+         vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughnessmap);
+
+         vec3 R = reflect(-V , N);
+         const float MAX_REFLECTION_LOD = 4.0f;
+         vec3 prefilteredColor = textureLod(prefilteredMap,R,roughnessmap * MAX_REFLECTION_LOD).rgb;
+         vec2 EnvLut = texture(LUT,vec2(max(dot(N,V),0.0),roughnessmap)).rg;
+         vec3 specular = prefilteredColor * (F * EnvLut.x + EnvLut.y);
+
+         vec3 irradiance = texture(ConvDiffCubeMap, N).rgb;
+         vec3 kS = F; 
+         vec3 kD = 1.0 - kS;
+         vec3 diffuse = irradiance * texturecolor;
+         ambient = (kD * diffuse + specular) * ao; 
+         color = ambient + Lo;
+      }
+      else
+      {
+         ambient = vec3(0.03) * texturecolor * ao;
+         color = ambient + Lo;
+      }
+      
       color = color / (color + vec3(1.0));
       color = pow(color, vec3(1.0/2.2));  
 
       bool FogEnabled = false;
 
-      //OutColor = vec4(color , 1.0);
-
-
-     
       float DeltaPlane = FarPlane - NearPlane;
       float distanceFromCamera = distance(CameraPos,CurrentPos) / DeltaPlane;
 
       float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
+      vec3 FinalFogColor;
+      if(IBLfog)
+      {
+         FinalFogColor = texture(ConvDiffCubeMap, N).rgb;
+      }
+      else
+      {
+         FinalFogColor = FogColor;
+      }
+
       ID = ModelID;
       Depth = vec4(CurrentPos,1.0f);
       float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
-      OutColor = vec4(color + (FogColor * FogIntensity), 1.0);
-     
+      OutColor = vec4(color + (FinalFogColor * FogIntensity), 1.0);   
 }

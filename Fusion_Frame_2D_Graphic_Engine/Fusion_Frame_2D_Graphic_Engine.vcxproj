@@ -130,56 +130,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Bone.cpp" />
-    <ClCompile Include="Buffer.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Color.cpp" />
-    <ClCompile Include="DrawingFunctions.cpp" />
-    <ClCompile Include="Initialize.cpp" />
-    <ClCompile Include="Light.cpp" />
-    <ClCompile Include="Log.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Object.cpp" />
-    <ClCompile Include="Physics.cpp" />
-    <ClCompile Include="SDL_CUSTOM.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="ShadowMaps.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="VectorMath.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Bone.hpp" />
-    <ClInclude Include="Buffer.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Collision.hpp" />
-    <ClInclude Include="Color.hpp" />
-    <ClInclude Include="DrawingFunctions.hpp" />
-    <ClInclude Include="Engine.hpp" />
-    <ClInclude Include="Framebuffer.hpp" />
-    <ClInclude Include="Initialize.h" />
-    <ClInclude Include="Light.hpp" />
-    <ClInclude Include="Log.h" />
-    <ClInclude Include="Material.hpp" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.hpp" />
-    <ClInclude Include="Object.hpp" />
-    <ClInclude Include="Physics.hpp" />
-    <ClInclude Include="SDL_camera2d.hpp" />
-    <ClInclude Include="SDL_CUSTOM.hpp" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="ShadowMaps.hpp" />
-    <ClInclude Include="SSLS.hpp" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="Thread.h" />
-    <ClInclude Include="VectorMath.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Shaders\Basic.fs" />
     <None Include="Shaders\Basic.vs" />
+    <None Include="Shaders\brdfLUT.fs" />
+    <None Include="Shaders\brdfLUT.vs" />
+    <None Include="Shaders\ConvolutationCubeMap.fs" />
+    <None Include="Shaders\ConvolutationCubeMap.vs" />
+    <None Include="Shaders\CubeMap.frag" />
+    <None Include="Shaders\CubeMap.vert" />
     <None Include="Shaders\FBO.fs" />
     <None Include="Shaders\FBO.vs" />
     <None Include="Shaders\Light.fs" />
@@ -188,8 +146,56 @@
     <None Include="Shaders\MeshBasic.vs" />
     <None Include="Shaders\PBR.fs" />
     <None Include="Shaders\PBR.vs" />
-    <None Include="Shaders\PixelShader.fs" />
-    <None Include="Shaders\PixelShader.vs" />
+    <None Include="Shaders\PreFilterCubeMap.fs" />
+    <None Include="Shaders\PreFilterCubeMap.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FusionOpengl\Bone.cpp" />
+    <ClCompile Include="FusionOpengl\Buffer.cpp" />
+    <ClCompile Include="FusionOpengl\Camera.cpp" />
+    <ClCompile Include="FusionOpengl\Color.cpp" />
+    <ClCompile Include="FusionOpengl\Cubemap.cpp" />
+    <ClCompile Include="FusionOpengl\Light.cpp" />
+    <ClCompile Include="FusionOpengl\Material.cpp" />
+    <ClCompile Include="FusionOpengl\Mesh.cpp" />
+    <ClCompile Include="FusionOpengl\Model.cpp" />
+    <ClCompile Include="FusionOpengl\Object.cpp" />
+    <ClCompile Include="FusionOpengl\Shader.cpp" />
+    <ClCompile Include="FusionOpengl\ShadowMaps.cpp" />
+    <ClCompile Include="FusionOpengl\Texture.cpp" />
+    <ClCompile Include="FusionPhysics\Octtree.cpp" />
+    <ClCompile Include="FusionPhysics\Physics.cpp" />
+    <ClCompile Include="FusionUtility\Initialize.cpp" />
+    <ClCompile Include="FusionUtility\Log.cpp" />
+    <ClCompile Include="FusionUtility\StopWatch.cpp" />
+    <ClCompile Include="FusionUtility\VectorMath.cpp" />
+    <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="FusionOpengl\Bone.hpp" />
+    <ClInclude Include="FusionOpengl\Buffer.h" />
+    <ClInclude Include="FusionOpengl\Camera.h" />
+    <ClInclude Include="FusionOpengl\Color.hpp" />
+    <ClInclude Include="FusionOpengl\Cubemap.h" />
+    <ClInclude Include="FusionOpengl\Framebuffer.hpp" />
+    <ClInclude Include="FusionOpengl\Light.hpp" />
+    <ClInclude Include="FusionOpengl\Material.hpp" />
+    <ClInclude Include="FusionOpengl\Mesh.h" />
+    <ClInclude Include="FusionOpengl\Model.hpp" />
+    <ClInclude Include="FusionOpengl\Object.hpp" />
+    <ClInclude Include="FusionOpengl\Shader.h" />
+    <ClInclude Include="FusionOpengl\ShadowMaps.hpp" />
+    <ClInclude Include="FusionOpengl\SSLS.hpp" />
+    <ClInclude Include="FusionOpengl\stb_image.h" />
+    <ClInclude Include="FusionOpengl\Texture.h" />
+    <ClInclude Include="FusionPhysics\Octtree.hpp" />
+    <ClInclude Include="FusionPhysics\Physics.hpp" />
+    <ClInclude Include="FusionUtility\Initialize.h" />
+    <ClInclude Include="FusionUtility\Log.h" />
+    <ClInclude Include="FusionUtility\StopWatch.h" />
+    <ClInclude Include="FusionUtility\Thread.h" />
+    <ClInclude Include="FusionUtility\VectorMath.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

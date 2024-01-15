@@ -19,7 +19,6 @@
 
 namespace FUSIONOPENGL
 {
-
     class PreMeshData
     {
     public:
@@ -51,7 +50,10 @@ namespace FUSIONOPENGL
         unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
-        void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount);
+        void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
+
         void FindGlobalMeshScales();
         
         std::vector<Mesh3D> Meshes;
@@ -81,7 +83,7 @@ namespace FUSIONOPENGL
         void processNode(aiNode* node, const aiScene* scene);
         Mesh3D processMesh(aiMesh* mesh, const aiScene* scene);
         void ExtractBones(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
-        std::vector<Texture2D> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
+        void loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, std::vector<FUSIONOPENGL::Texture2D>& Destination);
         
         PreMeshData processMeshAsync(aiMesh* mesh, const aiScene* scene);
         void processNodeAsync(aiNode* node, const aiScene* scene);
@@ -106,7 +108,7 @@ namespace FUSIONOPENGL
             std::string directory;
             glm::vec3 originpoint;
             glm::vec3 dynamic_origin;
-
+            
             std::map<std::string, BoneInfo> Bones;
             int boneCounter = 0;
     };

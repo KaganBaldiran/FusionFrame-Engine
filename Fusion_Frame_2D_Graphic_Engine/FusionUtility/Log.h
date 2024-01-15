@@ -7,27 +7,27 @@
 
 extern std::vector<std::string> logTraceBack;
 
-#define LOG(message) std::cout<< "LOG:: " __FUNCTION__ " :: "<< message << "\n"
-#define LOG_INF(message) std::cout<< "INFO:: " __FUNCTION__ " :: "<< message << "\n"
-#define LOG_ERR(message) std::cerr<<"ERROR:: " __FUNCTION__ " :: " << message << "\n"
-#define LOG_WARN(message) std::cerr<<"WARNING:: "  __FUNCTION__ " :: " << message << "\n"
-#define LOG_TRACE(message) std::cout << "TRACE:: " << __FUNCTION__ << " :: " << message << "\n"
-#define LOG_CRITICAL(message) std::cerr << "CRITICAL:: " << __FUNCTION__ << " :: " << message << "\n"
-#define LOG_NOTICE(message) std::cout << "NOTICE:: " << __FUNCTION__ << " :: " << message << "\n"
-#define LOG_VERBOSE(message) std::cout << "VERBOSE:: " << __FUNCTION__ << " :: " << message << "\n"
-#define LOG_TIMESTAMP(message) std::cout << "[" << __TIME__ << "] " << __FUNCTION__ << " :: " << message << "\n"
-#define LOG_PARAMETERS(...) std::cout << "PARAMETERS:: " << __FUNCTION__ << " :: " << #__VA_ARGS__ << " = " << __VA_ARGS__ << "\n"
+#define LOG(message) std::cout<< "LOG:: " __FUNCTION__ " :: "<< message << std::endl
+#define LOG_INF(message) std::cout<< "INFO:: " __FUNCTION__ " :: "<< message << std::endl
+#define LOG_ERR(message) std::cerr<<"ERROR:: " __FUNCTION__ " :: " << message << std::endl
+#define LOG_WARN(message) std::cerr<<"WARNING:: "  __FUNCTION__ " :: " << message << std::endl
+#define LOG_TRACE(message) std::cout << "TRACE:: " << __FUNCTION__ << " :: " << message << std::endl
+#define LOG_CRITICAL(message) std::cerr << "CRITICAL:: " << __FUNCTION__ << " :: " << message << std::endl
+#define LOG_NOTICE(message) std::cout << "NOTICE:: " << __FUNCTION__ << " :: " << message << std::endl
+#define LOG_VERBOSE(message) std::cout << "VERBOSE:: " << __FUNCTION__ << " :: " << message << std::endl
+#define LOG_TIMESTAMP(message) std::cout << "[" << __TIME__ << "] " << __FUNCTION__ << " :: " << message << std::endl
+#define LOG_PARAMETERS(...) std::cout << "PARAMETERS:: " << __FUNCTION__ << " :: " << #__VA_ARGS__ << " = " << __VA_ARGS__ << std::endl
 
 #define LOG_ASSERT(condition, message) \
     if (!(condition)) { \
-        std::cerr << "ASSERT FAILED:: " << __FUNCTION__ << " :: " << message << "\n"; \
+        std::cerr << "ASSERT FAILED:: " << __FUNCTION__ << " :: " << message << std::endl; \
     }
 
 
 #define LOG_TRACEBACK(message) \
   {\
      std::ostringstream logstream; \
-     logstream << "LOG:: " __FUNCTION__ " :: "<< message << "\n"; \
+     logstream << "LOG:: " __FUNCTION__ " :: "<< message << std::endl; \
      std::string logMessage = logstream.str(); \
      std::cout << logMessage; \
      if(logTraceBack.size() <= 500) \
@@ -43,7 +43,7 @@ extern std::vector<std::string> logTraceBack;
 #define LOG_TO_FILE(filename, message) \
     { \
         std::ofstream logFile(filename, std::ios::app); \
-        logFile << "LOG:: " << __FUNCTION__ << " :: " << message << "\n"; \
+        logFile << "LOG:: " << __FUNCTION__ << " :: " << message << std::endl; \
         logFile.close(); \
     }
 

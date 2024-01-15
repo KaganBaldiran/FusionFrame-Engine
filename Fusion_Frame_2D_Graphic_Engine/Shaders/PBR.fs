@@ -215,7 +215,7 @@ void main()
       vec3 FinalFogColor;
       if(IBLfog)
       {
-         FinalFogColor = texture(ConvDiffCubeMap, N).rgb;
+         FinalFogColor = texture(ConvDiffCubeMap, -N).rgb;
       }
       else
       {

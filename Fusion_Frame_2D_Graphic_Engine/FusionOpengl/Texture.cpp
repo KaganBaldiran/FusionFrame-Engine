@@ -17,7 +17,7 @@ FUSIONOPENGL::Texture2D::Texture2D(const char* filePath , GLenum target , GLenum
 	unsigned char* data = stbi_load(filePath, &width, &height, &channels, NULL);
 	if (!data)
 	{
-		LOG_ERR("Error importing the texture!");
+		LOG_ERR("Error importing the texture! :: " << filePath);
 		return;
 	}
 
@@ -54,7 +54,8 @@ FUSIONOPENGL::Texture2D::Texture2D(const char* filePath , GLenum target , GLenum
 	LOG_INF("Texture Imported : " << PathData);
 }
 
-FUSIONOPENGL::Texture2D::~Texture2D()
+
+void FUSIONOPENGL::Texture2D::Clear()
 {
 	glDeleteTextures(1, &id);
 	LOG_INF("Texture Cleaned : " << PathData);
@@ -80,6 +81,9 @@ void FUSIONOPENGL::Texture2D::Bind(GLuint slot , GLuint shader , const char* uni
 	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, id);
 	glUniform1i(glGetUniformLocation(shader, uniform), slot);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void FUSIONOPENGL::Texture2D::Unbind()

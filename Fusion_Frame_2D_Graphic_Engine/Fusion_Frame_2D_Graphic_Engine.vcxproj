@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +151,7 @@
     <None Include="Shaders\PreFilterCubeMap.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Application.cpp" />
     <ClCompile Include="FusionOpengl\Bone.cpp" />
     <ClCompile Include="FusionOpengl\Buffer.cpp" />
     <ClCompile Include="FusionOpengl\Camera.cpp" />
@@ -172,7 +174,7 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="Application.hpp" />
     <ClInclude Include="FusionOpengl\Bone.hpp" />
     <ClInclude Include="FusionOpengl\Buffer.h" />
     <ClInclude Include="FusionOpengl\Camera.h" />

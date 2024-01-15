@@ -1,26 +1,79 @@
 #include "Model.hpp"
+#include "Light.hpp"
 
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
 {
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        ShaderPreperations();
+    };
+
 	for (size_t i = 0; i < Meshes.size(); i++)
 	{
-		Meshes[i].Draw(camera, shader, ShaderPreperations);
+		Meshes[i].Draw(camera, shader, shaderPrep);
 	}
 }
 
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations)
 {
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        ShaderPreperations();
+    };
+
 	for (size_t i = 0; i < Meshes.size(); i++)
 	{
-		Meshes[i].Draw(camera, shader,material, ShaderPreperations);
+		Meshes[i].Draw(camera, shader,material, shaderPrep);
 	}
 }
 
-void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations , CubeMap& cubemap, float EnvironmentAmbientAmount)
+//If nullptr is passed to material , it will use the imported material from mtl file instead
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material, float EnvironmentAmbientAmount)
 {
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        ShaderPreperations();
+    };
+
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].Draw(camera, shader, material, ShaderPreperations, cubemap , EnvironmentAmbientAmount);
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap ,material, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap, materials[i], EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONOPENGL::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawImportedMaterial(camera, shader, shaderPrep, cubemap, EnvironmentAmbientAmount);
     }
 }
 
@@ -254,7 +307,7 @@ FUSIONOPENGL::PreMeshData FUSIONOPENGL::Model::processMeshAsync(aiMesh* mesh, co
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 
-    std::vector<Texture2D> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+    /*std::vector<Texture2D> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
     std::vector<Texture2D> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
@@ -264,14 +317,18 @@ FUSIONOPENGL::PreMeshData FUSIONOPENGL::Model::processMeshAsync(aiMesh* mesh, co
     textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 
     std::vector<Texture2D> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());*/
+
+    loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
+    loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures);
+    loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", textures);
+    loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic", textures);
 
     return PreMeshData(textures , indices , vertices);
 }
 
 FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
-
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture2D> textures;
@@ -330,25 +387,18 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
             indices.push_back(face.mIndices[j]);
     }
 
-
     ExtractBones(vertices, mesh, scene);
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-
-    std::vector<Texture2D> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-    std::vector<Texture2D> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-    std::vector<Texture2D> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-    std::vector<Texture2D> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-    return Mesh3D(vertices, indices, textures);
+    loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse" , textures);
+    loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular" , textures);
+    loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal" , textures);
+    loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic" , textures);
+   
+    Mesh3D newMesh(vertices, indices, textures);
+    newMesh.MeshName = mesh->mName.C_Str();
+    return newMesh;
 }
 
 void FUSIONOPENGL::Model::ExtractBones(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene)
@@ -396,9 +446,8 @@ void FUSIONOPENGL::Model::ExtractBones(std::vector<Vertex>& vertices, aiMesh* me
     }
 }
 
-std::vector<FUSIONOPENGL::Texture2D> FUSIONOPENGL::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+void FUSIONOPENGL::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName , std::vector<FUSIONOPENGL::Texture2D> &Destination)
 {
-    std::vector<Texture2D> textures;
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
         aiString str;
@@ -409,20 +458,31 @@ std::vector<FUSIONOPENGL::Texture2D> FUSIONOPENGL::Model::loadMaterialTextures(a
         {
             if (std::strcmp(textures_loaded[j].GetFilePath().c_str(), str.C_Str()) == 0)
             {
-                textures.push_back(textures_loaded[j]);
+                Destination.push_back(textures_loaded[j]);
                 skip = true;
                 break;
             }
         }
         if (!skip)
         {
-            Texture2D texture(str.C_Str(), GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
-            texture.PbrMapType = type;
+            std::string FilePath;
+            if (directory.find('\\') != std::string::npos)
+            {
+                FilePath = directory.substr(0, directory.find_last_of('\\'));
+                FilePath += "\\" + std::string(str.C_Str());
+            }
+            else if (directory.find('/') != std::string::npos)
+            {
+                FilePath = directory.substr(0, directory.find_last_of('/'));
+                FilePath += "/" + std::string(str.C_Str());
+            }
+            
+            Texture2D texture(FilePath.c_str(), GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, false);
+            texture.PbrMapType = typeName;
 
-            textures.push_back(texture);
+            Destination.push_back(texture);
             textures_loaded.push_back(texture);
         }
     }
-    return textures;
 }
 

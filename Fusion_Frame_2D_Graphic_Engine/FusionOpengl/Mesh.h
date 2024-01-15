@@ -16,6 +16,7 @@
 #include <memory>
 #include <array>
 #include "Cubemap.h"
+
 #define MAX_BONE_INFLUENCE 4
 #define FF_ORIGIN glm::vec3(0.0f,0.0f,0.0f)
 namespace FUSIONOPENGL
@@ -75,18 +76,27 @@ namespace FUSIONOPENGL
 		Face(std::vector<Vertex> Vertices, glm::vec3 Normal = { 0.0f ,0.0f,0.0f })
 		{
 			this->Normal = Normal;
-			std::copy_n(Vertices.begin(), size, this->Vertices.begin());
+			for (size_t i = 0; i < size; i++)
+			{
+				this->Vertices[i] = Vertices[i];
+			}
 		}
 
 		Face()
 		{
 			Normal = glm::vec3(0.0f);
-			std::fill_n(Vertices, Vertices.size(), Vertex());
+			for (size_t i = 0; i < size; i++)
+			{
+				this->Vertices[i] = Vertex();
+			}
 		}
 
-		void SetVertices(Vertex Vertices[size])
+		void SetVertices(std::vector<Vertex> Vertices)
 		{
-			this->Vertices.assign(Vertices, Vertices + size);
+			for (size_t i = 0; i < size; i++)
+			{
+				this->Vertices[i] = Vertices[i];
+			}
 		}
 
 		void SetNormal(glm::vec3 Normal)
@@ -163,15 +173,23 @@ namespace FUSIONOPENGL
 		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
-		void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations , CubeMap& cubeMap, float EnvironmentAmbientAmount = 0.2f);
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
+		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);
 		void ConstructMesh();
 		std::vector<Vertex>& GetVertexArray() { return vertices; };
 
 		unsigned int VAO;
+		Material ImportedMaterial;
+		std::string MeshName;
 
 		void Clean()
 		{
 			ObjectBuffer.clean();
+
+			for (auto it = ImportedMaterial.GetTextureMaps().begin(); it != ImportedMaterial.GetTextureMaps().end(); ++it)
+			{
+				it->second->Clear();
+			}			
 		}
 
 	private:
@@ -182,6 +200,7 @@ namespace FUSIONOPENGL
 		std::vector<Texture2D> textures;
 		std::vector<unsigned int> indices;
 		std::vector<Vertex> vertices;
+		
 	};
 
 	class TextureObj

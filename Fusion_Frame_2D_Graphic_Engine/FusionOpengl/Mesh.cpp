@@ -7,7 +7,7 @@ void FUSIONOPENGL::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, 
 
 void FUSIONOPENGL::WorldTransform::Translate(glm::vec3 v)
 {
-	TranslationMatrix = glm::translate(TranslationMatrix, v );
+	TranslationMatrix = glm::translate(TranslationMatrix, v);
 	TransformAction action;
 	action.Transformation = v;
 	this->LastTransforms.push_back(action);
@@ -28,7 +28,7 @@ void FUSIONOPENGL::WorldTransform::Scale(glm::vec3 v)
 	this->LastScales.push_back(action);
 }
 
-void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v , float angle)
+void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v, float angle)
 {
 	RotationMatrix = glm::rotate(RotationMatrix, glm::radians(angle), v);
 	RotateAction action;
@@ -39,8 +39,8 @@ void FUSIONOPENGL::WorldTransform::Rotate(glm::vec3 v , float angle)
 
 void FUSIONOPENGL::WorldTransform::TranslateNoTraceBack(glm::vec3 v)
 {
-	TranslationMatrix = glm::translate(TranslationMatrix, v );
-	
+	TranslationMatrix = glm::translate(TranslationMatrix, v);
+
 	Position.x = TranslationMatrix[3][0];
 	Position.y = TranslationMatrix[3][1];
 	Position.z = TranslationMatrix[3][2];
@@ -86,7 +86,7 @@ FUSIONOPENGL::TextureObj::~TextureObj()
 	this->ObjectBuffer.clean();
 }
 
-void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader , Texture2D& texture)
+void FUSIONOPENGL::TextureObj::Draw(Camera2D& camera, GLuint shader, Texture2D& texture)
 {
 	glUseProgram(shader);
 	ObjectBuffer.BindVAO();
@@ -127,11 +127,31 @@ void FUSIONOPENGL::TextureObj::Draw(Camera3D& camera, GLuint shader, Texture2D& 
 	glUseProgram(0);
 }
 
-FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> &vertices_i, std::vector<unsigned int> &indices_i, std::vector<Texture2D>& textures_i)
+FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<Texture2D>& textures_i)
 {
 	this->vertices.assign(vertices_i.begin(), vertices_i.end());
 	this->indices.assign(indices_i.begin(), indices_i.end());
 	this->textures.assign(textures_i.begin(), textures_i.end());
+
+	for (size_t i = 0; i < textures.size(); i++)
+	{
+		if (textures[i].PbrMapType == "texture_diffuse")
+		{
+			ImportedMaterial.PushTextureMap(TEXTURE_DIFFUSE0, textures[i]);
+		}
+		else if (textures[i].PbrMapType == "texture_specular")
+		{
+			ImportedMaterial.PushTextureMap(TEXTURE_SPECULAR0, textures[i]);
+		}
+		else if (textures[i].PbrMapType == "texture_normal")
+		{
+			ImportedMaterial.PushTextureMap(TEXTURE_NORMAL0, textures[i]);
+		}
+		else if (textures[i].PbrMapType == "texture_metalic")
+		{
+			ImportedMaterial.PushTextureMap(TEXTURE_METALIC0, textures[i]);
+		}
+	}
 
 	ObjectBuffer.Bind();
 
@@ -140,7 +160,7 @@ FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> &vertices_i, std:
 	ObjectBuffer.BufferDataFill(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 	ObjectBuffer.AttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)0);
-	ObjectBuffer.AttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex,Normal));
+	ObjectBuffer.AttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, Normal));
 	ObjectBuffer.AttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, TexCoords));
 	ObjectBuffer.AttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, Tangent));
 	ObjectBuffer.AttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONOPENGL::Vertex), (void*)offsetof(Vertex, Bitangent));
@@ -148,11 +168,11 @@ FUSIONOPENGL::Mesh3D::Mesh3D(std::vector<FUSIONOPENGL::Vertex> &vertices_i, std:
 	ObjectBuffer.Unbind();
 }
 
-void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();
-    ShaderPreperations();
+	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
 	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
@@ -166,7 +186,6 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-
 }
 
 void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations)
@@ -190,11 +209,52 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material mater
 	ObjectBuffer.UnbindVAO();
 }
 
-void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations, CubeMap& cubeMap , float EnvironmentAmbientAmount)
+void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
+
+	LOG("Mesh: " << this->MeshName << " Texture Count: " << textures.size());
+
+	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
+	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
+	shader.setInt("ConvDiffCubeMap", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
+	shader.setInt("prefilteredMap", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, FUSIONOPENGL::brdfLUT);
+	shader.setInt("LUT", 3);
+
+	shader.setBool("EnableIBL", true);
+	shader.setFloat("ao", EnvironmentAmbientAmount);
+	
+	material.SetMaterialShader(shader);
+	
+	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void FUSIONOPENGL::Mesh3D::DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, float EnvironmentAmbientAmount)
+{
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	LOG("Mesh: " << this->MeshName << " Texture Count: " << textures.size());
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
 	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
@@ -218,13 +278,14 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, Material mater
 	shader.setBool("EnableIBL", true);
 	shader.setFloat("ao", EnvironmentAmbientAmount);
 
-	material.SetMaterialShader(shader);
+	this->ImportedMaterial.SetMaterialShader(shader);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
 	glActiveTexture(GL_TEXTURE0);
+
 }
 
 void FUSIONOPENGL::Mesh3D::ConstructMesh()
@@ -243,3 +304,6 @@ void FUSIONOPENGL::Mesh3D::ConstructMesh()
 
 	ObjectBuffer.Unbind();
 }
+
+
+

@@ -146,6 +146,9 @@
     <ClCompile Include="FusionOpengl\Cubemap.cpp">
       <Filter>Sources\FusionOpengl</Filter>
     </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionOpengl\Bone.hpp">
@@ -214,7 +217,7 @@
     <ClInclude Include="FusionPhysics\Physics.hpp">
       <Filter>Headers\FusionPhysics</Filter>
     </ClInclude>
-    <ClInclude Include="Engine.hpp">
+    <ClInclude Include="Application.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="FusionOpengl\Cubemap.h">

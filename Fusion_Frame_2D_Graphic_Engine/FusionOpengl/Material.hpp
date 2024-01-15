@@ -19,6 +19,8 @@
 #define TEXTURE_METALIC1 "texture_metalic1"
 #define TEXTURE_ALPHA1 "texture_alpha1"
 
+#define FF_IMPORTED_MATERIAL NULL
+
 namespace FUSIONOPENGL
 {
 	static void SetEnvironment(Shader& shader,float FogIntesity = 1.0f, glm::vec3 FogColor = glm::vec3(1.0f), glm::vec3 EnvironmentRadiance = glm::vec3(1.0f))
@@ -126,6 +128,15 @@ namespace FUSIONOPENGL
 		inline void EnableClayMaterial()
 		{
 			std::fill_n(this->DisableClayMaterial, 4, 1);
+		}
+
+		//If called , there is no need to dispose the individual taxtures.
+		void Clear()
+		{
+			for (auto it = TextureMaps.begin(); it != TextureMaps.end(); ++it)
+			{
+				it->second->Clear();
+			}
 		}
 
 		float roughness;

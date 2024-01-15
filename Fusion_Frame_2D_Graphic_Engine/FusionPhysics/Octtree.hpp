@@ -7,7 +7,7 @@
 
 namespace FUSIONPHYSICS
 {
-	extern std::vector<FUSIONOPENGL::Object*> ObjectInstances;
+	extern std::vector<FUSIONOPENGL::WorldTransform*> ObjectInstances;
 
 	class WorldBoundryNode
 	{

@@ -3,8 +3,12 @@
 #include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
+#include "Object.hpp"
 #define FF_CAMERA_LAYOUT_FIRST_PERSON 0X100
 #define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD 0X101
+
+//#define FREE_INDUSTRY_STANDARD_CAMERA  // define if you want to freely change the targetPosition using alt-lm click 
+#define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION // define if you want to freely rotate the camera without needing to press alt 
 
 namespace FUSIONOPENGL
 {
@@ -50,8 +54,13 @@ namespace FUSIONOPENGL
 		void UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize);
 		void SetOrientation(glm::vec3 Orien);
 		void SetPosition(glm::vec3 Pos);
+#ifndef FREE_INDUSTRY_STANDARD_CAMERA
+		void SetTargetPosition(glm::vec3 TargetPos);
+		void SetTarget(Object* object, float Distance);
+#endif
 		void Matrix(GLuint shaderprogram, const char* uniform);
 		void HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON, float speed = 0.03f);
+		const glm::vec3 GetUpVector() {return this->Up; };
 
 		glm::vec3 Orientation;
 		glm::vec3 Position;

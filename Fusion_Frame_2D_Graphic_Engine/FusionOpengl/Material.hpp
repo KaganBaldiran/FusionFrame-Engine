@@ -105,6 +105,11 @@ namespace FUSIONOPENGL
 			return TextureMaps[Key];
 		}
 
+		inline void SetTiling(float Amount = 1.0f)
+		{
+			this->TilingCoeff = Amount;
+		}
+
 		inline std::map<std::string, Texture2D*>& GetTextureMaps()
 		{
 			return TextureMaps;
@@ -122,6 +127,7 @@ namespace FUSIONOPENGL
 			glUniform1iv(glGetUniformLocation(shader.GetID(), "disableclaymaterial"), 4, &DisableClayMaterial[0]);
 			shader.setFloat("metallic", this->metalic);
 			shader.setFloat("roughness", this->roughness);
+			shader.setFloat("TilingCoeff", this->TilingCoeff);
 			shader.setVec4("albedo", Albedo);
 		}
 
@@ -141,6 +147,7 @@ namespace FUSIONOPENGL
 
 		float roughness;
 		float metalic;
+		float TilingCoeff = 1.0f;
 		glm::vec4 Albedo;
 
 	private:

@@ -329,6 +329,7 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 			}
 
 			Faces.back().SetNormal(Normal);
+			LocalBoxNormals.push_back(Normal);
 		}
 
 	}
@@ -485,13 +486,13 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 	for (size_t i = 0; i < 6; i++)
 	{
 		transformed = Entity1ModelMatrix * glm::vec4(Directions[i], 1.0f);
-		float dotProduct = glm::dot(glm::vec3(transformed.x, transformed.y, transformed.z), targetVector);
+		float dotProduct = glm::dot(glm::normalize(glm::vec3(transformed.x, transformed.y, transformed.z)), glm::normalize(targetVector));
 
 		if (dotProduct > max)
 		{
 			max = dotProduct;
 			Chosen = i;
-			ChosenAxis = Directions[i];
+			ChosenAxis = glm::normalize(transformed);
 		}
 	}
 
@@ -749,7 +750,7 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
 		EdgeNormal = glm::normalize(EdgeNormal);
 
-		LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
+		//LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
 
 
 		/*auto Difference = glm::vec3(transformedOrigin.x, transformedOrigin.y, transformedOrigin.z) - EdgeMidPoint;
@@ -830,7 +831,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
 		EdgeNormal = glm::normalize(EdgeNormal);
 
-		LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
+		//LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
 
 
 		/*auto Difference = glm::vec3(transformedOrigin.x, transformedOrigin.y, transformedOrigin.z) - EdgeMidPoint;
@@ -888,7 +889,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::UpdateAttributes()
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
 		EdgeNormal = glm::normalize(EdgeNormal);
 
-		LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
+		//LOG("Edge Normal: " << Vec3<float>(EdgeNormal));
 
 
 		/*auto Difference = glm::vec3(transformedOrigin.x, transformedOrigin.y, transformedOrigin.z) - EdgeMidPoint;

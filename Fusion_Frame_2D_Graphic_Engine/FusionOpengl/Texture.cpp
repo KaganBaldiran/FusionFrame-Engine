@@ -9,10 +9,7 @@ FUSIONOPENGL::Texture2D::Texture2D(const char* filePath , GLenum target , GLenum
 	glGenTextures(1, &id);
 	glBindTexture(target, id);
 
-	if (Flip)
-	{
-		stbi_set_flip_vertically_on_load(Flip);
-	}
+	stbi_set_flip_vertically_on_load(Flip);
 
 	unsigned char* data = stbi_load(filePath, &width, &height, &channels, NULL);
 	if (!data)

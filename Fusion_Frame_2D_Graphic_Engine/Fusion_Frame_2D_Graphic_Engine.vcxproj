@@ -165,6 +165,7 @@
     <ClCompile Include="FusionOpengl\Shader.cpp" />
     <ClCompile Include="FusionOpengl\ShadowMaps.cpp" />
     <ClCompile Include="FusionOpengl\Texture.cpp" />
+    <ClCompile Include="FusionOpengl\Transformation.cpp" />
     <ClCompile Include="FusionPhysics\Octtree.cpp" />
     <ClCompile Include="FusionPhysics\Physics.cpp" />
     <ClCompile Include="FusionUtility\Initialize.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="FusionOpengl\SSLS.hpp" />
     <ClInclude Include="FusionOpengl\stb_image.h" />
     <ClInclude Include="FusionOpengl\Texture.h" />
+    <ClInclude Include="FusionOpengl\Transformation.hpp" />
     <ClInclude Include="FusionPhysics\Octtree.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
     <ClInclude Include="FusionUtility\Initialize.h" />

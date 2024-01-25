@@ -127,7 +127,21 @@ void FUSIONOPENGL::Camera3D::SetPosition(glm::vec3 Pos)
 {
 	this->Position = Pos;
 }
+#ifndef FREE_INDUSTRY_STANDARD_CAMERA
+   void FUSIONOPENGL::Camera3D::SetTargetPosition(glm::vec3 TargetPos)
+   {
+	   this->targetPosition = TargetPos;
+   }
 
+void FUSIONOPENGL::Camera3D::SetTarget(Object* object , float Distance)
+{
+	if (CameraLayout == FF_CAMERA_LAYOUT_INDUSTRY_STANDARD)
+	{
+		SetPosition(object->GetTransformation().Position + (Distance * -this->Orientation));
+		SetTargetPosition(object->GetTransformation().Position);
+	}
+}
+#endif
 
 void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout , float speed)
 {
@@ -242,6 +256,7 @@ void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSi
 		{
 			Position += (float)deltaMouse.y * (speed * 0.5f) * Orientation;
 		}
+#ifdef FREE_INDUSTRY_STANDARD_CAMERA
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
 		{
@@ -273,7 +288,54 @@ void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSi
 			}
 		}
 
+#endif 
+#ifdef FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION
+		static bool Break = false;
+		static bool AllowPressBreak = false;
 
+		if (!Break)
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+			if (firstclick)
+			{
+				glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+				firstclick = false;
+			}
+
+			Vec2<double> mousepos;
+			glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
+
+			Vec2<float> rot;
+
+			rot.x = CameraSensitivity * (float)(mousepos.y - (WindowSize.y / 2)) / WindowSize.y;
+			rot.y = CameraSensitivity * (float)(mousepos.x - (WindowSize.x / 2)) / WindowSize.x;
+
+			glm::vec3 cameraToTarget = targetPosition - Position;
+			float distanceToTarget = glm::length(cameraToTarget);
+			glm::quat rotation = glm::quat(glm::vec3(-rot.x, -rot.y, 0.0f));
+			cameraToTarget = glm::rotate(rotation, cameraToTarget);
+			Position = targetPosition - distanceToTarget * glm::normalize(cameraToTarget);
+			Orientation = glm::normalize(targetPosition - Position);
+
+			glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE && !AllowPressBreak)
+		{
+			AllowPressBreak = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && AllowPressBreak)
+		{
+			Break = !Break;
+			if (Break)
+			{
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			}
+			firstclick = true;
+			AllowPressBreak = false;
+		}
+#else
 		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS && (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS))
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -307,6 +369,7 @@ void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSi
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			firstclick = true;
 		}
+#endif // FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION
 
 		MousePosCamera(CurrentMousePos);
 	}

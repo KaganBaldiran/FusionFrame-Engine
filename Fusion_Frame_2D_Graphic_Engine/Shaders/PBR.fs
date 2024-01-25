@@ -9,6 +9,8 @@ in vec2 FinalTexCoord;
 in mat3 TBN;
 in vec3 CurrentPos;
 
+uniform float TilingCoeff;
+
 uniform vec3 CameraPos;
 uniform float FarPlane;
 uniform float NearPlane;
@@ -105,7 +107,7 @@ void main()
     }
     else
     {
-      texturecolor = texture(texture_diffuse0, FinalTexCoord).rgb;
+      texturecolor = texture(texture_diffuse0, FinalTexCoord * TilingCoeff).rgb;
     }
 
     float roughnessmap;
@@ -116,7 +118,7 @@ void main()
     }
     else
     {
-      roughnessmap = texture(texture_specular0, FinalTexCoord).r;
+      roughnessmap = texture(texture_specular0, FinalTexCoord * TilingCoeff).r;
     }
 
     vec3 resultnormal;
@@ -127,7 +129,7 @@ void main()
     }
     else
     {
-        resultnormal = texture(texture_normal0,FinalTexCoord).rgb;
+        resultnormal = texture(texture_normal0,FinalTexCoord * TilingCoeff).rgb;
         resultnormal = resultnormal * 2.0f - 1.0f;
         resultnormal = normalize(TBN * resultnormal);
     }
@@ -141,7 +143,7 @@ void main()
     }
     else
     {
-      metalicmap = texture(texture_metalic0, FinalTexCoord).r;
+      metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
     }
 
       vec3 N = normalize(resultnormal);

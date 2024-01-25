@@ -4,6 +4,7 @@
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionOpengl/Object.hpp"
+#include "../FusionOpengl/Mesh.h"
 #include "../FusionOpengl/Buffer.h"
 #include <memory>
 #define FF_TOP_SIDE 0

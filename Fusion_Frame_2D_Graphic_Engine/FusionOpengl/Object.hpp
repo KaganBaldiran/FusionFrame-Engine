@@ -4,9 +4,8 @@
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Buffer.h"
-#include "Camera.h"
 #include <map>
-#include "Mesh.h"
+#include "Transformation.hpp"
 
 namespace FUSIONOPENGL
 {

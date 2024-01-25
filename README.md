@@ -1,5 +1,5 @@
 # FusionFrame-Engine
-2D-3D Engine and 3D Flappy Bird Game using FusionFrame for a University Project 
+3D Game framework written in c++.
 ## Current Look
 
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/8af3ef5a-0eb5-4cb9-9457-545246fbf708)

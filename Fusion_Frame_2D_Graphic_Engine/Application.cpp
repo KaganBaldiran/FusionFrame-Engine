@@ -57,10 +57,10 @@ int Application::Run()
 	FUSIONOPENGL::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 	FUSIONOPENGL::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 
-	FUSIONOPENGL::Texture2D MirrorDiffuse("Resources\\models\\sofa\\textures\\ornate_mirror_01_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONOPENGL::Texture2D MirrorNormal("Resources\\models\\mirror\\textures\\ornate_mirror_01_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONOPENGL::Texture2D MirrorSpecular("Resources\\models\\sofa\\textures\\ornate_mirror_01_roughness_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONOPENGL::Texture2D MirrorMetalic("Resources\\models\\sofa\\textures\\ornate_mirror_01_metallic_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONOPENGL::Texture2D MirrorDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONOPENGL::Texture2D MirrorNormal("Resources\\models\\stove\\textures\\electric_stove_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONOPENGL::Texture2D MirrorSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONOPENGL::Texture2D MirrorMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 
 	FUSIONOPENGL::Texture2D WallDiffuse("Resources\\wall\\textures\\painted_plaster_wall_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 	FUSIONOPENGL::Texture2D WallNormal("Resources\\wall\\textures\\painted_plaster_wall_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
@@ -130,15 +130,15 @@ int Application::Run()
 	stopwatch.Set();
 	std::unique_ptr<FUSIONOPENGL::Model> MainCharac;
 	std::unique_ptr<FUSIONOPENGL::Model> model1;
-	std::unique_ptr<FUSIONOPENGL::Model> Mirror;
+	std::unique_ptr<FUSIONOPENGL::Model> Stove;
 	std::unique_ptr<FUSIONOPENGL::Model> grid;
 	std::unique_ptr<FUSIONOPENGL::Model> sofa;
 
 	std::unique_ptr<FUSIONOPENGL::Model> wall;
 
-	MainCharac = std::make_unique<FUSIONOPENGL::Model>("Resources\\shovel.obj");
-	model1 = std::make_unique<FUSIONOPENGL::Model>("Resources\\shovel.obj");
-	Mirror = std::make_unique<FUSIONOPENGL::Model>("Resources\\models\\mirror\\mirror.obj");
+	MainCharac = std::make_unique<FUSIONOPENGL::Model>("Resources\\shovel2.obj");
+	model1 = std::make_unique<FUSIONOPENGL::Model>("Resources\\shovel2.obj");
+	Stove = std::make_unique<FUSIONOPENGL::Model>("Resources\\models\\stove\\stove.obj");
 	grid = std::make_unique<FUSIONOPENGL::Model>("Resources\\floor\\grid.obj");
 	sofa = std::make_unique<FUSIONOPENGL::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 
@@ -180,9 +180,9 @@ int Application::Run()
 	MainCharac->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
 	MainCharac->GetTransformation().TranslateNoTraceBack({ 4.0f,1.0f,-10.0f });
 
-	Mirror->GetTransformation().ScaleNoTraceBack(glm::vec3(7.0f, 7.0f, 7.0f));
-	Mirror->GetTransformation().TranslateNoTraceBack({ 0.0f,13.0f,30.0f });
-	Mirror->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 70.0f);
+	Stove->GetTransformation().ScaleNoTraceBack(glm::vec3(7.0f, 7.0f, 7.0f));
+	Stove->GetTransformation().TranslateNoTraceBack({ 0.0f,4.0f,30.0f });
+	//Stove->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 70.0f);
 
 	wall->GetTransformation().ScaleNoTraceBack(glm::vec3(5.0f, 5.0f, 5.0f));
 	wall->GetTransformation().TranslateNoTraceBack({ -60.0f,10.0f,0.0f });
@@ -192,10 +192,10 @@ int Application::Run()
 	sofa->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
 	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-5.0f });
 
-	
+
 	FUSIONPHYSICS::CollisionBox3DAABB Box1(model1->GetTransformation(), { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB Box0(MainCharac->GetTransformation(), { 1.0f,1.0f,1.0f });
-	FUSIONPHYSICS::CollisionBox3DAABB WateringPotBox(Mirror->GetTransformation(), { 1.0f,1.0f,1.0f });
+	FUSIONPHYSICS::CollisionBox3DAABB WateringPotBox(Stove->GetTransformation(), { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB tryBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.63f,1.2f,1.0f });
@@ -219,7 +219,8 @@ int Application::Run()
 
 	MainCharac->UpdateChildren();
 
-	Mirror->PushChild(&WateringPotBox);
+	Stove->PushChild(&WateringPotBox);
+	Stove->UpdateChildren();
 
 	glm::vec4 BackGroundColor(175.0f / 255.0f, 225.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 
@@ -235,12 +236,19 @@ int Application::Run()
 
 	glm::vec3 translateVector(0.0f, 0.0f, 0.01f);
 
-
+	Vec2<int> PrevWindowSize;
+	Vec2<int> PrevWindowPos;
+	bool IsFullScreen = false;
 	float AOamount = 0.5f;
+
+
+	bool showDebug = false;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
+
+
 
 		ScreenFrameBuffer.Bind();
 		glClearColor(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z, BackGroundColor.w);
@@ -267,28 +275,37 @@ int Application::Run()
 		Plane.GetTransformation().Translate({ 0.0f,std::sin(time(0)) / 10.0f,0.0f });
 		Plane.UpdateAttributes();
 
-		Mirror->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, MirrorMaterial, AOamount);
-		grid->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap,FloorMaterial, AOamount);
+		Stove->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, MirrorMaterial, AOamount);
+		grid->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, FloorMaterial, AOamount);
 		sofa->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, SofaMaterial, AOamount);
 		wall->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, WallMaterial, AOamount);
 
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
-		Mirror->UpdateChildren();
+		Stove->UpdateChildren();
 		sofa->UpdateChildren();
 
 #ifdef ENGINE_DEBUG
-		light0.Draw(camera3d, *Shaders.LightShader);
-		light1.Draw(camera3d, *Shaders.LightShader);
-		light2.Draw(camera3d, *Shaders.LightShader);
-		light3.Draw(camera3d, *Shaders.LightShader);
-		Box0.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		Box1.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		SofaBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		WateringPotBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		tryBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		Plane.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		Plane2.DrawBoxMesh(camera3d, *Shaders.LightShader);
-		floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+
+		static bool AllowD = true;
+		if (IsKeyPressedOnce(window, GLFW_KEY_D, AllowD))
+		{
+			showDebug = !showDebug;
+		}
+		if (showDebug)
+		{
+			light0.Draw(camera3d, *Shaders.LightShader);
+			light1.Draw(camera3d, *Shaders.LightShader);
+			light2.Draw(camera3d, *Shaders.LightShader);
+			light3.Draw(camera3d, *Shaders.LightShader);
+			Box0.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			Box1.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			SofaBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			WateringPotBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			tryBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			Plane.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			Plane2.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+		}
 #endif
 
 		model1->GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
@@ -338,14 +355,12 @@ int Application::Run()
 				FirstFloorTouch = false;
 			}
 		}
-		
+
 		//LOG("dIRECTION: " << Vec3<float>(direction));
 
 		if (Collision)
 		{
-			glm::vec3 transformedDirection = glm::normalize(FUSIONOPENGL::TranslateVertex(MainCharac->GetTransformation().GetModelMat4(), direction));
-			//model0->GetTransformation().Translate(glm::vec3(transformedDirection.x , 0.0f , transformedDirection.z) * SPEED);
-			MainCharac->GetTransformation().Translate(-direction * 0.2f);
+			MainCharac->GetTransformation().Translate(-direction * 0.4f);
 		}
 		else
 		{
@@ -366,30 +381,55 @@ int Application::Run()
 				MainCharac->GetTransformation().Translate(-glm::cross(camera3d.Orientation, camera3d.GetUpVector()) * SPEED);
 			}
 
-			static bool AllowJump = false;
-			static bool AllowReset = true;
-			if (!AllowReset && stopwatch.GetSeconds() >= 2.0f)
+		}
+		static bool AllowJump = false;
+		static bool AllowReset = true;
+		if (!AllowReset && stopwatch.GetSeconds() >= 2.0f)
+		{
+			AllowJump = false;
+			AllowReset = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !AllowJump && AllowReset)
+		{
+			AllowJump = true;
+			AllowReset = false;
+		}
+		if (AllowReset)
+		{
+			stopwatch.Reset();
+		}
+		if (AllowJump)
+		{
+			if (stopwatch.GetSeconds() >= 1.0f)
 			{
 				AllowJump = false;
-				AllowReset = true;
 			}
-			if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !AllowJump && AllowReset)
+			MainCharac->GetTransformation().Translate(camera3d.GetUpVector() * SPEED);
+		}
+
+
+		static bool AllowPressF = true;
+		if (!AllowPressF && glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE)
+		{
+			AllowPressF = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && AllowPressF)
+		{
+			AllowPressF = false;
+			IsFullScreen = !IsFullScreen;
+			if (!IsFullScreen)
 			{
-				AllowJump = true;
-				AllowReset = false;
+				glfwGetWindowPos(window, &PrevWindowPos.x, &PrevWindowPos.y);
+				PrevWindowSize(WindowSize);
+				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+				glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
 			}
-			if (AllowReset)
+			else
 			{
-				stopwatch.Reset();
+				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+				glfwSetWindowMonitor(window, NULL, PrevWindowPos.x, PrevWindowPos.y, PrevWindowSize.x, PrevWindowSize.y, mode->refreshRate);
 			}
-			if (AllowJump)
-			{
-				if (stopwatch.GetSeconds() >= 1.0f)
-				{
-					AllowJump = false;
-				}
-				MainCharac->GetTransformation().Translate(camera3d.GetUpVector() * SPEED);
-			}
+
 		}
 
 		model1->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, shovelMaterial, AOamount);
@@ -441,6 +481,20 @@ int Application::Run()
 	glfwTerminate();
 	LOG_INF("Window terminated!");
 	return 0;
+}
+
+bool Application::IsKeyPressedOnce(GLFWwindow* window, int Key, bool& Signal)
+{
+	if (!Signal && glfwGetKey(window, Key) == GLFW_RELEASE)
+	{
+		Signal = true;
+	}
+	if (glfwGetKey(window, Key) == GLFW_PRESS && Signal)
+	{
+		Signal = false;
+		return true;
+	}
+	return false;
 }
 
 

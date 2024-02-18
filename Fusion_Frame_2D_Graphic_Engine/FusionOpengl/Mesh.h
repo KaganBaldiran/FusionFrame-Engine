@@ -92,13 +92,25 @@ namespace FUSIONOPENGL
 		void FindNormal()
 		{
 			Normal = glm::cross((Vertices[1].Position - Vertices[0].Position), (Vertices[2].Position - Vertices[0].Position));
-			Normal = glm::normalize(glm::abs(Normal));
+			if (glm::length(Normal) < glm::epsilon<float>()) 
+			{
+				LOG_ERR("Error: Attempting to normalize a zero-length vector.");
+			}
+			else {
+				Normal = glm::normalize(glm::abs(Normal));
+			}
 		}
 
 		void FindNormal(glm::mat4 ModelMatrix)
 		{
 			Normal = glm::cross((TranslateVertex(ModelMatrix, Vertices[1].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)), (TranslateVertex(ModelMatrix, Vertices[2].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)));
-			Normal = glm::normalize(glm::abs(Normal));
+			if (glm::length(Normal) < glm::epsilon<float>()) 
+			{
+				LOG_ERR("Error: Attempting to normalize a zero-length vector.");
+			}
+			else {
+				Normal = glm::normalize(glm::abs(Normal));
+			}
 		}
 
 		std::array<Vertex, size> GetVertices() { return Vertices; };

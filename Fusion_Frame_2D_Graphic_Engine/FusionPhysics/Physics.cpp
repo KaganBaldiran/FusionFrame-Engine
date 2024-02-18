@@ -492,7 +492,30 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 		{
 			max = dotProduct;
 			Chosen = i;
-			ChosenAxis = glm::normalize(transformed);
+			//ChosenAxis = glm::normalize(glm::vec3(transformed.x, transformed.y, transformed.z));
+			ChosenAxis = Directions[i];
+		}
+	}
+
+	return { Chosen,ChosenAxis };
+}
+
+std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals)
+{
+	float max = 0.0f;
+	int Chosen = -1;
+	glm::vec3 ChosenAxis = glm::vec3(0.0f);
+
+	glm::vec4 transformed;
+	for (size_t i = 0; i < Normals.size(); i++)
+	{
+		float dotProduct = glm::dot(glm::normalize(Normals[i]), glm::normalize(targetVector));
+
+		if (dotProduct > max)
+		{
+			max = dotProduct;
+			Chosen = i;
+			ChosenAxis = glm::normalize(Normals[i]);
 		}
 	}
 

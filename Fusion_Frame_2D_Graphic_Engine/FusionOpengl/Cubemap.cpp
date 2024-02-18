@@ -270,7 +270,7 @@ void FUSIONOPENGL::CubeMap::Draw(Camera3D &camera, Vec2<float> windowSize)
 
 }
 
-void FUSIONOPENGL::CubeMap::SetCubeMapTexture(GLuint& CubeMapTexture)
+void FUSIONOPENGL::CubeMap::SetCubeMapTexture(GLuint CubeMapTexture)
 {
     glDeleteTextures(1, &this->cubemaptextureID);
     this->cubemaptextureID = CubeMapTexture;

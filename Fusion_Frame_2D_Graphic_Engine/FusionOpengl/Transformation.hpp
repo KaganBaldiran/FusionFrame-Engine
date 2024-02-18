@@ -54,7 +54,7 @@ namespace FUSIONOPENGL
 		glm::vec3 ScaleFactor;
 
 		void SetModelMatrixUniformLocation(GLuint shader, const char* uniform);
-		void Translate(glm::vec3 v);
+		virtual void Translate(glm::vec3 v);
 		void Scale(glm::vec3 v);
 		void Rotate(glm::vec3 v, float angle);
 
@@ -67,5 +67,23 @@ namespace FUSIONOPENGL
 		{
 			return TranslationMatrix * RotationMatrix * ScalingMatrix;
 		};
+	};
+
+	class WorldTransformForLights : public WorldTransform
+	{
+	public:
+
+		WorldTransformForLights(std::vector<glm::vec3>& LightPositions , int LightID)
+		{
+			Position = glm::vec3(0.0f, 0.0f, 0.0f);
+			ScaleFactor = glm::vec3(1.0f, 1.0f, 1.0f);
+			this->LightPositions = &LightPositions;
+			this->LightID = LightID;
+		}
+		void Translate(glm::vec3 v) override;
+
+	private:
+		std::vector<glm::vec3>* LightPositions;
+		int LightID;
 	};
 }

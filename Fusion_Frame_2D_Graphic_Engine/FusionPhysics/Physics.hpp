@@ -82,6 +82,7 @@ namespace FUSIONPHYSICS
 	};
 
 	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, glm::mat4 Entity1ModelMatrix);
+	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals);
 	std::pair<bool, int> BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
 	float FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
 	bool IsCollidingSAT(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);

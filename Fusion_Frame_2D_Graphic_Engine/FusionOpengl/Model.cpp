@@ -1,5 +1,6 @@
 #include "Model.hpp"
 #include "Light.hpp"
+#include "ShadowMaps.hpp"
 
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
 {
@@ -7,6 +8,8 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", 0);
         ShaderPreperations();
     };
 
@@ -22,6 +25,8 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material materi
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", 0);
         ShaderPreperations();
     };
 
@@ -31,13 +36,15 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material materi
 	}
 }
 
-//If nullptr is passed to material , it will use the imported material from mtl file instead
+
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", 0);
         ShaderPreperations();
     };
 
@@ -47,12 +54,59 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
     }
 }
 
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", ShadowMaps.size());
+        for (size_t i = 0; i < ShadowMaps.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + 8 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
+            glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
+            glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
+        }
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap, material, EnvironmentAmbientAmount);
+    }
+}
+
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
+        shader.setInt("OmniShadowMapCount", 0);
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap, materials[i], EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setInt("OmniShadowMapCount", ShadowMaps.size());
+        for (size_t i = 0; i < ShadowMaps.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + 7 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
+            glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 7 + i);
+        }
         ShaderPreperations();
     };
 
@@ -68,6 +122,7 @@ void FUSIONOPENGL::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader,
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         ShaderPreperations();
     };
 

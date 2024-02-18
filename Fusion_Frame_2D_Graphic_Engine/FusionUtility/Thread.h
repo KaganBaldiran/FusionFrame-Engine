@@ -12,7 +12,7 @@ namespace FUSIONUTIL
 	static std::vector<std::shared_future<void>> shared_futures;
 	static std::vector<std::shared_ptr<std::promise<void>>> promises;
 
-	void ExecuteFunctionsAsync(std::vector<std::function<void()>> Functions)
+	inline void ExecuteFunctionsAsync(std::vector<std::function<void()>> Functions)
 	{
 		promises.clear();
 		shared_futures.clear();

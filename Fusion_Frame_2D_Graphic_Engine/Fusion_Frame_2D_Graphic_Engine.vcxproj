@@ -145,6 +145,9 @@
     <None Include="Shaders\Light.vs" />
     <None Include="Shaders\MeshBasic.fs" />
     <None Include="Shaders\MeshBasic.vs" />
+    <None Include="Shaders\OmniShadowMap.fs" />
+    <None Include="Shaders\OmniShadowMap.gs" />
+    <None Include="Shaders\OmniShadowMap.vs" />
     <None Include="Shaders\PBR.fs" />
     <None Include="Shaders\PBR.vs" />
     <None Include="Shaders\PreFilterCubeMap.fs" />
@@ -152,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="FusionFrame.cpp" />
     <ClCompile Include="FusionOpengl\Bone.cpp" />
     <ClCompile Include="FusionOpengl\Buffer.cpp" />
     <ClCompile Include="FusionOpengl\Camera.cpp" />
@@ -176,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
+    <ClInclude Include="FusionFrame.h" />
     <ClInclude Include="FusionOpengl\Bone.hpp" />
     <ClInclude Include="FusionOpengl\Buffer.h" />
     <ClInclude Include="FusionOpengl\Camera.h" />

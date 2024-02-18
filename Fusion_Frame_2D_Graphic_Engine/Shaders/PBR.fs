@@ -49,9 +49,63 @@ uniform float ao;
 uniform int disableclaymaterial[4];
 
 uniform float ModelID;
+uniform float ObjectScale;
 
+uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT];
+uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT];
+
+uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
 
+
+ float ShadowCalculationOmni(vec3 fragPos , samplerCube OmnishadowMap , vec3 LightPosition , float farplane)
+  {
+      vec3 gridSamplingDisk[20] = vec3[]
+      (
+        vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
+        vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+        vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+        vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+        vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+      );
+
+      vec3 fragTolight = fragPos - LightPosition;
+      float currentDepth = length(fragTolight);
+
+      float shadow = 0.0;
+      float bias   = 0.15;
+      //int samples  = int(max(min((20.0f * (ObjectScale / FarPlane)),64.0f) , 1.0f) );
+      int samples  = 20;
+      float viewDistance = length(CameraPos - fragPos);
+      float diskRadius = (1.0 + (viewDistance / farplane)) / 25.0;  
+      for(int i = 0; i < samples; ++i)
+      {
+        float closestDepth = texture(OmnishadowMap, fragTolight + gridSamplingDisk[i] * diskRadius).r;
+        closestDepth *= farplane;   
+        if(currentDepth - bias > closestDepth)
+        {
+            shadow += 1.0;
+        }
+      }
+      shadow /= float(samples);   
+      return shadow;
+  }
+
+  /*
+  float ShadowCalculationOmni(vec3 fragPos , samplerCube OmnishadowMap , vec3 LightPosition)
+  {
+      vec3 fragTolight = fragPos - LightPosition;
+      float closestDepth = texture(OmnishadowMap,fragTolight).r;
+      closestDepth *= 25.0f;
+
+      float currentDepth = length(fragTolight);
+
+      float bias = 0.05;
+      float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+      
+      return shadow;
+  }
+  */
 float DistributionGGX(vec3 N , vec3 H, float roughness)
   {
       float a = roughness * roughness;
@@ -146,6 +200,7 @@ void main()
       metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
     }
 
+      float shadow;
       vec3 N = normalize(resultnormal);
       vec3 V = normalize(CameraPos - CurrentPos);
 
@@ -175,7 +230,17 @@ void main()
 
           float NdotL = max(dot(N,L),0.0);
 
-          Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          if(i < OmniShadowMapCount)
+          {
+             shadow = ShadowCalculationOmni(CurrentPos,OmniShadowMaps[i],LightPositions[i] , ShadowMapFarPlane[i]);
+             Lo += (1.0 - shadow) * (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          }
+          else
+          {
+             Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          }
+
+          //Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
       }
 
       vec3 color;

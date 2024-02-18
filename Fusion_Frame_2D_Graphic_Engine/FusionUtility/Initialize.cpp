@@ -65,6 +65,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.brdfLUTShader = std::make_unique<FUSIONOPENGL::Shader>("Shaders/brdfLUT.vs", "Shaders/brdfLUT.fs");
 	shaders.HDRIShader = std::make_unique<FUSIONOPENGL::Shader>("Shaders/HDRI.vs", "Shaders/HDRI.fs");
 	shaders.CubeMapShader = std::make_unique<FUSIONOPENGL::Shader>("Shaders/CubeMap.vert", "Shaders/CubeMap.frag");
+	shaders.OmniShadowMapShader = std::make_unique<FUSIONOPENGL::Shader>("Shaders/OmniShadowMap.vs", "Shaders/OmniShadowMap.gs", "Shaders/OmniShadowMap.fs");
 
 	FUSIONOPENGL::brdfLUT = FUSIONOPENGL::ComputeLUT(*shaders.brdfLUTShader).first;
 }
@@ -81,4 +82,5 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONOPENGL::DeleteShaderProgram(shaders.PreFilterCubeMapShader->GetID());
 	FUSIONOPENGL::DeleteShaderProgram(shaders.brdfLUTShader->GetID());
 	FUSIONOPENGL::DeleteShaderProgram(shaders.CubeMapShader->GetID());
+	FUSIONOPENGL::DeleteShaderProgram(shaders.OmniShadowMapShader->GetID());
 }

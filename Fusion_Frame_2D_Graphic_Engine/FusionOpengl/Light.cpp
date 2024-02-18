@@ -13,7 +13,7 @@ FUSIONOPENGL::Light::Light()
 {
 	LightID = itr;
 	itr++;
-
+	
 	LightCount++;
 }
 
@@ -22,27 +22,28 @@ FUSIONOPENGL::Light::Light(glm::vec3 Position, glm::vec3 Color, float intensity)
 	LightID = itr;
 	itr++;
 
+	transformation = std::make_unique<WorldTransformForLights>(LightPositions, LightID);
+
 	LightPositions.push_back(Position);
 	LightColors.push_back(Color);
 	LightIntensity.push_back(intensity);
 
-	transformation.Scale({ 0.1f,0.1f,0.1f});
-	transformation.Translate(Position);
+	transformation->Scale({ 0.1f,0.1f,0.1f});
+	transformation->Translate(Position);
 
 	LightCount++;
 }
 
-void FUSIONOPENGL::Light::SetAttrib(glm::vec3 Position, glm::vec3 Color, float intensity)
+void FUSIONOPENGL::Light::SetAttrib(glm::vec3 Color, float intensity)
 {
-	LightPositions[LightID] ;
-	LightColors.push_back(Color);
-	LightIntensity.push_back(intensity);
+	LightColors[LightID] = Color;
+	LightIntensity[LightID] = intensity;
 }
 
 void FUSIONOPENGL::Light::Draw(Camera3D& camera, Shader& shader)
 {
 	std::function<void()> LightPrep = [&]() {
-		transformation.SetModelMatrixUniformLocation(shader.GetID(), "model");
+		transformation->SetModelMatrixUniformLocation(shader.GetID(), "model");
 		shader.setVec3("LightColor", LightColors[LightID]);
 	};
 	LightIcon->Draw(camera, shader, LightPrep);

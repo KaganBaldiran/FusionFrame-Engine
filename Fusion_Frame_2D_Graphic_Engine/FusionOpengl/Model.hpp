@@ -19,6 +19,9 @@
 
 namespace FUSIONOPENGL
 {
+    //forward declaration of the omnishadow map class
+    class OmniShadowMap;
+
     class PreMeshData
     {
     public:
@@ -51,7 +54,9 @@ namespace FUSIONOPENGL
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount);
+        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap , std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
         void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();

@@ -20,6 +20,7 @@ namespace FUSIONUTIL
 		std::unique_ptr<FUSIONOPENGL::Shader> brdfLUTShader;
 		std::unique_ptr<FUSIONOPENGL::Shader> HDRIShader;
 		std::unique_ptr<FUSIONOPENGL::Shader> CubeMapShader;
+		std::unique_ptr<FUSIONOPENGL::Shader> OmniShadowMapShader;
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);

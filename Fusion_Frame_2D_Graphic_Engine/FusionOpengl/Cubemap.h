@@ -33,7 +33,7 @@ namespace FUSIONOPENGL
 		~CubeMap();
 		void Draw(Camera3D& camera, Vec2<float> windowSize);
 		GLuint GetCubeMapTexture() { return this->cubemaptextureID; };
-		void SetCubeMapTexture(GLuint& CubeMapTexture);
+		void SetCubeMapTexture(GLuint CubeMapTexture);
 		void SetPreFilteredEnvMap(GLuint preFilteredEnvironmentMapID);
 		void SetConvDiffCubeMap(GLuint ConvDiffCubeMapID);
 		GLuint GetPreFilteredEnvMap() { return this->PrefilteredEnvMap; };

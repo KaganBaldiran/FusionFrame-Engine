@@ -11,6 +11,5 @@ void main()
 {
 
    FragColor = texture(skybox,TexCoords);
-
    //FragColor = textureLod(skybox, TexCoords, 0); 
 }

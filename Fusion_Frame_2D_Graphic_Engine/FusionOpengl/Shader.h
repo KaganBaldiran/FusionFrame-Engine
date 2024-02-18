@@ -23,16 +23,18 @@ namespace FUSIONOPENGL
     std::string ReadTextFile(const char* filepath);
     GLuint CompileVertShader(const char* vertexsource);
     GLuint CompileFragShader(const char* fragmentsource);
+    GLuint CompileGeoShader(const char* Geosource);
     GLuint CompileShaderProgram(GLuint vertexshader, GLuint fragmentshader);
+    GLuint CompileShaderProgram(GLuint vertexshader, GLuint geoshader, GLuint fragmentshader);
     void UseShaderProgram(GLuint program);
     void DeleteShaderProgram(GLuint program);
-
 
     class Shader
     {
     public:
 
-        Shader(const char* vertsource, const char* fragsource);
+        Shader(const char* vertsourcepath, const char* fragsourcepath);
+        Shader(const char* vertsourcepath, const char* geosourcepath, const char* fragsourcepath);
 
         GLuint GetID();
 

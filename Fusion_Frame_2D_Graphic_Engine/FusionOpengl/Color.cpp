@@ -80,3 +80,8 @@ glm::vec4 FUSIONOPENGL::Color::GetRBGA()
 {
 	return { this->Value.x , this->Value.z , this->Value.y , this->Value.w };
 }
+
+glm::vec4 FUSIONOPENGL::Color::GetRGBA()
+{
+	return { this->Value.x , this->Value.y , this->Value.z , this->Value.w };
+}

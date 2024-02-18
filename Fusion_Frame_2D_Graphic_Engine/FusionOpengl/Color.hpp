@@ -35,6 +35,7 @@ namespace FUSIONOPENGL
 		float GetGreen();
 		float GetAlpha();
 		glm::vec4 GetRBGA();
+		glm::vec4 GetRGBA();
 
 	private:
 		glm::vec4 Value;

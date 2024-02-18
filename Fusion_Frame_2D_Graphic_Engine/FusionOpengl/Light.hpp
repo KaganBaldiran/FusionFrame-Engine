@@ -24,11 +24,11 @@ namespace FUSIONOPENGL
 	public:
 		Light();
 		Light(glm::vec3 Position, glm::vec3 Color, float intensity);
-		void SetAttrib(glm::vec3 Position, glm::vec3 Color, float intensity);
-		WorldTransform* GetTransformation() { return &this->transformation; };
+		void SetAttrib(glm::vec3 Color, float intensity);
+		WorldTransformForLights* GetTransformation() { return this->transformation.get(); };
 		void Draw(Camera3D& camera, Shader& shader);
 	private:
-		WorldTransform transformation;
+		std::unique_ptr<WorldTransformForLights> transformation;
 		int LightID;
 	};
 }

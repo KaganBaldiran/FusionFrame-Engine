@@ -55,6 +55,15 @@
     <None Include="Shaders\PreFilterCubeMap.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\OmniShadowMap.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\OmniShadowMap.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\OmniShadowMap.gs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -152,6 +161,7 @@
     <ClCompile Include="FusionOpengl\Transformation.cpp">
       <Filter>Sources\FusionOpengl</Filter>
     </ClCompile>
+    <ClCompile Include="FusionFrame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionOpengl\Bone.hpp">
@@ -228,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="FusionOpengl\Transformation.hpp">
       <Filter>Headers\FusionOpengl</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionFrame.h">
+      <Filter>Headers\FusionUtility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

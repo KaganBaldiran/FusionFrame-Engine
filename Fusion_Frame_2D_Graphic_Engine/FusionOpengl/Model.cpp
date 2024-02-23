@@ -10,6 +10,7 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
+        //shader.setBool("EnableAnimation", false);
         ShaderPreperations();
     };
 
@@ -27,6 +28,7 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, Material materi
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
+        shader.setBool("EnableAnimation", false);
         ShaderPreperations();
     };
 
@@ -45,6 +47,7 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
+        shader.setBool("EnableAnimation", false);
         ShaderPreperations();
     };
 
@@ -69,6 +72,36 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
             glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
             glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
         }
+        shader.setBool("EnableAnimation", false);
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap, material, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", ShadowMaps.size());
+        for (size_t i = 0; i < ShadowMaps.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + 8 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
+            glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
+            glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
+        }
+        for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+        {
+            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+        }
+        shader.setBool("EnableAnimation", true);
         ShaderPreperations();
     };
 
@@ -85,6 +118,7 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mat
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
         shader.setInt("OmniShadowMapCount", 0);
+        shader.setBool("EnableAnimation", false);
         ShaderPreperations();
     };
 
@@ -107,6 +141,34 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mat
             glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
             glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 7 + i);
         }
+        shader.setBool("EnableAnimation", false);
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].Draw(camera, shader, shaderPrep, cubemap, materials[i], EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setInt("OmniShadowMapCount", ShadowMaps.size());
+        for (size_t i = 0; i < ShadowMaps.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + 7 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
+            glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 7 + i);
+        }
+        for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+        {
+            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+        }
+        shader.setBool("EnableAnimation", true);
         ShaderPreperations();
     };
 
@@ -123,6 +185,7 @@ void FUSIONOPENGL::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader,
         FUSIONOPENGL::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setBool("EnableAnimation", false);
         ShaderPreperations();
     };
 
@@ -193,11 +256,20 @@ void FUSIONOPENGL::Model::FindGlobalMeshScales()
 
 }
 
-void FUSIONOPENGL::Model::loadModel(std::string const& path, bool Async)
+void FUSIONOPENGL::Model::loadModel(std::string const& path, bool Async , bool AnimationModel)
 {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
-
+    int flags;
+    if (AnimationModel)
+    {
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace;
+    }
+    else
+    {
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
+    }
+    const aiScene* scene = importer.ReadFile(path, flags);
+    this->scene = (aiScene*)scene;
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
@@ -458,6 +530,8 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
 
 void FUSIONOPENGL::Model::ExtractBones(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene)
 {
+    //LOG("mesh->mNumBones: " << mesh->mNumBones);
+
     for (size_t i = 0; i < mesh->mNumBones; i++)
     {
         int boneID = -1;
@@ -475,15 +549,17 @@ void FUSIONOPENGL::Model::ExtractBones(std::vector<Vertex>& vertices, aiMesh* me
         {
             boneID = Bones[boneName].id;
         }
+
         assert(boneID != -1);
         auto weights = mesh->mBones[i]->mWeights;
         int NumberWeights = mesh->mBones[i]->mNumWeights;
+        //LOG("NumberWeights[" << i << "] : " << NumberWeights);
 
         for (size_t x = 0; x < NumberWeights; x++)
         {
             int vertexID = weights[x].mVertexId;
             float weight = weights[x].mWeight;
-
+            //LOG("vertexID: " << vertexID << "weight: " << weight);
             assert(vertexID <= vertices.size());
 
             auto& vertextemp = vertices[vertexID];

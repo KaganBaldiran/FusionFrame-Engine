@@ -161,7 +161,11 @@
     <ClCompile Include="FusionOpengl\Transformation.cpp">
       <Filter>Sources\FusionOpengl</Filter>
     </ClCompile>
-    <ClCompile Include="FusionFrame.cpp" />
+    <ClCompile Include="FusionFrame.cpp">
+      <Filter>Sources\FusionUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="FusionOpengl\Animation.cpp" />
+    <ClCompile Include="FusionOpengl\Animator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionOpengl\Bone.hpp">
@@ -241,6 +245,12 @@
     </ClInclude>
     <ClInclude Include="FusionFrame.h">
       <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionOpengl\Animation.hpp">
+      <Filter>Headers\FusionOpengl</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionOpengl\Animator.hpp">
+      <Filter>Headers\FusionOpengl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -41,22 +41,26 @@ namespace FUSIONOPENGL
     class Model : public Object
     {
     public:
-        Model(std::string const& filePath , bool Async = false)
+        Model(std::string const& filePath, bool Async = false, bool AnimationModel = false)
         {
-            this->loadModel(filePath,Async);
+            this->AnimationEnabled = AnimationModel;
+            FinalAnimationMatrices = nullptr;
+            this->loadModel(filePath,Async,AnimationModel);
             FindGlobalMeshScales();
             static unsigned int counter = 0;
             this->ModelID = counter;
             counter++;
         }
 
-        unsigned int GetModelID() { return this->ModelID; };
+        inline unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap , std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4> &AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
         void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();
@@ -84,7 +88,7 @@ namespace FUSIONOPENGL
             }
         }
         
-        void loadModel(std::string const& path , bool Async = false);
+        void loadModel(std::string const& path , bool Async = false, bool AnimationModel = false);
         void processNode(aiNode* node, const aiScene* scene);
         Mesh3D processMesh(aiMesh* mesh, const aiScene* scene);
         void ExtractBones(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
@@ -93,6 +97,11 @@ namespace FUSIONOPENGL
         PreMeshData processMeshAsync(aiMesh* mesh, const aiScene* scene);
         void processNodeAsync(aiNode* node, const aiScene* scene);
         void ConstructMeshes(std::vector<PreMeshData> PreMeshDatas);
+        inline std::vector<glm::mat4>*& GetAnimationMatricesPointer() { return this->FinalAnimationMatrices; };
+
+        inline std::map<std::string, BoneInfo>& GetBones() { return Bones; };
+        inline int& GetBoneCounter() { return this->boneCounter; };
+        inline bool IsAnimationEnabled() { return this->AnimationEnabled; };
 
         static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
         {
@@ -113,9 +122,13 @@ namespace FUSIONOPENGL
             std::string directory;
             glm::vec3 originpoint;
             glm::vec3 dynamic_origin;
-            
+            bool AnimationEnabled;
+            std::vector<glm::mat4>* FinalAnimationMatrices;
+
             std::map<std::string, BoneInfo> Bones;
             int boneCounter = 0;
+
+            aiScene* scene;
     };
 
 }

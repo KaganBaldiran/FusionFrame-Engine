@@ -45,6 +45,12 @@ void FUSIONOPENGL::Buffer::AttribPointer(GLuint index , GLuint size , GLenum typ
 	glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
+void FUSIONOPENGL::Buffer::AttribIPointer(GLuint index, GLuint size, GLenum type, GLsizei stride, const void* pointer)
+{
+	glEnableVertexAttribArray(index);
+	glVertexAttribIPointer(index, size, type, stride, pointer);
+}
+
 FUSIONOPENGL::Buffer3D::Buffer3D()
 {
 	glGenBuffers(1, &vbo);

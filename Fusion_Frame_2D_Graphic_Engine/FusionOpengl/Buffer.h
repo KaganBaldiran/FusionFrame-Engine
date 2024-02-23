@@ -16,7 +16,7 @@ namespace FUSIONOPENGL
 		void Unbind();
 		void BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 		void AttribPointer(GLuint index, GLuint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
-
+		void AttribIPointer(GLuint index, GLuint size, GLenum type, GLsizei stride, const void* pointer);
 		GLuint vao, vbo;
 	};
 

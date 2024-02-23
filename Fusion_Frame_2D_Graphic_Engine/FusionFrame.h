@@ -17,6 +17,7 @@
 #include "FusionUtility/Thread.h"
 #include "FusionPhysics/Octtree.hpp"
 #include "FusionOpengl/ShadowMaps.hpp"
+#include "FusionOpengl/Animator.hpp"
 
 namespace FUSIONUTIL
 {

@@ -156,6 +156,8 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="FusionFrame.cpp" />
+    <ClCompile Include="FusionOpengl\Animation.cpp" />
+    <ClCompile Include="FusionOpengl\Animator.cpp" />
     <ClCompile Include="FusionOpengl\Bone.cpp" />
     <ClCompile Include="FusionOpengl\Buffer.cpp" />
     <ClCompile Include="FusionOpengl\Camera.cpp" />
@@ -181,6 +183,8 @@
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
     <ClInclude Include="FusionFrame.h" />
+    <ClInclude Include="FusionOpengl\Animation.hpp" />
+    <ClInclude Include="FusionOpengl\Animator.hpp" />
     <ClInclude Include="FusionOpengl\Bone.hpp" />
     <ClInclude Include="FusionOpengl\Buffer.h" />
     <ClInclude Include="FusionOpengl\Camera.h" />

@@ -50,11 +50,13 @@ int Application::Run()
 	FUSIONOPENGL::Texture2D WallNormal("Resources\\wall\\textures\\painted_plaster_wall_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 	FUSIONOPENGL::Texture2D WallSpecular("Resources\\wall\\textures\\painted_plaster_wall_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
 
-	FUSIONOPENGL::OmniShadowMap ShadowMap0(1024, 1024 , 75.0f);
-	FUSIONOPENGL::OmniShadowMap ShadowMap1(1024, 1024, 75.0f);
-	FUSIONOPENGL::OmniShadowMap ShadowMap2(1024, 1024, 75.0f);
-	FUSIONOPENGL::OmniShadowMap ShadowMap3(1024, 1024, 75.0f);
+	int shadowMapSize = 1024;
 
+	FUSIONOPENGL::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
+	FUSIONOPENGL::OmniShadowMap ShadowMap1(shadowMapSize, shadowMapSize, 75.0f);
+	FUSIONOPENGL::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
+	FUSIONOPENGL::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
+	
 	Vec2<int> WindowSize;
 	Vec2<double> mousePos;
 
@@ -215,7 +217,6 @@ int Application::Run()
 	Shaders.PBRShader->use();
 
 	FUSIONOPENGL::SetEnvironmentIBL(*Shaders.PBRShader, 3.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
-
 	FUSIONOPENGL::UseShaderProgram(0);
 
 	const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
@@ -237,12 +238,12 @@ int Application::Run()
 	std::cout << "Original Vector: " << Vec3<float>(originalVector) << std::endl;
 	std::cout << "Normalized Vector: " << Vec3<float>(normalizedVector) << std::endl;
 
-	std::vector<std::unique_ptr<FUSIONOPENGL::Model>*> models;
-	models.push_back(&Stove);
-	models.push_back(&sofa);
-	models.push_back(&model1);
-	models.push_back(&grid);
-	models.push_back(&MainCharac);
+	std::vector<FUSIONOPENGL::Model*> models;
+	models.push_back(Stove.get());
+	models.push_back(sofa.get());
+	models.push_back(model1.get());
+	models.push_back(grid.get());
+	models.push_back(MainCharac.get());
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
 
@@ -252,8 +253,23 @@ int Application::Run()
 	shadowMaps.push_back(&ShadowMap2);
 	shadowMaps.push_back(&ShadowMap3);
 
+	FUSIONOPENGL::Model animationModel("Resources\\taunt\\Defeated.fbx" ,false , true);
+	animationModel.GetTransformation().ScaleNoTraceBack({ 0.1f,0.1f,0.1f });
+	animationModel.GetTransformation().TranslateNoTraceBack({7.0f,0.0f,0.0f});
+	FUSIONOPENGL::Animation animation("Resources\\taunt\\Defeated.fbx", &animationModel);
+	FUSIONOPENGL::Animator animator(&animation);
+
+    models.push_back(&animationModel);
+
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		auto start_time = std::chrono::high_resolution_clock::now();
 		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, light0.GetTransformation()->Position, models, camera3d);
 		ShadowMap1.Draw(*Shaders.OmniShadowMapShader, light1.GetTransformation()->Position, models, camera3d);
@@ -273,6 +289,8 @@ int Application::Run()
 		camera3d.UpdateCameraMatrix(50.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 180.0f, WindowSize);
 		camera3d.SetTarget(&*MainCharac, 20.0f);
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
+
+		animator.UpdateAnimation(deltaTime);
 
 		std::function<void()> shaderPrepe = [&]() {};
 		std::function<void()> shaderPrepe1 = [&]() {};
@@ -380,7 +398,7 @@ int Application::Run()
 
 		//direction = glm::normalize(Box0.GetTransformation().Position - SofaBox.GetTransformation().Position);
 		//LOG("direction: " << Vec3<float>(Normalized) << "Camera Direction: " << Vec3<float>(camera3d.Orientation));
-		LOG("DOT: " << glm::dot(direction, Front));
+		//LOG("DOT: " << glm::dot(direction, Front));
 
 		if (Collision)
 		{
@@ -479,8 +497,11 @@ int Application::Run()
 
 		}
 
+		auto animationMatrices = animator.GetFinalBoneMatrices();
+
 		model1->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		MainCharac->Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
+		animationModel.Draw(camera3d, *Shaders.PBRShader, shaderPrepe, cubemap, FUSIONOPENGL::Material(), shadowMaps, animationMatrices, AOamount);
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
 
 		ScreenFrameBuffer.Unbind();

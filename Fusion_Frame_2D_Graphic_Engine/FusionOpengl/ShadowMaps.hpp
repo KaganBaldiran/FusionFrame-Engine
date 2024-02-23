@@ -73,7 +73,7 @@ namespace FUSIONOPENGL
 			}
 		}
 
-		void Draw(Shader shader, glm::vec3 lightPos_i, std::vector<Model*>& models, Camera3D& camera)
+		void Draw(Shader &shader, glm::vec3 lightPos_i, std::vector<Model*>& models, Camera3D& camera)
 		{
 			glUseProgram(shader.GetID());
 			glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
@@ -87,15 +87,36 @@ namespace FUSIONOPENGL
 
 			LightMatrix(lightPos, shader.GetID());
 
-			glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
-			glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-			glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
-
-			std::function<void()> shaderPrep = []() {};
-
 			for (size_t i = 0; i < models.size(); i++)
 			{
-				models[i]->Draw(camera, shader, shaderPrep);
+				std::function<void()> shaderPrep;
+				auto model = models[i];
+				if (model->IsAnimationEnabled())
+				{
+					shaderPrep = [&]()
+					{
+						auto& AnimationBoneMatrices = *model->GetAnimationMatricesPointer();
+						for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+						{
+							shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+						}
+						shader.setBool("EnableAnimation", model->IsAnimationEnabled());
+						glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
+						glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+						glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+					};
+				}
+				else
+				{
+					shaderPrep = [&]()
+					{
+					    shader.setBool("EnableAnimation", model->IsAnimationEnabled());
+						glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
+						glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+						glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+					};
+				}
+				model->Draw(camera, shader, shaderPrep);
 			}
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -151,6 +172,16 @@ namespace FUSIONOPENGL
 			std::function<void()> shaderPrep = []() {};
 			for (size_t i = 0; i < models.size(); i++)
 			{
+				auto model = models[i];
+				if (model->get()->IsAnimationEnabled())
+				{
+					auto& AnimationBoneMatrices = *model->get()->GetAnimationMatricesPointer();
+					for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+					{
+						shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+					}
+				}
+				shader.setBool("EnableAnimation", model->get()->IsAnimationEnabled());
 				models[i]->get()->Draw(camera, shader, shaderPrep);
 			}
 

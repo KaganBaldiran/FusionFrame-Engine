@@ -73,9 +73,11 @@ const float PI = 3.14159265359;
       float currentDepth = length(fragTolight);
 
       float shadow = 0.0;
-      float bias   = 0.15;
+      //float bias   = 0.15;
+      float bias   = 0.5;
       //int samples  = int(max(min((20.0f * (ObjectScale / FarPlane)),64.0f) , 1.0f) );
-      int samples  = 20;
+      //int samples  = 20;
+      int samples  = 40;
       float viewDistance = length(CameraPos - fragPos);
       float diskRadius = (1.0 + (viewDistance / farplane)) / 25.0;  
       for(int i = 0; i < samples; ++i)

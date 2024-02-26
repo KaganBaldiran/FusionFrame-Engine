@@ -192,6 +192,45 @@ void FUSIONOPENGL::Mesh3D::Draw(Camera3D& camera, Shader& shader, std::function<
 	glActiveTexture(GL_TEXTURE0);
 }
 
+void FUSIONOPENGL::Mesh3D::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount)
+{
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	//LOG("Mesh: " << this->MeshName << " Texture Count: " << textures.size());
+
+	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
+	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
+
+	/*glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
+	shader.setInt("ConvDiffCubeMap", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
+	shader.setInt("prefilteredMap", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, FUSIONOPENGL::brdfLUT);
+	shader.setInt("LUT", 3);
+
+	shader.setBool("EnableIBL", true);
+	shader.setFloat("ao", EnvironmentAmbientAmount);*/
+
+	material.SetMaterialShader(shader);
+
+	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
+	glActiveTexture(GL_TEXTURE0);
+}
+
 void FUSIONOPENGL::Mesh3D::DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, float EnvironmentAmbientAmount)
 {
 	shader.use();

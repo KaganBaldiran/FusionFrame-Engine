@@ -22,4 +22,5 @@
 namespace FUSIONUTIL
 {
 	glm::vec2 GetMonitorSize();
+	float GetDeltaFrame();
 }

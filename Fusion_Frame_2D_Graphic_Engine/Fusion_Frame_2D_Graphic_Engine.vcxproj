@@ -139,8 +139,12 @@
     <None Include="Shaders\ConvolutationCubeMap.vs" />
     <None Include="Shaders\CubeMap.frag" />
     <None Include="Shaders\CubeMap.vert" />
+    <None Include="Shaders\DeferredPBR.fs" />
+    <None Include="Shaders\DeferredPBR.vs" />
     <None Include="Shaders\FBO.fs" />
     <None Include="Shaders\FBO.vs" />
+    <None Include="Shaders\Gbuffer.fs" />
+    <None Include="Shaders\Gbuffer.vs" />
     <None Include="Shaders\Light.fs" />
     <None Include="Shaders\Light.vs" />
     <None Include="Shaders\MeshBasic.fs" />

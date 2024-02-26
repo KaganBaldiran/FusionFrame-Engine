@@ -111,6 +111,27 @@ void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::function<v
     }
 }
 
+void FUSIONOPENGL::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONOPENGL::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+        {
+            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+        }
+        shader.setBool("EnableAnimation", true);
+        ShaderPreperations();
+        };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawDeferred(camera, shader, shaderPrep, cubemap, material, EnvironmentAmbientAmount);
+    }
+}
+
 void FUSIONOPENGL::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {

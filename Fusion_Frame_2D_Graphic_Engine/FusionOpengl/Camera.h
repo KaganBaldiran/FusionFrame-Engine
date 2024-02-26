@@ -57,6 +57,7 @@ namespace FUSIONOPENGL
 #ifndef FREE_INDUSTRY_STANDARD_CAMERA
 		void SetTargetPosition(glm::vec3 TargetPos);
 		void SetTarget(Object* object, float Distance);
+		void SetTarget(Object* object, float Distance , glm::vec3 Offset);
 #endif
 		void Matrix(GLuint shaderprogram, const char* uniform);
 		void HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON, float speed = 0.03f);

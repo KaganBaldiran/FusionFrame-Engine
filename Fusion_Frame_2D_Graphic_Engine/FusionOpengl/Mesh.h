@@ -129,6 +129,8 @@ namespace FUSIONOPENGL
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
+		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);
+
 		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);
 		void ConstructMesh();
 		std::vector<Vertex>& GetVertexArray() { return vertices; };

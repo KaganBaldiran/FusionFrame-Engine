@@ -64,6 +64,18 @@
     <None Include="Shaders\OmniShadowMap.gs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\Gbuffer.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Gbuffer.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\DeferredPBR.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\DeferredPBR.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

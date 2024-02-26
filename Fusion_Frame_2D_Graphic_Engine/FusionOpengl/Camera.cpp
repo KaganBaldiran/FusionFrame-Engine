@@ -128,12 +128,12 @@ void FUSIONOPENGL::Camera3D::SetPosition(glm::vec3 Pos)
 	this->Position = Pos;
 }
 #ifndef FREE_INDUSTRY_STANDARD_CAMERA
-   void FUSIONOPENGL::Camera3D::SetTargetPosition(glm::vec3 TargetPos)
-   {
-	   this->targetPosition = TargetPos;
-   }
+void FUSIONOPENGL::Camera3D::SetTargetPosition(glm::vec3 TargetPos)
+{
+	this->targetPosition = TargetPos;
+}
 
-void FUSIONOPENGL::Camera3D::SetTarget(Object* object , float Distance)
+void FUSIONOPENGL::Camera3D::SetTarget(Object* object, float Distance)
 {
 	if (CameraLayout == FF_CAMERA_LAYOUT_INDUSTRY_STANDARD)
 	{
@@ -141,9 +141,17 @@ void FUSIONOPENGL::Camera3D::SetTarget(Object* object , float Distance)
 		SetTargetPosition(object->GetTransformation().Position);
 	}
 }
+void FUSIONOPENGL::Camera3D::SetTarget(Object* object, float Distance, glm::vec3 Offset)
+{
+	if (CameraLayout == FF_CAMERA_LAYOUT_INDUSTRY_STANDARD)
+	{
+		SetPosition(object->GetTransformation().Position + (Distance * -this->Orientation) + Offset);
+		SetTargetPosition(object->GetTransformation().Position + Offset);
+	}
+}
 #endif
 
-void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout , float speed)
+void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout, float speed)
 {
 	this->CameraLayout = CameraLayout;
 	if (CameraLayout == FF_CAMERA_LAYOUT_FIRST_PERSON)

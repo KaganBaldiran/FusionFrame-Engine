@@ -137,7 +137,7 @@ namespace FUSIONOPENGL
 		}
 
 		//If called , there is no need to dispose the individual taxtures.
-		void Clear()
+		void Clean()
 		{
 			for (auto it = TextureMaps.begin(); it != TextureMaps.end(); ++it)
 			{

@@ -13,7 +13,6 @@ FUSIONOPENGL::Camera::Camera()
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
 	this->viewMat = glm::mat4(1.0f);
-
 }
 
 FUSIONOPENGL::Camera::~Camera()
@@ -145,9 +144,19 @@ void FUSIONOPENGL::Camera3D::SetTarget(Object* object, float Distance, glm::vec3
 {
 	if (CameraLayout == FF_CAMERA_LAYOUT_INDUSTRY_STANDARD)
 	{
-		SetPosition(object->GetTransformation().Position + (Distance * -this->Orientation) + Offset);
+		SetPosition(object->GetTransformation().Position + (Distance * -this->Orientation) + Offset + (Zoom * Orientation));
 		SetTargetPosition(object->GetTransformation().Position + Offset);
 	}
+}
+void FUSIONOPENGL::Camera3D::SetMinMaxZoom(bool clampZoom, float minZoom, float maxZoom)
+{
+	this->ClampZoom = clampZoom;
+	this->MinZoom = minZoom;
+	this->MaxZoom = maxZoom;
+}
+void FUSIONOPENGL::Camera3D::SetZoomSensitivity(float Speed)
+{
+	this->ZoomSpeed = Speed;
 }
 #endif
 
@@ -251,13 +260,18 @@ void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSi
 
 		Vec2<double> deltaMouse(CurrentMousePos - MousePosCamera);
 
-		if (ScrollAmount.y == 1)
+		if (ClampZoom)
 		{
-			Position += speed * Orientation;
-		}
-		if (ScrollAmount.y == -1)
-		{
-			Position += speed * -Orientation;
+			if (ScrollAmount.y == 1)
+			{
+				Zoom += ZoomSpeed;
+				Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
+			}
+			if (ScrollAmount.y == -1)
+			{
+				Zoom -= ZoomSpeed;
+				Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
+			}
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
@@ -293,8 +307,8 @@ void FUSIONOPENGL::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSi
 				glm::vec3 deltaPosition(PositionVecLength * glm::vec3(deltaMouse.y / WindowSize.y) * Up);
 				Position += deltaPosition;
 				targetPosition += deltaPosition;
-			}
-		}
+	}
+}
 
 #endif 
 #ifdef FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION

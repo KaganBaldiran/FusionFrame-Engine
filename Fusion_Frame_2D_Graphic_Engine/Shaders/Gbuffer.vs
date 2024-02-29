@@ -30,9 +30,9 @@
    if(EnableAnimation)
    {
     vec4 totalPosition = vec4(0.0f);
-    vec3 localNormal;
-    vec3 localTangent;
-    vec3 localBitangent;
+    vec3 localNormal = aNormal;
+    vec3 localTangent = tangentnormal;
+    vec3 localBitangent = bitangentnormal;
     for(int i = 0 ; i < MAX_BONE_INFLUENCE ; i++)
     {
         if(boneIds[i] == -1) 
@@ -44,16 +44,16 @@
         }
         vec4 localPosition = finalBonesMatrices[boneIds[i]] * vec4(vertexdata,1.0f);
         totalPosition += localPosition * weights[i];
-        localNormal = mat3(finalBonesMatrices[boneIds[i]]) * aNormal;
-        localTangent = mat3(finalBonesMatrices[boneIds[i]]) * tangentnormal;
-        localBitangent = mat3(finalBonesMatrices[boneIds[i]]) * bitangentnormal;
+        localNormal = mat3(finalBonesMatrices[boneIds[i]]) * localNormal;
+        localTangent = mat3(finalBonesMatrices[boneIds[i]]) * localTangent;
+        localBitangent = mat3(finalBonesMatrices[boneIds[i]]) * localBitangent;
    }
    
      CurrentPos = vec3(model * totalPosition);
      gl_Position = proj * view * vec4(CurrentPos,1.0f);
 
-     vec3 T = normalize(vec3(model* vec4(tangentnormal,0.0f)));
-     vec3 B = normalize(vec3(model* vec4(bitangentnormal,0.0f)));
+     vec3 T = normalize(vec3(model* vec4(localTangent,0.0f)));
+     vec3 B = normalize(vec3(model* vec4(localBitangent,0.0f)));
      vec3 N = normalize(vec3(model* vec4(localNormal,0.0f)));
      TBN = mat3(T,B,N);
 

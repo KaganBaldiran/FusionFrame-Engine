@@ -1,5 +1,6 @@
 #version 330 core
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 Depth;
   
 in vec2 TexCoords;
 uniform sampler2D AlbedoSpecularPass;
@@ -242,6 +243,8 @@ void main()
 
       float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
+      Depth = vec4(Position,1.0f);;
+      //FragColor = vec4(vec3(roughness),1.0f);
    //vec4 OutColor = vec4(vec3(Metalic),1.0f);
    //FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w); 
 }

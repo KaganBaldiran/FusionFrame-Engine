@@ -167,6 +167,7 @@
     <ClCompile Include="FusionOpengl\Camera.cpp" />
     <ClCompile Include="FusionOpengl\Color.cpp" />
     <ClCompile Include="FusionOpengl\Cubemap.cpp" />
+    <ClCompile Include="FusionOpengl\HalfEdge.cpp" />
     <ClCompile Include="FusionOpengl\Light.cpp" />
     <ClCompile Include="FusionOpengl\Material.cpp" />
     <ClCompile Include="FusionOpengl\Mesh.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="FusionOpengl\Color.hpp" />
     <ClInclude Include="FusionOpengl\Cubemap.h" />
     <ClInclude Include="FusionOpengl\Framebuffer.hpp" />
+    <ClInclude Include="FusionOpengl\HalfEdge.hpp" />
     <ClInclude Include="FusionOpengl\Light.hpp" />
     <ClInclude Include="FusionOpengl\Material.hpp" />
     <ClInclude Include="FusionOpengl\Mesh.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="FusionOpengl\Transformation.hpp" />
     <ClInclude Include="FusionPhysics\Octtree.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
+    <ClInclude Include="FusionPhysics\QuickHull.hpp" />
     <ClInclude Include="FusionUtility\Initialize.h" />
     <ClInclude Include="FusionUtility\Log.h" />
     <ClInclude Include="FusionUtility\StopWatch.h" />

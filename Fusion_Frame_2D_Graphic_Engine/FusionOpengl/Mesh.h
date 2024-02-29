@@ -17,28 +17,12 @@
 #include <array>
 #include "Cubemap.h"
 #include "Transformation.hpp"
+#include "HalfEdge.hpp"
+#include "unordered_map"
 
-#define MAX_BONE_INFLUENCE 4
 namespace FUSIONOPENGL
 {
-
-	inline glm::vec3 TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos)
-	{
-		glm::vec4 transformed = Matrix * glm::vec4(VertexPos, 1.0f);
-		return glm::vec3(transformed.x, transformed.y, transformed.z);
-	}
-
-	struct Vertex {
-
-		glm::vec3 Position;
-		glm::vec3 Normal;
-		glm::vec2 TexCoords;
-		glm::vec3 Tangent;
-		glm::vec3 Bitangent;
-
-		int m_BoneIDs[MAX_BONE_INFLUENCE];
-		float m_Weights[MAX_BONE_INFLUENCE];
-	};
+	
 
 	struct BoneInfo
 	{
@@ -46,90 +30,17 @@ namespace FUSIONOPENGL
 		glm::mat4 OffsetMat;
 	};
 
-	
-	template<std::size_t size>
-	class Face
-	{
-	public:
-
-		Face(Vertex Vertices[size], glm::vec3 Normal = { 0.0f ,0.0f,0.0f})
-		{
-			this->Normal = Normal;
-			this->Vertices.assign(Vertices);
-		}
-
-		Face(std::vector<Vertex> Vertices, glm::vec3 Normal = { 0.0f ,0.0f,0.0f })
-		{
-			this->Normal = Normal;
-			for (size_t i = 0; i < size; i++)
-			{
-				this->Vertices[i] = Vertices[i];
-			}
-		}
-
-		Face()
-		{
-			Normal = glm::vec3(0.0f);
-			for (size_t i = 0; i < size; i++)
-			{
-				this->Vertices[i] = Vertex();
-			}
-		}
-
-		void SetVertices(std::vector<Vertex> Vertices)
-		{
-			for (size_t i = 0; i < size; i++)
-			{
-				this->Vertices[i] = Vertices[i];
-			}
-		}
-
-		void SetNormal(glm::vec3 Normal)
-		{
-			this->Normal = Normal;
-		}
-
-		void FindNormal()
-		{
-			Normal = glm::cross((Vertices[1].Position - Vertices[0].Position), (Vertices[2].Position - Vertices[0].Position));
-			if (glm::length(Normal) < glm::epsilon<float>()) 
-			{
-				LOG_ERR("Error: Attempting to normalize a zero-length vector.");
-			}
-			else {
-				Normal = glm::normalize(glm::abs(Normal));
-			}
-		}
-
-		void FindNormal(glm::mat4 ModelMatrix)
-		{
-			Normal = glm::cross((TranslateVertex(ModelMatrix, Vertices[1].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)), (TranslateVertex(ModelMatrix, Vertices[2].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)));
-			if (glm::length(Normal) < glm::epsilon<float>()) 
-			{
-				LOG_ERR("Error: Attempting to normalize a zero-length vector.");
-			}
-			else {
-				Normal = glm::normalize(glm::abs(Normal));
-			}
-		}
-
-		std::array<Vertex, size> GetVertices() { return Vertices; };
-		glm::vec3 GetNormal() { return Normal; };
-	private:
-		glm::vec3 Normal;
-		std::array<Vertex, size> Vertices;
-	};
-
-	
-
 	class Mesh3D
 	{
 	public:
 		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
+		Mesh3D(std::vector<FUSIONOPENGL::Vertex>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Face>& Faces, std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
 		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);
+
+		void ConstructHalfEdges();
 
 		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);
 		void ConstructMesh();
@@ -157,7 +68,17 @@ namespace FUSIONOPENGL
 		std::vector<Texture2D> textures;
 		std::vector<unsigned int> indices;
 		std::vector<Vertex> vertices;
-		
+		std::vector<HalfEdge> HalfEdges;
+		std::vector<Face> Faces;
+
+		struct PairHash
+		{
+			size_t operator()(const std::pair<int, int>& p) const
+			{
+				return std::hash<int>{}(p.second) ^ std::hash<int>{}(p.first);
+			}
+		};
+		std::unordered_map<std::pair<int, int>, int, PairHash> EdgeMap;
 	};
 
 	class TextureObj

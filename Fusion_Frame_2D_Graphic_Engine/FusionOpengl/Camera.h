@@ -58,6 +58,8 @@ namespace FUSIONOPENGL
 		void SetTargetPosition(glm::vec3 TargetPos);
 		void SetTarget(Object* object, float Distance);
 		void SetTarget(Object* object, float Distance , glm::vec3 Offset);
+		void SetMinMaxZoom(bool clampZoom = false , float minZoom = -1.0f, float maxZoom = -1.0f);
+		void SetZoomSensitivity(float Speed);
 #endif
 		void Matrix(GLuint shaderprogram, const char* uniform);
 		void HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON, float speed = 0.03f);
@@ -74,6 +76,12 @@ namespace FUSIONOPENGL
 		int w_width = 1000;
 		int w_height = 1000;
 		float sensitivity = 100.0f;
+
+		float Zoom = 1.0f;
+		float MinZoom = 0.8f;
+		float MaxZoom = 1.2f;
+		float ZoomSpeed = 1.0f;
+		bool ClampZoom = false;
 
 		glm::vec3 targetPosition;
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);

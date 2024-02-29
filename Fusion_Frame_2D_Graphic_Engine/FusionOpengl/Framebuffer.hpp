@@ -111,7 +111,7 @@ namespace FUSIONOPENGL
 
 		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize ,bool DOFenabled = false, float DOFdistance = 0.09f , float DOFintensity = 1.0f)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
 			glClearColor(1.0f,1.0f,1.0f,1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -267,7 +267,7 @@ namespace FUSIONOPENGL
 
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f, bool DOFenabled = false, float DOFdistance = 0.09f, float DOFintensity = 1.0f)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -4,6 +4,7 @@ namespace FUSIONOPENGL
 	std::unique_ptr<FUSIONOPENGL::Model> LightIcon;
 	std::vector<glm::vec3> LightPositions;
 	std::vector<glm::vec3> LightColors;
+	std::vector<int> LightTypes;
 	std::vector<float> LightIntensity;
 	int LightCount;
 }

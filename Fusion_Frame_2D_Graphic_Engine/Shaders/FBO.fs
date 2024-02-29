@@ -53,7 +53,8 @@ void main()
       //float CamDistance = length(CamPos - texture(DepthAttac, TexCoords).xyz)/DeltaDistance;
 
       vec4 OutColor = texture(Viewport, TexCoords);
-      FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w);
+      FragColor = vec4(pow(OutColor.xyz,vec3(0.9)),OutColor.w);
+
 	  //FragColor = vec4(vec3(CamDistance),1.0f);
 	  //float OutColor = texture(ID , TexCoords).r / 10.0f;
       //FragColor = vec4(pow(vec3(OutColor),vec3(0.9)),1.0f);

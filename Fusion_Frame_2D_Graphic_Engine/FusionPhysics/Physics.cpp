@@ -162,11 +162,12 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONOPENGL::WorldTransfo
 		auto face = FindPointsOnDirection(BoxNormals[i], BoxVertices);
 		if (face.size() == 4)
 		{
-			Faces.emplace_back(face);
-			Faces.back().FindNormal();
+			FUSIONOPENGL::Face newFace;
+			newFace.Vertices.assign(face.begin(), face.end());
+			newFace.Normal = FindNormal(this->GetTransformation().GetModelMat4(), newFace.Vertices);
 
-			auto Normal = Faces.back().GetNormal();
-			glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(*this->GetTransformation().OriginPoint, 1.0f);
+			auto Normal = newFace.GetNormal();
+			glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
 			auto Difference = glm::vec3(transformedOrigin.x, transformedOrigin.y, transformedOrigin.z) - face[0].Position;
 
@@ -183,11 +184,26 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONOPENGL::WorldTransfo
 				Normal.z *= -1;
 			}
 
-			Faces.back().SetNormal(Normal);
-			//LOG(Vec3<float>(Normal));
+			newFace.Normal = Normal;
+			Faces.push_back(newFace);
+			LocalBoxNormals.push_back(Normal);
 		}
 
 	}
+
+	for (size_t i = 0; i < 6; i++)
+	{
+		if (i != 2 && i != 3)
+		{
+			LocalEdgeNormals.push_back(BoxNormals[2] + BoxNormals[i]);
+			LocalEdgeNormals.push_back(BoxNormals[3] + BoxNormals[i]);
+		}
+	}
+
+	LocalEdgeNormals.push_back(BoxNormals[4] + BoxNormals[0]);
+	LocalEdgeNormals.push_back(BoxNormals[4] + BoxNormals[1]);
+	LocalEdgeNormals.push_back(BoxNormals[5] + BoxNormals[0]);
+	LocalEdgeNormals.push_back(BoxNormals[5] + BoxNormals[1]);
 
 	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
 
@@ -195,8 +211,50 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONOPENGL::WorldTransfo
 	Min = MinMax.second;
 
 	std::vector<FUSIONOPENGL::Texture2D> textures;
-	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices, textures);
+
+	std::vector<FUSIONOPENGL::Face> MeshFaces;
+	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 3)
+	{
+		FUSIONOPENGL::Face newFace;
+		newFace.Indices.push_back(indices[i]);
+		newFace.Indices.push_back(indices[i + 1]);
+		newFace.Indices.push_back(indices[i + 2]);
+		MeshFaces.push_back(newFace);
+	}
+
+	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices, MeshFaces,textures);
 }
+
+/*
+std::vector<glm::vec3> extractEdges(const std::vector<glm::vec3>& vertices, const std::vector<GLuint>& indices) 
+{
+	std::vector<glm::vec3> edges;
+
+	// Iterate through the indices (triplets)
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		GLuint index1 = indices[i];
+		GLuint index2 = indices[i + 1];
+		GLuint index3 = indices[i + 2];
+
+		// Define edges for each face
+		glm::vec3 edge1 = { index1, index2 };
+		glm::vec3 edge2 = { index2, index3 };
+		glm::vec3 edge3 = { index3, index1 };
+
+		
+
+		// Add edges if not already in the list
+		if (!found1)
+			edges.push_back(edge1);
+		if (!found2)
+			edges.push_back(edge2);
+		if (!found3)
+			edges.push_back(edge3);
+	}
+
+	return edges;
+}
+*/
 
 FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 BoxSizeCoeff)
 {
@@ -307,10 +365,11 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 		auto face = FindPointsOnDirection(BoxNormals[i], BoxVertices);
 		if (face.size() == 4)
 		{
-			Faces.emplace_back(face);
-			Faces.back().FindNormal();
+			FUSIONOPENGL::Face newFace;
+			newFace.Vertices.assign(face.begin(), face.end());
+			newFace.Normal = FindNormal(this->GetTransformation().GetModelMat4(), newFace.Vertices);
 
-			auto Normal = Faces.back().GetNormal();
+			auto Normal = newFace.GetNormal();
 			glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
 			auto Difference = glm::vec3(transformedOrigin.x, transformedOrigin.y, transformedOrigin.z) - face[0].Position;
@@ -328,19 +387,30 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 				Normal.z *= -1;
 			}
 
-			Faces.back().SetNormal(Normal);
+			newFace.Normal = Normal;
+			Faces.push_back(newFace);
 			LocalBoxNormals.push_back(Normal);
 		}
 
 	}
 
+	
 	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
 
 	Min = MinMax.first;
 	Min = MinMax.second;
 
 	std::vector<FUSIONOPENGL::Texture2D> textures;
-	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices, textures);
+	std::vector<FUSIONOPENGL::Face> MeshFaces;
+	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 3)
+	{
+		FUSIONOPENGL::Face newFace;
+		newFace.Indices.push_back(indices[i]);
+		newFace.Indices.push_back(indices[i + 1]);
+		newFace.Indices.push_back(indices[i + 2]);
+		MeshFaces.push_back(newFace);
+	}
+	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices , MeshFaces, textures);
 }
 
 void FUSIONPHYSICS::CollisionBox::DrawBoxMesh(FUSIONOPENGL::Camera3D& camera, FUSIONOPENGL::Shader& shader)
@@ -360,7 +430,7 @@ void FUSIONPHYSICS::CollisionBox3DAABB::UpdateAttributes()
 	LocalBoxNormals.clear();
 	for (size_t i = 0; i < Faces.size(); i++)
 	{
-		Faces[i].FindNormal(this->GetTransformation().GetModelMat4());
+		Faces[i].Normal = FindNormal(this->GetTransformation().GetModelMat4(), Faces[i].Vertices);
 		auto Normal = Faces[i].GetNormal();
 		glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
@@ -379,10 +449,25 @@ void FUSIONPHYSICS::CollisionBox3DAABB::UpdateAttributes()
 			Normal.z *= -1;
 		}
 
-		Faces.back().SetNormal(Normal);
+		Faces[i].Normal = Normal;
 		LocalBoxNormals.push_back(Normal);
 		//LOG("Normal: " << Vec3<float>(Normal));
 	}
+
+	LocalEdgeNormals.clear();
+	for (size_t i = 0; i < 6; i++)
+	{
+		if (i != 2 && i != 3)
+		{
+			LocalEdgeNormals.push_back(LocalBoxNormals[2] + LocalBoxNormals[i]);
+			LocalEdgeNormals.push_back(LocalBoxNormals[3] + LocalBoxNormals[i]);
+		}
+	}
+
+	LocalEdgeNormals.push_back(LocalBoxNormals[4] + LocalBoxNormals[0]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[4] + LocalBoxNormals[1]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[5] + LocalBoxNormals[0]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[5] + LocalBoxNormals[1]);
 
 	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
 
@@ -433,9 +518,9 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 	}
 
 	LocalBoxNormals.clear();
-	for (size_t i = 0; i < Faces.size(); i++)
+	for (size_t i = 0; i < this->Faces.size(); i++)
 	{
-		Faces[i].FindNormal(this->GetTransformation().GetModelMat4());
+		Faces[i].Normal = FindNormal(this->GetTransformation().GetModelMat4(), Faces[i].Vertices);
 		auto Normal = Faces[i].GetNormal();
 		glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(*this->GetTransformation().OriginPoint, 1.0f);
 
@@ -454,9 +539,24 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 			Normal.z *= -1;
 		}
 
-		Faces.back().SetNormal(Normal);
+		Faces[i].Normal = Normal;
 		LocalBoxNormals.push_back(Normal);
 	}
+
+	LocalEdgeNormals.clear();
+	for (size_t i = 0; i < 6; i++)
+	{
+		if (i != 2 && i != 3)
+		{
+			LocalEdgeNormals.push_back(LocalBoxNormals[2] + LocalBoxNormals[i]);
+			LocalEdgeNormals.push_back(LocalBoxNormals[3] + LocalBoxNormals[i]);
+		}
+	}
+
+	LocalEdgeNormals.push_back(LocalBoxNormals[4] + LocalBoxNormals[0]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[4] + LocalBoxNormals[1]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[5] + LocalBoxNormals[0]);
+	LocalEdgeNormals.push_back(LocalBoxNormals[5] + LocalBoxNormals[1]);
 
 	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
 
@@ -492,8 +592,7 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 		{
 			max = dotProduct;
 			Chosen = i;
-			//ChosenAxis = glm::normalize(glm::vec3(transformed.x, transformed.y, transformed.z));
-			ChosenAxis = Directions[i];
+			ChosenAxis = transformed;
 		}
 	}
 
@@ -535,7 +634,7 @@ std::pair<bool, int> FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, Co
 		   Box1.Max.z >= Box2.Min.z , direction.first };
 }
 
-float FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis)
+bool FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis)
 {
 	if (Axis == glm::vec3(0.0f))
 		return true;
@@ -544,7 +643,8 @@ float FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, g
 	for (size_t i = 0; i < Box1.GetVertices().size(); i++)
 	{
 		glm::vec4 vertexWorldPositon = glm::vec4(FUSIONOPENGL::TranslateVertex(Box1.GetTransformation().GetModelMat4(), Box1.GetVertices()[i].Position), 1.0f);
-		float projection = vertexWorldPositon.x * Axis.x + vertexWorldPositon.y * Axis.y + vertexWorldPositon.z * Axis.z;
+		//float projection = vertexWorldPositon.x * Axis.x + vertexWorldPositon.y * Axis.y + vertexWorldPositon.z * Axis.z;
+		float projection = glm::dot({ vertexWorldPositon.x,vertexWorldPositon.y,vertexWorldPositon.z }, Axis);
 		maxProjectionA = glm::max(maxProjectionA, projection);
 		minProjectionA = glm::min(minProjectionA, projection);
 	}
@@ -554,67 +654,99 @@ float FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, g
 	for (size_t i = 0; i < Box2.GetVertices().size(); i++)
 	{
 		glm::vec4 vertexWorldPositon = glm::vec4(FUSIONOPENGL::TranslateVertex(Box2.GetTransformation().GetModelMat4(), Box2.GetVertices()[i].Position), 1.0f);
-		float projection = vertexWorldPositon.x * Axis.x + vertexWorldPositon.y * Axis.y + vertexWorldPositon.z * Axis.z;
+		//float projection = vertexWorldPositon.x * Axis.x + vertexWorldPositon.y * Axis.y + vertexWorldPositon.z * Axis.z;
+		float projection = glm::dot({ vertexWorldPositon.x,vertexWorldPositon.y,vertexWorldPositon.z }, Axis);
 		maxProjectionB = glm::max(maxProjectionB, projection);
 		minProjectionB = glm::min(minProjectionB, projection);
 	}
 
-	return (minProjectionA <= maxProjectionB && minProjectionA >= minProjectionB) || (minProjectionB <= maxProjectionA && minProjectionB >= minProjectionA);
+	return (minProjectionA <= maxProjectionB && maxProjectionA >= minProjectionB) ||
+		(minProjectionB <= maxProjectionA && maxProjectionB >= minProjectionA);
 }
+
 
 bool FUSIONPHYSICS::IsCollidingSAT(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)
 {
-	glm::vec3 listOfAxisToCheck[15];
+	std::vector<glm::vec3> listOfAxisToCheck;
+	listOfAxisToCheck.reserve(36);
 
-	listOfAxisToCheck[0] = Box1.GetLocalNormals()[2];
-	listOfAxisToCheck[1] = Box1.GetLocalNormals()[0];
-	listOfAxisToCheck[2] = Box1.GetLocalNormals()[5];
-	listOfAxisToCheck[3] = Box1.GetLocalNormals()[2];
-	listOfAxisToCheck[4] = Box1.GetLocalNormals()[0];
-	listOfAxisToCheck[5] = Box1.GetLocalNormals()[5];
+	auto& localNormalsBox1 = Box1.GetLocalNormals();
+	auto LocalNormalBox1Size = localNormalsBox1.size();
 
-	listOfAxisToCheck[6] = listOfAxisToCheck[0] * listOfAxisToCheck[3];
-	listOfAxisToCheck[7] = listOfAxisToCheck[0] * listOfAxisToCheck[4];
-	listOfAxisToCheck[8] = listOfAxisToCheck[0] * listOfAxisToCheck[5];
-	listOfAxisToCheck[9] = listOfAxisToCheck[1] * listOfAxisToCheck[3];
-	listOfAxisToCheck[10] = listOfAxisToCheck[1] * listOfAxisToCheck[4];
-	listOfAxisToCheck[11] = listOfAxisToCheck[1] * listOfAxisToCheck[5];
-	listOfAxisToCheck[12] = listOfAxisToCheck[2] * listOfAxisToCheck[3];
-	listOfAxisToCheck[13] = listOfAxisToCheck[2] * listOfAxisToCheck[4];
-	listOfAxisToCheck[14] = listOfAxisToCheck[2] * listOfAxisToCheck[5];
-
-	for (size_t i = 0; i < 15; i++)
+	for (size_t i = 0; i < LocalNormalBox1Size; i++)
 	{
-		if (!FindMinSeparation(Box1, Box2, listOfAxisToCheck[i]))
+		listOfAxisToCheck[i] = localNormalsBox1[i];
+	}
+
+	for (size_t i = 0; i < LocalNormalBox1Size; i++)
+	{
+		for (size_t j = i; j < LocalNormalBox1Size; j++)
 		{
-			return false;
-			break;
+			listOfAxisToCheck[LocalNormalBox1Size + i] = localNormalsBox1[i] * localNormalsBox1[j];
 		}
 	}
 
-	listOfAxisToCheck[0] = Box2.GetLocalNormals()[2];
-	listOfAxisToCheck[1] = Box2.GetLocalNormals()[0];
-	listOfAxisToCheck[2] = Box2.GetLocalNormals()[5];
-	listOfAxisToCheck[3] = Box2.GetLocalNormals()[2];
-	listOfAxisToCheck[4] = Box2.GetLocalNormals()[0];
-	listOfAxisToCheck[5] = Box2.GetLocalNormals()[5];
+	auto& LocalEdgeNormalsBox1 = Box1.GetLocalEdgeNormals();
+	auto LocalEdgeBox1Size = LocalEdgeNormalsBox1.size();
 
-	listOfAxisToCheck[6] = listOfAxisToCheck[0] * listOfAxisToCheck[3];
-	listOfAxisToCheck[7] = listOfAxisToCheck[0] * listOfAxisToCheck[4];
-	listOfAxisToCheck[8] = listOfAxisToCheck[0] * listOfAxisToCheck[5];
-	listOfAxisToCheck[9] = listOfAxisToCheck[1] * listOfAxisToCheck[3];
-	listOfAxisToCheck[10] = listOfAxisToCheck[1] * listOfAxisToCheck[4];
-	listOfAxisToCheck[11] = listOfAxisToCheck[1] * listOfAxisToCheck[5];
-	listOfAxisToCheck[12] = listOfAxisToCheck[2] * listOfAxisToCheck[3];
-	listOfAxisToCheck[13] = listOfAxisToCheck[2] * listOfAxisToCheck[4];
-	listOfAxisToCheck[14] = listOfAxisToCheck[2] * listOfAxisToCheck[5];
+	for (size_t i = 0; i < 12; i++)
+	{
+		listOfAxisToCheck[12 + i] = LocalEdgeNormalsBox1[i];
+	}
 
-	for (size_t i = 0; i < 15; i++)
+	for (size_t i = 0; i < LocalEdgeBox1Size; i++)
+	{
+		for (size_t j = i; j < LocalEdgeBox1Size; j++)
+		{
+			listOfAxisToCheck[24 + i] = LocalEdgeNormalsBox1[i] + LocalEdgeNormalsBox1[j];
+		}
+	}
+
+	for (size_t i = 0; i < 36; i++)
 	{
 		if (!FindMinSeparation(Box1, Box2, listOfAxisToCheck[i]))
 		{
 			return false;
-			break;
+		}
+	}
+
+	auto& localNormalsBox2 = Box2.GetLocalNormals();
+	auto LocalNormalBox2Size = localNormalsBox2.size();
+
+	for (size_t i = 0; i < LocalNormalBox2Size; i++)
+	{
+		listOfAxisToCheck[i] = localNormalsBox2[i];
+	}
+
+	for (size_t i = 0; i < LocalNormalBox2Size; i++)
+	{
+		for (size_t j = i; j < LocalNormalBox2Size; j++)
+		{
+			listOfAxisToCheck[LocalNormalBox2Size + i] = localNormalsBox2[i] * localNormalsBox2[j];
+		}
+	}
+
+	auto& LocalEdgeNormalsBox2 = Box2.GetLocalEdgeNormals();
+	auto LocalEdgeBox2Size = LocalEdgeNormalsBox2.size();
+
+	for (size_t i = 0; i < 12; i++)
+	{
+		listOfAxisToCheck[12 + i] = LocalEdgeNormalsBox2[i];
+	}
+
+	for (size_t i = 0; i < LocalEdgeBox2Size; i++)
+	{
+		for (size_t j = i; j < LocalEdgeBox2Size; j++)
+		{
+			listOfAxisToCheck[24 + i] = LocalEdgeNormalsBox2[i] + LocalEdgeNormalsBox2[j];
+		}
+	}
+
+	for (size_t i = 0; i < 36; i++)
+	{
+		if (!FindMinSeparation(Box1, Box2, listOfAxisToCheck[i]))
+		{
+			return false;
 		}
 	}
 
@@ -746,10 +878,10 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 
 	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
-	FUSIONOPENGL::Face<4> face;
+	FUSIONOPENGL::Face face;
 
-	face.SetVertices(BoxVertices);
-	face.FindNormal(this->GetTransformation().GetModelMat4());
+	face.Vertices.assign(BoxVertices.begin() , BoxVertices.end());
+	face.Normal = FindNormal(this->GetTransformation().GetModelMat4(), face.Vertices);
 
 	auto faceNormal = face.GetNormal();
 
@@ -803,7 +935,16 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	Min = MinMax.second;
 
 	std::vector<FUSIONOPENGL::Texture2D> textures;
-	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices, textures);
+	std::vector<FUSIONOPENGL::Face> MeshFaces;
+	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 4)
+	{
+		FUSIONOPENGL::Face newFace;
+		newFace.Indices.push_back(indices[i]);
+		newFace.Indices.push_back(indices[i + 1]);
+		newFace.Indices.push_back(indices[i + 2]);
+		MeshFaces.push_back(newFace);
+	}
+	BoxMesh = std::make_unique<FUSIONOPENGL::Mesh3D>(BoxVertices, BoxIndices,MeshFaces, textures);
 }
 
 void FUSIONPHYSICS::CollisionBoxPlane::Clear()
@@ -833,7 +974,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 	LocalBoxNormals.clear();
 	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
-	Faces[0].FindNormal(this->GetTransformation().GetModelMat4());
+	Faces[0].Normal = FindNormal(this->GetTransformation().GetModelMat4() , Faces[0].Vertices);
 	auto faceNormal = Faces[0].GetNormal();
 
 	LocalBoxNormals.push_back(faceNormal);
@@ -891,7 +1032,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::UpdateAttributes()
 	LocalBoxNormals.clear();
 	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
 
-	Faces[0].FindNormal(this->GetTransformation().GetModelMat4());
+	Faces[0].Normal = FindNormal(this->GetTransformation().GetModelMat4(), Faces[0].Vertices);
 	auto faceNormal = Faces[0].GetNormal();
 
 	LocalBoxNormals.push_back(faceNormal);

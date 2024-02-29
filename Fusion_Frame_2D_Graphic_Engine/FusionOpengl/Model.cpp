@@ -480,6 +480,7 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture2D> textures;
+    std::vector<Face> Faces;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
@@ -530,9 +531,13 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
-
+        Face NewFace;
         for (unsigned int j = 0; j < face.mNumIndices; j++)
+        {
             indices.push_back(face.mIndices[j]);
+            NewFace.Indices.push_back(face.mIndices[j]);
+        }
+        Faces.push_back(NewFace);
     }
 
     ExtractBones(vertices, mesh, scene);
@@ -544,7 +549,7 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
     loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal" , textures);
     loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic" , textures);
    
-    Mesh3D newMesh(vertices, indices, textures);
+    Mesh3D newMesh(vertices, indices,Faces, textures);
     newMesh.MeshName = mesh->mName.C_Str();
     return newMesh;
 }

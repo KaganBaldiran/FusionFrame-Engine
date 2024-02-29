@@ -176,8 +176,15 @@
     <ClCompile Include="FusionFrame.cpp">
       <Filter>Sources\FusionUtility</Filter>
     </ClCompile>
-    <ClCompile Include="FusionOpengl\Animation.cpp" />
-    <ClCompile Include="FusionOpengl\Animator.cpp" />
+    <ClCompile Include="FusionOpengl\Animator.cpp">
+      <Filter>Sources\FusionOpengl</Filter>
+    </ClCompile>
+    <ClCompile Include="FusionOpengl\Animation.cpp">
+      <Filter>Sources\FusionOpengl</Filter>
+    </ClCompile>
+    <ClCompile Include="FusionOpengl\HalfEdge.cpp">
+      <Filter>Sources\FusionOpengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionOpengl\Bone.hpp">
@@ -262,6 +269,12 @@
       <Filter>Headers\FusionOpengl</Filter>
     </ClInclude>
     <ClInclude Include="FusionOpengl\Animator.hpp">
+      <Filter>Headers\FusionOpengl</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionPhysics\QuickHull.hpp">
+      <Filter>Headers\FusionPhysics</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionOpengl\HalfEdge.hpp">
       <Filter>Headers\FusionOpengl</Filter>
     </ClInclude>
   </ItemGroup>

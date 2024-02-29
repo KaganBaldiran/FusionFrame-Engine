@@ -7,13 +7,14 @@
 #include "Mesh.h"
 #include <memory>
 #include "Model.hpp"
-#define MAX_LIGHT_COUNT 100
+#define MAX_LIGHT_COUNT 500
 
 namespace FUSIONOPENGL
 {
 	extern std::unique_ptr<Model> LightIcon;
 	extern std::vector<glm::vec3> LightPositions;
 	extern std::vector<glm::vec3> LightColors;
+	extern std::vector<int> LightTypes;
 	extern std::vector<float> LightIntensity;
 	extern int LightCount;
 

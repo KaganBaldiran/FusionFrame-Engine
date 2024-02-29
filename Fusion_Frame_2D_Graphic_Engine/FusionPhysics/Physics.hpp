@@ -35,6 +35,7 @@ namespace FUSIONPHYSICS
 	public:
 		FUSIONOPENGL::Mesh3D* GetBoxMesh() { return BoxMesh.get(); };
 		const std::vector<glm::vec3>& GetLocalNormals() { return this->LocalBoxNormals; };
+		const std::vector<glm::vec3>& GetLocalEdgeNormals() { return this->LocalEdgeNormals; };
 		const std::vector<glm::vec3>& GetNormals() { return this->BoxNormals; };
 		const std::vector<FUSIONOPENGL::Vertex>& GetVertices() { return this->BoxVertices; };
 		void DrawBoxMesh(FUSIONOPENGL::Camera3D& camera, FUSIONOPENGL::Shader& shader);
@@ -46,6 +47,7 @@ namespace FUSIONPHYSICS
 		std::vector<unsigned int> BoxIndices;
 		std::vector<glm::vec3> BoxNormals;
 		std::vector<glm::vec3> LocalBoxNormals;
+		std::vector<glm::vec3> LocalEdgeNormals;
 		std::unique_ptr<FUSIONOPENGL::Mesh3D> BoxMesh;
 		glm::vec3 ModelOriginPoint;
 		glm::vec3 MeshColor;
@@ -61,7 +63,7 @@ namespace FUSIONPHYSICS
 		void UpdateAttributes();
 
 	private:
-		std::vector<FUSIONOPENGL::Face<4>> Faces;
+		std::vector<FUSIONOPENGL::Face> Faces;
 	};
 
 	class CollisionBox3DAABB : public CollisionBox
@@ -69,22 +71,22 @@ namespace FUSIONPHYSICS
 	public:
 		CollisionBox3DAABB(FUSIONOPENGL::WorldTransform& transformation, glm::vec3 BoxSizeCoeff);
 		CollisionBox3DAABB(glm::vec3 Size, glm::vec3 BoxSizeCoeff = glm::vec3(1.0f));
-		std::vector<FUSIONOPENGL::Face<4>>& GetFaces() { return this->Faces; };
+		std::vector<FUSIONOPENGL::Face>& GetFaces() { return this->Faces; };
 
 		void Update();
 		//Update without a parent
 		void UpdateAttributes();
 		float ProjectOntoAxis(const glm::vec3& axis);
-
+	
 		void Clear();
 	private:
-		std::vector<FUSIONOPENGL::Face<4>> Faces;
+		std::vector<FUSIONOPENGL::Face> Faces;
 	};
 
 	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, glm::mat4 Entity1ModelMatrix);
 	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals);
 	std::pair<bool, int> BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
-	float FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
+	bool FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
 	bool IsCollidingSAT(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
 	bool IsCollidingSAT(CollisionBox& Plane, CollisionBox3DAABB& Box);
 	bool IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);

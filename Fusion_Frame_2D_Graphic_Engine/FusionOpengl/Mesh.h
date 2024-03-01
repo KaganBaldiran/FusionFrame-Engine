@@ -22,8 +22,6 @@
 
 namespace FUSIONOPENGL
 {
-	
-
 	struct BoneInfo
 	{
 		int id;
@@ -44,9 +42,7 @@ namespace FUSIONOPENGL
 
 		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);
 		void ConstructMesh();
-		std::vector<Vertex>& GetVertexArray() { return vertices; };
 
-		unsigned int VAO;
 		Material ImportedMaterial;
 		std::string MeshName;
 
@@ -60,25 +56,52 @@ namespace FUSIONOPENGL
 			}			
 		}
 
+		inline std::vector<std::shared_ptr<HalfEdge>>& GetHalfEdges() { return this->HalfEdges; };
+		inline std::vector<Face>& GetFaces() { return this->Faces; };
+		inline std::vector<unsigned int>& GetIndices() { return this->indices; };
+		inline std::vector<Vertex>& GetVertices() { return vertices; };
+
+		std::vector<Face> Faces;
+
 	private:
-		unsigned int VBO, EBO;
-
 		Buffer3D ObjectBuffer;
-
 		std::vector<Texture2D> textures;
 		std::vector<unsigned int> indices;
 		std::vector<Vertex> vertices;
-		std::vector<HalfEdge> HalfEdges;
-		std::vector<Face> Faces;
+		std::vector<std::shared_ptr<HalfEdge>> HalfEdges;
 
-		struct PairHash
-		{
-			size_t operator()(const std::pair<int, int>& p) const
+		struct Vec3Hash {
+			size_t operator()(const glm::vec3& v) const 
 			{
-				return std::hash<int>{}(p.second) ^ std::hash<int>{}(p.first);
+				size_t h1 = std::hash<float>()(v.x);
+				size_t h2 = std::hash<float>()(v.y);
+				size_t h3 = std::hash<float>()(v.z);
+
+				size_t seed = 0;
+				seed ^= h1 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				seed ^= h3 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+				return seed;
 			}
 		};
-		std::unordered_map<std::pair<int, int>, int, PairHash> EdgeMap;
+
+		struct PairVec3Hash {
+			size_t operator()(const std::pair<glm::vec3, glm::vec3>& p) const 
+			{
+				size_t h1 = Vec3Hash()(p.first);
+				size_t h2 = Vec3Hash()(p.second);
+
+				size_t seed = 0;
+				seed ^= h1 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+				return seed;
+			}
+		};
+
+		//Internal use
+		std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash> HalfEdgeMap;
 	};
 
 	class TextureObj

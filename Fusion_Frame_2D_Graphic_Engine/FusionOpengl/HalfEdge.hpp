@@ -62,7 +62,7 @@ namespace FUSIONOPENGL
 		inline std::vector<Vertex> GetVertices() { return Vertices; };
 		inline glm::vec3 GetNormal() { return Normal; };
 
-		HalfEdge* halfEdge;
+		std::shared_ptr<HalfEdge> halfEdge;
 		glm::vec3 Normal;
 		int FaceVertexCount;
 		std::vector<Vertex> Vertices;
@@ -77,9 +77,9 @@ namespace FUSIONOPENGL
 		}
 		Vertex* StartingVertex;
 		Vertex* EndingVertex;
-		HalfEdge* NextHalfEdge;
-		HalfEdge* PrevHalfEdge;
-		HalfEdge* TwinHalfEdge;
+		std::shared_ptr<HalfEdge> NextHalfEdge;
+		std::shared_ptr<HalfEdge> PrevHalfEdge;
+		std::shared_ptr<HalfEdge> TwinHalfEdge;
 		bool BoundryEdge;
 		Face* Face;
 

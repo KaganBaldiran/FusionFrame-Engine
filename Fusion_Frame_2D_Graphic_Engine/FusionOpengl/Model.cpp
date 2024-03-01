@@ -228,7 +228,7 @@ void FUSIONOPENGL::Model::FindGlobalMeshScales()
 
 	for (size_t j = 0; j < Meshes.size(); j++)
 	{
-		auto& VertexArray = Meshes[j].GetVertexArray();
+		auto& VertexArray = Meshes[j].GetVertices();
 		Vertex origin = VertexArray[0]; 
 
 		for (unsigned int k = 0; k < VertexArray.size(); k++) {
@@ -550,7 +550,7 @@ FUSIONOPENGL::Mesh3D FUSIONOPENGL::Model::processMesh(aiMesh* mesh, const aiScen
     loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic" , textures);
    
     Mesh3D newMesh(vertices, indices,Faces, textures);
-    newMesh.MeshName = mesh->mName.C_Str();
+    newMesh.MeshName = mesh->mName.data;
     return newMesh;
 }
 

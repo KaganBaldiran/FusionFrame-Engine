@@ -278,29 +278,29 @@ void FUSIONOPENGL::Mesh3D::DrawDeferred(Camera3D& camera, Shader& shader, std::f
 }
 
 void FUSIONOPENGL::Mesh3D::ConstructHalfEdges()
-{  
+{
 	for (auto& face : this->Faces)
 	{
 		auto& indices = face.Indices;
 
-		HalfEdge edge1;
-		HalfEdge edge2;
-		HalfEdge edge3;
+		std::pair<glm::vec3, glm::vec3> pair1 = std::make_pair(vertices[indices[0]].Position, vertices[indices[1]].Position);
+		std::pair<glm::vec3, glm::vec3> pair2 = std::make_pair(vertices[indices[1]].Position, vertices[indices[2]].Position);
+		std::pair<glm::vec3, glm::vec3> pair3 = std::make_pair(vertices[indices[2]].Position, vertices[indices[0]].Position);
 
-		std::pair<int, int> pair1 = std::make_pair(indices[0], indices[1]);
-		std::pair<int, int> pair2 = std::make_pair(indices[1], indices[2]);
-		std::pair<int, int> pair3 = std::make_pair(indices[2], indices[0]);
+		auto edge1 = std::make_shared<HalfEdge>();
+		auto edge2 = std::make_shared<HalfEdge>();
+		auto edge3 = std::make_shared<HalfEdge>();
 
 		this->HalfEdges.push_back(edge1);
-		EdgeMap[pair1] = HalfEdges.size() - 1;
+		HalfEdgeMap[pair1] = HalfEdges.size() - 1;
 		this->HalfEdges.push_back(edge2);
-		EdgeMap[pair2] = HalfEdges.size() - 1;
+		HalfEdgeMap[pair2] = HalfEdges.size() - 1;
 		this->HalfEdges.push_back(edge3);
-		EdgeMap[pair3] = HalfEdges.size() - 1;
+		HalfEdgeMap[pair3] = HalfEdges.size() - 1;
 
-		HalfEdge* edge1Ptr = &HalfEdges[EdgeMap[pair1]];
-		HalfEdge* edge2Ptr = &HalfEdges[EdgeMap[pair2]];
-		HalfEdge* edge3Ptr = &HalfEdges[EdgeMap[pair3]];
+		auto& edge1Ptr = HalfEdges[HalfEdgeMap[pair1]];
+		auto& edge2Ptr = HalfEdges[HalfEdgeMap[pair2]];
+		auto& edge3Ptr = HalfEdges[HalfEdgeMap[pair3]];
 
 		edge1Ptr->StartingVertex = &vertices[indices[0]];
 		edge1Ptr->EndingVertex = &vertices[indices[1]];
@@ -326,25 +326,21 @@ void FUSIONOPENGL::Mesh3D::ConstructHalfEdges()
 		face.halfEdge = edge1Ptr;
 	}
 
-	int TwinCount = 1;
-	std::unordered_map<std::pair<int, int>, int, PairHash>::iterator itr;
-	for (itr = EdgeMap.begin(); itr != EdgeMap.end(); itr++)
+	std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash>::iterator itr;
+	for (itr = HalfEdgeMap.begin(); itr != HalfEdgeMap.end(); itr++)
 	{
 		auto twinPair = std::make_pair(itr->first.second, itr->first.first);
-		if (EdgeMap.find(twinPair) == EdgeMap.end())
+		if (HalfEdgeMap.find(twinPair) == HalfEdgeMap.end())
 		{
-			HalfEdges[itr->second].BoundryEdge = true;
+			HalfEdges[itr->second]->BoundryEdge = true;
 		}
 		else
 		{
-			LOG("FOUND TWIN: " << TwinCount);
-			HalfEdges[itr->second].TwinHalfEdge = &HalfEdges[EdgeMap[twinPair]];
-			HalfEdges[itr->second].BoundryEdge = false;
-			TwinCount++;
+			HalfEdges[itr->second]->TwinHalfEdge = HalfEdges[HalfEdgeMap[twinPair]];
+			HalfEdges[itr->second]->BoundryEdge = false;
 		}
 	}
 }
-
 void FUSIONOPENGL::Mesh3D::DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, float EnvironmentAmbientAmount)
 {
 	shader.use();

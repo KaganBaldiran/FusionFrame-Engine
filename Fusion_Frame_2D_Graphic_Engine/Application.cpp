@@ -283,9 +283,10 @@ int Application::Run()
 	FUSIONOPENGL::Model animationModel("Resources\\taunt\\Jumping.fbx", false, true);
 	animationModel.GetTransformation().ScaleNoTraceBack({ 0.1f,0.1f,0.1f });
 	animationModel.GetTransformation().TranslateNoTraceBack({ 15.0f,-1.0f,0.0f });
-	FUSIONOPENGL::Animation WalkingAnimation("Resources\\taunt\\WalkingInPlace.fbx", &animationModel);
+	FUSIONOPENGL::Animation WalkingAnimation("Resources\\taunt\\MutantWalk.fbx", &animationModel);
 	FUSIONOPENGL::Animation IdleAnimation("Resources\\taunt\\OrcIdle.fbx", &animationModel);
 	FUSIONOPENGL::Animation JumpingAnimation("Resources\\taunt\\Jumping.fbx", &animationModel);
+	FUSIONOPENGL::Animation RunningAnimation("Resources\\taunt\\Running.fbx", &animationModel);
 	FUSIONOPENGL::Animator animator(&IdleAnimation);
 
 	FUSIONPHYSICS::CollisionBox3DAABB Box0(animationModel.GetTransformation(), { 0.4f,0.9f,1.0f });
@@ -309,6 +310,18 @@ int Application::Run()
 
 	camera3d.SetMinMaxZoom(true,-6.0f, 6.0f);
 	camera3d.SetZoomSensitivity(3.0f);
+
+
+	/*for (size_t mesh = 0; mesh < grid->Meshes.size(); mesh++)
+	{
+		for (size_t face = 0; face < grid->Meshes[mesh].Faces.size(); face++)
+		{
+			LOG(face << " : " << Vec3<float>(grid->Meshes[mesh].Faces[face].halfEdge->NextHalfEdge->StartingVertex->Position));
+			LOG(face << " : " << Vec3<float>(grid->Meshes[mesh].Faces[face].halfEdge->NextHalfEdge->EndingVertex->Position));
+			LOG(face << " : " << Vec3<float>(grid->Meshes[mesh].Faces[face].halfEdge->PrevHalfEdge->StartingVertex->Position));
+			LOG(face << " : " << Vec3<float>(grid->Meshes[mesh].Faces[face].halfEdge->PrevHalfEdge->EndingVertex->Position));
+		}
+	}*/
 
 	while (!glfwWindowShouldClose(window))
 	{

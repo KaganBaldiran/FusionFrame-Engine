@@ -170,6 +170,7 @@
     <ClCompile Include="FusionCore\Light.cpp" />
     <ClCompile Include="FusionCore\Material.cpp" />
     <ClCompile Include="FusionCore\Mesh.cpp" />
+    <ClCompile Include="FusionCore\MeshOperations.cpp" />
     <ClCompile Include="FusionCore\Model.cpp" />
     <ClCompile Include="FusionCore\Object.cpp" />
     <ClCompile Include="FusionCore\Shader.cpp" />
@@ -177,7 +178,6 @@
     <ClCompile Include="FusionCore\Texture.cpp" />
     <ClCompile Include="FusionCore\Transformation.cpp" />
     <ClCompile Include="FusionFrame.cpp" />
-    <ClCompile Include="FusionPhysics\MeshOperations.cpp" />
     <ClCompile Include="FusionPhysics\Octtree.cpp" />
     <ClCompile Include="FusionPhysics\Physics.cpp" />
     <ClCompile Include="FusionUtility\Initialize.cpp" />
@@ -200,6 +200,7 @@
     <ClInclude Include="FusionCore\Light.hpp" />
     <ClInclude Include="FusionCore\Material.hpp" />
     <ClInclude Include="FusionCore\Mesh.h" />
+    <ClInclude Include="FusionCore\MeshOperations.h" />
     <ClInclude Include="FusionCore\Model.hpp" />
     <ClInclude Include="FusionCore\Object.hpp" />
     <ClInclude Include="FusionCore\Shader.h" />
@@ -209,7 +210,6 @@
     <ClInclude Include="FusionCore\Texture.h" />
     <ClInclude Include="FusionCore\Transformation.hpp" />
     <ClInclude Include="FusionFrame.h" />
-    <ClInclude Include="FusionPhysics\MeshOperations.h" />
     <ClInclude Include="FusionPhysics\Octtree.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
     <ClInclude Include="FusionPhysics\QuickHull.hpp" />

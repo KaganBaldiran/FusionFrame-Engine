@@ -41,16 +41,9 @@ namespace FUSIONCORE
     class Model : public Object
     {
     public:
-        Model(std::string const& filePath, bool Async = false, bool AnimationModel = false)
-        {
-            this->AnimationEnabled = AnimationModel;
-            FinalAnimationMatrices = nullptr;
-            this->loadModel(filePath,Async,AnimationModel);
-            FindGlobalMeshScales();
-            static unsigned int counter = 0;
-            this->ModelID = counter;
-            counter++;
-        }
+
+        Model();
+        Model(std::string const& filePath, bool Async = false, bool AnimationModel = false);
 
         inline unsigned int GetModelID() { return this->ModelID; };
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
@@ -104,6 +97,7 @@ namespace FUSIONCORE
         inline std::map<std::string, BoneInfo>& GetBones() { return Bones; };
         inline int& GetBoneCounter() { return this->boneCounter; };
         inline bool IsAnimationEnabled() { return this->AnimationEnabled; };
+        inline std::string& GetModelName() { return this->ModelName; };
 
         static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
         {
@@ -131,6 +125,7 @@ namespace FUSIONCORE
             int boneCounter = 0;
 
             aiScene* scene;
+            std::string ModelName;
     };
 
 }

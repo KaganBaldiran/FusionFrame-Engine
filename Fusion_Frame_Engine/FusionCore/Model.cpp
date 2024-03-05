@@ -2,6 +2,26 @@
 #include "Light.hpp"
 #include "ShadowMaps.hpp"
 
+unsigned int counter = 0;
+
+FUSIONCORE::Model::Model()
+{
+    LOG("USED THIS ONE");
+    this->AnimationEnabled = false;
+    FinalAnimationMatrices = nullptr;
+    this->ModelID = counter;
+    counter++;
+}
+FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool AnimationModel)
+{
+    this->AnimationEnabled = AnimationModel;
+    FinalAnimationMatrices = nullptr;
+    this->loadModel(filePath, Async, AnimationModel);
+    FindGlobalMeshScales();
+    this->ModelID = counter;
+    counter++;
+}
+
 void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
@@ -284,11 +304,11 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     int flags;
     if (AnimationModel)
     {
-        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace;
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
     }
     else
     {
-        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
     }
     const aiScene* scene = importer.ReadFile(path, flags);
     this->scene = (aiScene*)scene;
@@ -352,7 +372,7 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
 
 void FUSIONCORE::Model::processNode(aiNode* node, const aiScene* scene)
 {
-
+    this->ModelName = scene->mName.data;
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
 
@@ -364,11 +384,11 @@ void FUSIONCORE::Model::processNode(aiNode* node, const aiScene* scene)
     {
         processNode(node->mChildren[i], scene);
     }
-
 }
 
 void FUSIONCORE::Model::processNodeAsync(aiNode* node, const aiScene* scene)
 {
+    this->ModelName = scene->mName.data;
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];

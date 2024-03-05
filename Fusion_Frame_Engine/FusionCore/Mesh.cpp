@@ -274,6 +274,18 @@ void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::funct
 	glActiveTexture(GL_TEXTURE0);
 }
 
+void FUSIONCORE::Mesh::BookKeepDuplicateVertices(Vertex* vertex)
+{
+	if (DuplicateVertexMap.find(vertex->Position) == DuplicateVertexMap.end())
+	{
+		DuplicateVertexMap[vertex->Position] = 1;
+	}
+	else
+	{
+		DuplicateVertexMap[vertex->Position] += 1;
+	}
+}
+
 void FUSIONCORE::Mesh::ConstructHalfEdges()
 {
 	for (auto& face : this->Faces)
@@ -283,6 +295,10 @@ void FUSIONCORE::Mesh::ConstructHalfEdges()
 		std::pair<glm::vec3, glm::vec3> pair1 = std::make_pair(vertices[indices[0]]->Position, vertices[indices[1]]->Position);
 		std::pair<glm::vec3, glm::vec3> pair2 = std::make_pair(vertices[indices[1]]->Position, vertices[indices[2]]->Position);
 		std::pair<glm::vec3, glm::vec3> pair3 = std::make_pair(vertices[indices[2]]->Position, vertices[indices[0]]->Position);
+
+		BookKeepDuplicateVertices(vertices[indices[0]].get());
+		BookKeepDuplicateVertices(vertices[indices[1]].get());
+		BookKeepDuplicateVertices(vertices[indices[2]].get());
 
 		this->HalfEdges.emplace_back(std::make_shared<HalfEdge>());
 		HalfEdgeMap[pair1] = HalfEdges.size() - 1;
@@ -298,11 +314,17 @@ void FUSIONCORE::Mesh::ConstructHalfEdges()
 		edge1Ptr->StartingVertex = vertices[indices[0]].get();
 		edge1Ptr->EndingVertex = vertices[indices[1]].get();
 
+		vertices[indices[0]]->halfEdge = edge1Ptr.get();
+
 		edge2Ptr->StartingVertex = vertices[indices[1]].get();
 		edge2Ptr->EndingVertex = vertices[indices[2]].get();
 
+		vertices[indices[1]]->halfEdge = edge2Ptr.get();
+
 		edge3Ptr->StartingVertex = vertices[indices[2]].get();
 		edge3Ptr->EndingVertex = vertices[indices[0]].get();
+
+		vertices[indices[2]]->halfEdge = edge3Ptr.get();
 
 		edge1Ptr->NextHalfEdge = edge2Ptr.get();
 		edge2Ptr->NextHalfEdge = edge3Ptr.get();

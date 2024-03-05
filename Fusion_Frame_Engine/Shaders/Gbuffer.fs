@@ -29,7 +29,7 @@ uniform int disableclaymaterial[4];
 
 void main()
 {
-   vec3 texturecolor;
+    vec3 texturecolor;
      
     if(disableclaymaterial[0] == 1)
     {
@@ -75,8 +75,8 @@ void main()
       metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
     }
 
-   AlbedoSpecularPass = vec4(texturecolor,1.0f);
-   NormalMetalicPass = vec4(resultnormal,1.0f);
-   PositionDepthPass = vec4(CurrentPos,1.0f);
-   MetalicRoughnessPass = vec4(roughnessmap ,metalicmap,1.0f,1.0f);
+    AlbedoSpecularPass = vec4(texturecolor,1.0f);
+    NormalMetalicPass = vec4(resultnormal,1.0f);
+    PositionDepthPass = vec4(CurrentPos,1.0f);
+    MetalicRoughnessPass = vec4(roughnessmap ,metalicmap,1.0f,1.0f);
 }

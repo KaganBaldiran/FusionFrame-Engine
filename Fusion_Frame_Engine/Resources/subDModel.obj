@@ -1,7 +1,7 @@
 # Blender 4.0.2
 # www.blender.org
 mtllib subDModel.mtl
-o Cube
+o Cubev
 v -0.500000 -0.500000 0.500000
 v -0.500000 0.500000 0.500000
 v -0.500000 -0.500000 -0.500000

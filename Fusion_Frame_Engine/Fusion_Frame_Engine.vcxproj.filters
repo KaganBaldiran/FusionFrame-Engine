@@ -185,8 +185,8 @@
     <ClCompile Include="FusionCore\Transformation.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
-    <ClCompile Include="FusionPhysics\MeshOperations.cpp">
-      <Filter>Sources\FusionPhysics</Filter>
+    <ClCompile Include="FusionCore\MeshOperations.cpp">
+      <Filter>Sources\FusionCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -280,8 +280,8 @@
     <ClInclude Include="FusionCore\Transformation.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
-    <ClInclude Include="FusionPhysics\MeshOperations.h">
-      <Filter>Headers\FusionPhysics</Filter>
+    <ClInclude Include="FusionCore\MeshOperations.h">
+      <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

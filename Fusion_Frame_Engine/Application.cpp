@@ -22,7 +22,7 @@ int Application::Run()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/hayloft_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/kiara_5_noon_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode->width, mode->height);
@@ -34,30 +34,30 @@ int Application::Run()
 
 	FUSIONCORE::Camera3D camera3d;
 
-	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/diagonal_parquet_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, false);
-	FUSIONCORE::Texture2D FloorNormal("Resources/floor/diagonal_parquet_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, false);
-	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/diagonal_parquet_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, false);
+	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/diagonal_parquet_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+	FUSIONCORE::Texture2D FloorNormal("Resources/floor/diagonal_parquet_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/diagonal_parquet_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
 
-	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D MirrorDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D MirrorNormal("Resources\\models\\stove\\textures\\electric_stove_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D MirrorSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D MirrorMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONCORE::Texture2D MirrorDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D MirrorNormal("Resources\\models\\stove\\textures\\electric_stove_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D MirrorSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D MirrorMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D WallDiffuse("Resources\\wall\\textures\\painted_plaster_wall_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D WallNormal("Resources\\wall\\textures\\painted_plaster_wall_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D WallSpecular("Resources\\wall\\textures\\painted_plaster_wall_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONCORE::Texture2D WallDiffuse("Resources\\wall\\textures\\painted_plaster_wall_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D WallNormal("Resources\\wall\\textures\\painted_plaster_wall_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D WallSpecular("Resources\\wall\\textures\\painted_plaster_wall_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D bearDiffuse("Resources\\taunt\\textures\\bear_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D bearNormal("Resources\\taunt\\textures\\bear_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
-	FUSIONCORE::Texture2D bearSpecular("Resources\\taunt\\textures\\bear_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, false);
+	FUSIONCORE::Texture2D bearDiffuse("Resources\\taunt\\textures\\bear_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D bearNormal("Resources\\taunt\\textures\\bear_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D bearSpecular("Resources\\taunt\\textures\\bear_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
 	int shadowMapSize = 512;
 
@@ -133,29 +133,39 @@ int Application::Run()
 #elif defined NOTASYNC
 	FUSIONUTIL::Timer stopwatch;
 	stopwatch.Set();
-	std::unique_ptr<FUSIONCORE::Model> MainCharac;
-	std::unique_ptr<FUSIONCORE::Model> model1;
-	std::unique_ptr<FUSIONCORE::Model> Stove;
-	std::unique_ptr<FUSIONCORE::Model> grid;
-	std::unique_ptr<FUSIONCORE::Model> sofa;
-
-	std::unique_ptr<FUSIONCORE::Model> wall;
-
-	MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
-	model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
-	Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");
-	//Stove = std::make_unique<FUSIONOPENGL::Model>("Resources\\shovel2.obj");
-
-	grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
-
-	wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
+	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
+	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
+	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
+	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
+	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
+	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 
 	FUSIONCORE::Model subdModel("Resources\\subDModel.obj");
-	subdModel.GetTransformation().ScaleNoTraceBack({ 7.0f,7.0f,7.0f });
-	subdModel.GetTransformation().TranslateNoTraceBack({ 19.0f,4.0f,0.0f });
+	subdModel.GetTransformation().ScaleNoTraceBack({ 9.0f,9.0f,9.0f });
+	subdModel.GetTransformation().TranslateNoTraceBack({ 22.0f,6.0f,-9.0f });
 
-	FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 2);
+	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
+	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 3);
+	
+
+	//FUSIONPHYSICS::MESHOPERATIONS::SmoothObject(subdModel.Meshes[0]);
+
+	/*for (size_t i = 0; i < sofa->Meshes.size(); i++)
+	{
+		FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(sofa->Meshes[i] , 3);
+	}*/
+	
+	FUSIONCORE::Model IMPORTTEST;
+	FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\shovel2.obj", IMPORTTEST);
+	IMPORTTEST.GetTransformation().Translate({ 7.0f,7.0f,0.0f });
+
+	//FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(IMPORTTEST.Meshes[0], 1);
+
+	//FUSIONPHYSICS::MESHOPERATIONS::ExportObj("C:\\Users\\kbald\\Desktop\\TEST2Subd.obj", subdModel);
+
+	//FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(grid->Meshes[0], 1);
+	//FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(grid->Meshes[0], 2);
+	//FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(grid->Meshes[0], 1);
 
 	/*for (size_t i = 0; i < wall->Meshes.size(); i++)
 	{
@@ -222,6 +232,8 @@ int Application::Run()
 	FUSIONPHYSICS::CollisionBoxPlane Plane2({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane floorBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 
+
+
 	SofaBox.GetTransformation().Translate({ 0.0f,-1.0f,0.0f });
 
 	Plane.GetTransformation().Scale({ 5.0f,5.0f ,5.0f });
@@ -279,6 +291,7 @@ int Application::Run()
 	models.push_back(model1.get());
 	models.push_back(grid.get());
 	models.push_back(MainCharac.get());
+	models.push_back(&IMPORTTEST);
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
 
@@ -296,6 +309,7 @@ int Application::Run()
 	FUSIONCORE::Animation JumpingAnimation("Resources\\taunt\\Jumping.fbx", &animationModel);
 	FUSIONCORE::Animation RunningAnimation("Resources\\taunt\\Running.fbx", &animationModel);
 	FUSIONCORE::Animator animator(&IdleAnimation);
+
 
 	FUSIONPHYSICS::CollisionBox3DAABB Box0(animationModel.GetTransformation(), { 0.4f,0.9f,1.0f });
 	animationModel.PushChild(&Box0);
@@ -607,16 +621,25 @@ int Application::Run()
 
 		model1->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		MainCharac->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
-		Stove->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, MirrorMaterial, shadowMaps, AOamount);
 		grid->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FloorMaterial, shadowMaps, AOamount);
-		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, SofaMaterial, shadowMaps, AOamount);
+		Stove->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, MirrorMaterial, shadowMaps, AOamount);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		animationModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, AnimationModelMaterial, shadowMaps, animationMatrices, AOamount);
 		
 		wall->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, WallMaterial, shadowMaps, AOamount);
 		
-		FUSIONCORE::Material redMaterial(0.5f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, redMaterial, shadowMaps, AOamount);
+		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, SofaMaterial, shadowMaps, AOamount);
+		IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		Gbuffer.Unbind();
@@ -659,7 +682,7 @@ int Application::Run()
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, true, 0.3f, 3.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, true, 0.5f, 3.0f);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

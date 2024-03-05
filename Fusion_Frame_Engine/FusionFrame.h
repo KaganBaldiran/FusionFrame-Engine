@@ -18,7 +18,7 @@
 #include "FusionPhysics/Octtree.hpp"
 #include "FusionCore/ShadowMaps.hpp"
 #include "FusionCore/Animator.hpp"
-#include "FusionPhysics/MeshOperations.h"
+#include "FusionCore/MeshOperations.h"
 
 namespace FUSIONUTIL
 {

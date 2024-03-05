@@ -69,6 +69,9 @@ namespace FUSIONCORE
 
 		//Internal use
 		std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash> HalfEdgeMap;
+		std::unordered_map<glm::vec3, int, Vec3Hash> DuplicateVertexMap;
+
+		void BookKeepDuplicateVertices(Vertex* vertex);
 
 	public:
 
@@ -78,6 +81,7 @@ namespace FUSIONCORE
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
 		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);
+
 
 		void ConstructHalfEdges();
 
@@ -102,6 +106,7 @@ namespace FUSIONCORE
 		inline std::vector<unsigned int>& GetIndices() { return this->indices; };
 		inline std::vector<std::shared_ptr<Vertex>>& GetVertices() { return vertices; };
 		inline std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash>& GetEdgeHashMap() { return this->HalfEdgeMap; };
+		inline std::unordered_map<glm::vec3, int, Vec3Hash>& GetDuplicateVertexMap() { return this->DuplicateVertexMap; };
 
 		std::vector<std::shared_ptr<Face>> Faces;
 	};

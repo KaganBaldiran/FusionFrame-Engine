@@ -7,6 +7,7 @@
 ## Current Look
 
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/64129f1a-5155-463f-83f1-2dd4f2d48d19)
+![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/e4956876-731f-4cfc-94b7-6036e15215b3)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/83a063f0-b7df-410c-a21c-9f607e314e94)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/3ed5a02a-dd1b-4232-a338-02170ed365b3)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/fed40a2e-e828-4d71-aa73-cc3cacc8e099)

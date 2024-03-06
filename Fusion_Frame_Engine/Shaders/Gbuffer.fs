@@ -77,6 +77,7 @@ void main()
 
     AlbedoSpecularPass = vec4(texturecolor,1.0f);
     NormalMetalicPass = vec4(resultnormal,1.0f);
+
     PositionDepthPass = vec4(CurrentPos,1.0f);
     MetalicRoughnessPass = vec4(roughnessmap ,metalicmap,1.0f,1.0f);
 }

@@ -22,7 +22,7 @@ int Application::Run()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/kiara_5_noon_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/hayloft_2k.hdr", 2048, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode->width, mode->height);
@@ -234,7 +234,6 @@ int Application::Run()
 
 
 
-	SofaBox.GetTransformation().Translate({ 0.0f,-1.0f,0.0f });
 
 	Plane.GetTransformation().Scale({ 5.0f,5.0f ,5.0f });
 	Plane2.GetTransformation().Scale({ 2.0f,2.0f ,2.0f });
@@ -246,10 +245,12 @@ int Application::Run()
 	grid->GetTransformation().ScaleNoTraceBack({ 5.0f,5.0f ,5.0f });
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 
+	SofaBox.GetTransformation().Translate({ 0.0f,-1.0f,0.0f });
 
 	model1->PushChild(&Box1);
 	sofa->PushChild(&SofaBox);
 	sofa->UpdateChildren();
+
 
 	MainCharac->UpdateChildren();
 
@@ -359,7 +360,8 @@ int Application::Run()
 		Plane.UpdateAttributes();
 
 		Stove->UpdateChildren();
-		SofaBox.UpdateAttributes();
+		//SofaBox.UpdateAttributes();
+		sofa->UpdateChildren();
 
 		model1->GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
 		model1->UpdateChildren();
@@ -609,6 +611,7 @@ int Application::Run()
 		glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 		Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
+		//camera3d.Orientation = SofaBox.GetLocalNormals()[4];
 		camera3d.UpdateCameraMatrix(50.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 180.0f, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
@@ -616,6 +619,8 @@ int Application::Run()
 		std::function<void()> shaderPrepe = [&]() {};
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
+
+		
 
 		auto animationMatrices = animator.GetFinalBoneMatrices();
 
@@ -628,14 +633,16 @@ int Application::Run()
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+		
 		animationModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, AnimationModelMaterial, shadowMaps, animationMatrices, AOamount);
+		
 		
 		wall->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, WallMaterial, shadowMaps, AOamount);
 		
 		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, redMaterial, shadowMaps, AOamount);
 		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, SofaMaterial, shadowMaps, AOamount);
-		IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+		IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
 		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);

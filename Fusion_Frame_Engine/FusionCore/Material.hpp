@@ -42,13 +42,12 @@ namespace FUSIONCORE
 	{
 	public:
 
-
 		Material(float roughness = 0.5f,float metalic = 0.0f, glm::vec4 Albedo = { 1.0f, 1.0f, 1.0f, 1.0f })
 		{
 			this->roughness = roughness;
 			this->metalic = metalic;
 			this->Albedo = Albedo;
-			std::fill_n(this->DisableClayMaterial, 4, 1);
+			std::fill_n(this->DisableClayMaterial, 5, 1);
 		}
 
 		inline void PushTextureMap(const char* Key, Texture2D& TextureMap)
@@ -56,21 +55,25 @@ namespace FUSIONCORE
 			TextureMaps[Key] = &TextureMap;
 
 			std::string KeyValue(Key);
-			if (KeyValue == TEXTURE_DIFFUSE0)
+			if (KeyValue.find("texture_diffuse") != std::string::npos)
 			{
 				DisableClayMaterial[0] = 0;
 			}
-			else if (KeyValue == TEXTURE_SPECULAR0)
+			else if (KeyValue.find("texture_specular") != std::string::npos)
 			{
 				DisableClayMaterial[1] = 0;
 			}
-			else if (KeyValue == TEXTURE_NORMAL0)
+			else if (KeyValue.find("texture_normal") != std::string::npos)
 			{
 				DisableClayMaterial[2] = 0;
 			}
-			else if (KeyValue == TEXTURE_METALIC0)
+			else if (KeyValue.find("texture_metalic") != std::string::npos)
 			{
 				DisableClayMaterial[3] = 0;
+			}
+			else if (KeyValue.find("texture_alpha") != std::string::npos)
+			{
+				DisableClayMaterial[4] = 0;
 			}
 		}
 
@@ -79,21 +82,25 @@ namespace FUSIONCORE
 			if (TextureMaps.find(Key) != TextureMaps.end())
 			{
 				std::string KeyValue(Key);
-				if (KeyValue == TEXTURE_DIFFUSE0)
+				if (KeyValue.find("texture_diffuse") != std::string::npos)
 				{
 					DisableClayMaterial[0] = 1;
 				}
-				else if (KeyValue == TEXTURE_SPECULAR0)
+				else if (KeyValue.find("texture_specular") != std::string::npos)
 				{
 					DisableClayMaterial[1] = 1;
 				}
-				else if (KeyValue == TEXTURE_NORMAL0)
+				else if (KeyValue.find("texture_normal") != std::string::npos)
 				{
 					DisableClayMaterial[2] = 1;
 				}
-				else if (KeyValue == TEXTURE_METALIC0)
+				else if (KeyValue.find("texture_metalic") != std::string::npos)
 				{
 					DisableClayMaterial[3] = 1;
+				}
+				else if (KeyValue.find("texture_alpha") != std::string::npos)
+				{
+					DisableClayMaterial[4] = 1;
 				}
 
 				TextureMaps.erase(Key);
@@ -124,7 +131,7 @@ namespace FUSIONCORE
 				slot++;
 			}
 
-			glUniform1iv(glGetUniformLocation(shader.GetID(), "disableclaymaterial"), 4, &DisableClayMaterial[0]);
+			glUniform1iv(glGetUniformLocation(shader.GetID(), "disableclaymaterial"), 5, &DisableClayMaterial[0]);
 			shader.setFloat("metallic", this->metalic);
 			shader.setFloat("roughness", this->roughness);
 			shader.setFloat("TilingCoeff", this->TilingCoeff);
@@ -133,7 +140,7 @@ namespace FUSIONCORE
 
 		inline void EnableClayMaterial()
 		{
-			std::fill_n(this->DisableClayMaterial, 4, 1);
+			std::fill_n(this->DisableClayMaterial, 5, 1);
 		}
 
 		//If called , there is no need to dispose the individual taxtures.
@@ -148,11 +155,12 @@ namespace FUSIONCORE
 		float roughness;
 		float metalic;
 		float TilingCoeff = 1.0f;
+		float Alpha = 1.0f;
 		glm::vec4 Albedo;
 
 	private:
 		std::map<std::string, Texture2D*> TextureMaps;
-		int DisableClayMaterial[4];
+		int DisableClayMaterial[5];
 	};
 
 }

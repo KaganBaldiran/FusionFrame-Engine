@@ -44,15 +44,15 @@ namespace FUSIONCORE
 		VBO();
 		GLuint Bind();
 		GLuint GetBufferID();
+		inline void SetVBOstate(bool IsChanged) { this->IsChanged = IsChanged; };
+		inline const bool IsVBOchanged() { return this->IsChanged; };
 		~VBO();
 
 	private:
 
 		GLuint vbo;
-
+		bool IsChanged;
 	};
-
-
 
 	class VAO
 	{

@@ -19,10 +19,12 @@ uniform sampler2D texture_diffuse0;
 uniform sampler2D texture_normal0;
 uniform sampler2D texture_specular0;
 uniform sampler2D texture_metalic0;
+uniform sampler2D texture_alpha0;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_normal1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_metalic1;
+uniform sampler2D texture_alpha1;
 
 uniform vec4 albedo;
 uniform float metallic;
@@ -46,7 +48,7 @@ uniform sampler2D LUT;
 uniform bool EnableIBL;
 uniform float ao;
 
-uniform int disableclaymaterial[4];
+uniform int disableclaymaterial[5];
 
 uniform float ModelID;
 uniform float ObjectScale;
@@ -156,6 +158,21 @@ float DistributionGGX(vec3 N , vec3 H, float roughness)
 void main()
 {
     vec3 texturecolor;
+
+    float AlphaMap;
+    if(disableclaymaterial[4] == 1)
+    {
+      AlphaMap = 1.0f;
+    }
+    else
+    {
+      AlphaMap = texture(texture_alpha0, FinalTexCoord * TilingCoeff).r;
+    }
+
+    if(AlphaMap < 0.5f)
+    {
+      discard;
+    }
      
     if(disableclaymaterial[0] == 1)
     {

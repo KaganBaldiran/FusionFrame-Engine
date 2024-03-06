@@ -80,6 +80,7 @@ void FUSIONCORE::Buffer3D::Unbind()
 FUSIONCORE::VBO::VBO()
 {
 	glGenBuffers(1, &vbo);
+	IsChanged = false;
 }
 
 GLuint FUSIONCORE::VBO::Bind()
@@ -101,7 +102,6 @@ FUSIONCORE::VBO::~VBO()
 FUSIONCORE::VAO::VAO()
 {
 	glGenVertexArrays(1, &vao);
-
 }
 
 GLuint FUSIONCORE::VAO::Bind()

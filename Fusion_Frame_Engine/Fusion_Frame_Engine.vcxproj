@@ -154,6 +154,7 @@
     <None Include="Shaders\OmniShadowMap.vs" />
     <None Include="Shaders\PBR.fs" />
     <None Include="Shaders\PBR.vs" />
+    <None Include="Shaders\PBRinstanced.vs" />
     <None Include="Shaders\PreFilterCubeMap.fs" />
     <None Include="Shaders\PreFilterCubeMap.vs" />
   </ItemGroup>

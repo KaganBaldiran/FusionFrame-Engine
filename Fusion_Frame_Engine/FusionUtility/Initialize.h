@@ -22,7 +22,9 @@ namespace FUSIONUTIL
 		std::unique_ptr<FUSIONCORE::Shader> CubeMapShader;
 		std::unique_ptr<FUSIONCORE::Shader> OmniShadowMapShader;
 		std::unique_ptr<FUSIONCORE::Shader> GbufferShader;
+		std::unique_ptr<FUSIONCORE::Shader> InstancedGbufferShader;
 		std::unique_ptr<FUSIONCORE::Shader> DeferredPBRshader;
+		std::unique_ptr<FUSIONCORE::Shader> InstancedPBRshader;
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);

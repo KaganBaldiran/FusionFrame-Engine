@@ -22,12 +22,35 @@ namespace FUSIONCORE
 		int m_BoneIDs[MAX_BONE_INFLUENCE];
 		float m_Weights[MAX_BONE_INFLUENCE];
 		HalfEdge* halfEdge;
+
+		bool operator==(const Vertex &other) const
+		{
+			return Position.x == other.Position.x &&
+				   Position.y == other.Position.y &&
+				   Position.z == other.Position.z;
+		}
+	};
+
+	struct VertexHash {
+		size_t operator()(const Vertex& v) const
+		{
+			size_t h1 = std::hash<float>()(v.Position.x);
+			size_t h2 = std::hash<float>()(v.Position.y);
+			size_t h3 = std::hash<float>()(v.Position.z);
+
+			size_t seed = 0;
+			seed ^= h1 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			seed ^= h3 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+			return seed;
+		}
 	};
 
 	inline glm::vec3 TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos)
 	{
 		glm::vec4 transformed = Matrix * glm::vec4(VertexPos, 1.0f);
-		return glm::vec3(transformed.x, transformed.y, transformed.z);
+		return glm::vec3(transformed);
 	}
 
 	inline glm::vec3 FindNormal(std::vector<Vertex> Vertices)

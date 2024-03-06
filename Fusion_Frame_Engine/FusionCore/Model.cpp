@@ -131,6 +131,82 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<voi
     }
 }
 
+void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO &InstanceDataVBO,size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONCORE::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setInt("OmniShadowMapCount", ShadowMaps.size());
+        for (size_t i = 0; i < ShadowMaps.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + 8 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
+            glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
+            glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
+        }
+        shader.setBool("EnableAnimation", false);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetConvDiffCubeMap());
+        shader.setInt("ConvDiffCubeMap", 1);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetPreFilteredEnvMap());
+        shader.setInt("prefilteredMap", 2);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
+        shader.setInt("LUT", 3);
+
+        shader.setBool("EnableIBL", true);
+        shader.setFloat("ao", EnvironmentAmbientAmount);
+
+        material.SetMaterialShader(shader);
+
+        InstanceDataVBO.Bind();
+        glEnableVertexAttribArray(7);
+        glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glVertexAttribDivisor(7, 1); // Tell OpenGL this is an instanced vertex attribute.
+
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawInstanced(camera, shader, shaderPrep,InstanceCount, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        FUSIONCORE::SendLightsShader(shader);
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        material.SetMaterialShader(shader);
+
+        if (InstanceDataVBO.IsVBOchanged())
+        {
+            InstanceDataVBO.Bind();
+            glEnableVertexAttribArray(7);
+            glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glVertexAttribDivisor(7, 1);
+            InstanceDataVBO.SetVBOstate(false);
+        }
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawInstanced(camera, shader, shaderPrep, InstanceCount, EnvironmentAmbientAmount);
+    }
+}
+
 void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {

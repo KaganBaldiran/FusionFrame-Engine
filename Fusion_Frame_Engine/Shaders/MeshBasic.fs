@@ -37,7 +37,7 @@ uniform float FogIntesityUniform;
 uniform vec3 FogColor;
 uniform vec3 EnvironmentRadiance;
 
-uniform int disableclaymaterial[4];
+uniform int disableclaymaterial[5];
 
 uniform float ModelID;
 

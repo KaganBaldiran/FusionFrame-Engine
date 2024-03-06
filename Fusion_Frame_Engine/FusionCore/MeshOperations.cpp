@@ -1,6 +1,6 @@
 #include "MeshOperations.h"
 #include "fstream"
-#include "assimp/Exporter.hpp"
+#include <chrono>
 
 FUSIONCORE::HalfEdge* CreateNewEdge(FUSIONCORE::Vertex* vertex1 , FUSIONCORE::Vertex* vertex2 , 
 	                                std::vector<std::shared_ptr<FUSIONCORE::HalfEdge>> &HalfEdges , 
@@ -13,26 +13,6 @@ FUSIONCORE::HalfEdge* CreateNewEdge(FUSIONCORE::Vertex* vertex1 , FUSIONCORE::Ve
 	looseEdgePtr->EndingVertex = vertex2;
 	vertex1->halfEdge = looseEdgePtr;
 	return looseEdgePtr;
-}
-
-void FUSIONCORE::MESHOPERATIONS::TestAssimp(const char* FilePathImport , const char* FilePathExport)
-{
-	Assimp::Importer importer;
-	int flags;
-	flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
-	const aiScene* scene = importer.ReadFile(FilePathImport, flags);
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-	{
-		std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
-		return;
-	}
-
-	Assimp::Exporter exporter;
-
-	aiReturn result = exporter.Export(scene, "obj", FilePathExport);
-	if (result != AI_SUCCESS) {
-		return;
-	}
 }
 
 bool FUSIONCORE::MESHOPERATIONS::ExportObj(const char* FilePath, FUSIONCORE::Model& model)
@@ -100,7 +80,8 @@ bool FUSIONCORE::MESHOPERATIONS::ExportObj(const char* FilePath, FUSIONCORE::Mod
 	return true;
 }
 
-void calculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices) {
+void FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices) 
+{
 	for (size_t i = 0; i < indices.size(); i += 3) {
 		unsigned int i0 = indices[i];
 		unsigned int i1 = indices[i + 1];
@@ -208,7 +189,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 				{
 					if (line.find('vn') != std::string::npos)
 					{
-						LOG(line);
+						//LOG(line);
 						glm::vec3 Normal;
 						std::vector<std::string> NormalsString;
 						std::string TypeName("vn");
@@ -234,7 +215,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 						{
 							Normal[i] = std::stof(NormalsString[i]);
 						}
-						LOG("Normal: " << Vec3<float>(Normal));
+						//LOG("Normal: " << Vec3<float>(Normal));
 						Normals[CurrentMesh].push_back(glm::normalize(Normal));
 					}
 					else if (line.find('vt') != std::string::npos)
@@ -350,7 +331,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 		for (size_t i = 0; i < MeshVertecies.size(); i++)
 		{
 			model.Meshes.emplace_back(MeshVertecies[i], MeshIndicies[i], MeshFaces[i], textures);
-			calculateTangentBitangent(model.Meshes.back().GetVertices(), model.Meshes.back().GetIndices());
+			CalculateTangentBitangent(model.Meshes.back().GetVertices(), model.Meshes.back().GetIndices());
 		}
 		model.FindGlobalMeshScales();
 	}
@@ -634,7 +615,7 @@ void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Mesh& Mesh, int lev
 	}
 	else
 	{
-		//SmoothObject(Mesh);
+		SmoothObject(Mesh);
 		Mesh.ConstructMesh();
 	}
 }
@@ -643,4 +624,119 @@ void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Mesh& Mesh, int lev
 
 void FUSIONCORE::MESHOPERATIONS::CollapseDecimation(FUSIONCORE::Mesh& Mesh, int level)
 {
+}
+
+std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(FUSIONCORE::Mesh& Mesh, unsigned int PointCount, unsigned int seed)
+{
+	auto &MeshFaces = Mesh.GetFaces();
+	auto& MeshVertices = Mesh.GetVertices();
+	size_t CastedPointCount = 0;
+	std::vector<glm::vec3> Points;
+
+	while (CastedPointCount < PointCount)
+	{
+		for (size_t i = 0; i < MeshFaces.size(); i++)
+		{
+			auto& face = MeshFaces[i];
+			auto& vertex1 = MeshVertices[face->Indices[0]];
+			auto& vertex2 = MeshVertices[face->Indices[1]];
+			auto& vertex3 = MeshVertices[face->Indices[2]];
+
+			std::mt19937 gen(seed);
+			std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+			double s = dis(gen);
+			double t = dis(gen);
+
+			glm::vec3 u = vertex1->Position;
+			glm::vec3 v = vertex2->Position;
+			glm::vec3 w = vertex3->Position;
+
+			if (s + t <= 1) 
+			{
+				Points.push_back(glm::vec3(u.x + s * (v.x - u.x) + t * (w.x - u.x),
+					                       u.y + s * (v.y - u.y) + t * (w.y - u.y),
+					                       u.z + s * (v.z - u.z) + t * (w.z - u.z)));
+			}
+			else 
+			{
+				s = 1 - s;
+				t = 1 - t;
+				Points.push_back(glm::vec3(u.x + s * (w.x - u.x) + t * (v.x - u.x),
+					                       u.y + s * (w.y - u.y) + t * (v.y - u.y),
+					                       u.z + s * (w.z - u.z) + t * (v.z - u.z)));
+			}
+
+			CastedPointCount++;
+			if (CastedPointCount >= PointCount)
+			{
+				break;
+			}
+		}
+	}
+	return Points;
+}
+
+std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(FUSIONCORE::Mesh& Mesh, FUSIONCORE::WorldTransform& Transformation, unsigned int PointCount, unsigned int seed)
+{
+	auto& MeshFaces = Mesh.GetFaces();
+	auto& MeshVertices = Mesh.GetVertices();
+	auto ModelMatrix = Transformation.GetModelMat4();
+	size_t CastedPointCount = 0;
+	std::vector<glm::vec3> Points;
+	std::mt19937 gen(seed);
+
+	while (CastedPointCount < PointCount)
+	{
+		for (size_t i = 0; i < MeshFaces.size(); i++)
+		{
+			auto& face = MeshFaces[i];
+			auto& vertex1 = MeshVertices[face->Indices[0]];
+			auto& vertex2 = MeshVertices[face->Indices[1]];
+			auto& vertex3 = MeshVertices[face->Indices[2]];
+
+			std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+			double s = dis(gen);
+			double t = dis(gen);
+
+			glm::vec3 u = vertex1->Position;
+			glm::vec3 v = vertex2->Position;
+			glm::vec3 w = vertex3->Position;
+
+			if (s + t <= 1)
+			{
+				glm::vec3 Point = glm::vec3(u.x + s * (v.x - u.x) + t * (w.x - u.x),
+					u.y + s * (v.y - u.y) + t * (w.y - u.y),
+					u.z + s * (v.z - u.z) + t * (w.z - u.z));
+				Points.push_back(FUSIONCORE::TranslateVertex(ModelMatrix, Point));
+			}
+			else
+			{
+				s = 1 - s;
+				t = 1 - t;
+				glm::vec3 Point = glm::vec3(u.x + s * (w.x - u.x) + t * (v.x - u.x),
+					u.y + s * (w.y - u.y) + t * (v.y - u.y),
+					u.z + s * (w.z - u.z) + t * (v.z - u.z));
+				Points.push_back(FUSIONCORE::TranslateVertex(ModelMatrix, Point));
+			}
+
+			CastedPointCount++;
+			if (CastedPointCount >= PointCount)
+			{
+				break;
+			}
+		}
+	}
+	return Points;
+}
+
+void FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO, std::vector<glm::vec3> &InstanceData)
+{
+	size_t InstanceCount = InstanceData.size();
+
+	DestVBO.Bind();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * InstanceCount, &InstanceData[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	DestVBO.SetVBOstate(true);
 }

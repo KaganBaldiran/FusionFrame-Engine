@@ -22,7 +22,7 @@ int Application::Run()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/hayloft_2k.hdr", 2048, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/hayloft_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode->width, mode->height);
@@ -59,6 +59,11 @@ int Application::Run()
 	FUSIONCORE::Texture2D bearNormal("Resources\\taunt\\textures\\bear_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D bearSpecular("Resources\\taunt\\textures\\bear_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
+	FUSIONCORE::Texture2D ShrubDiffuse("Resources\\models\\shrub\\textures\\shrub_04_diff_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D ShrubNormal("Resources\\models\\shrub\\textures\\shrub_04_nor_dx_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D ShrubSpecular("Resources\\models\\shrub\\textures\\shrub_04_rough_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+
+
 	int shadowMapSize = 512;
 
 	FUSIONCORE::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
@@ -83,7 +88,7 @@ int Application::Run()
 
 	std::vector<FUSIONCORE::Light> Lights;
 
-	for (size_t i = 0; i < 60; i++)
+	for (size_t i = 0; i < 50; i++)
 	{
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), RandomIntensity(engine));
 	}
@@ -139,13 +144,16 @@ int Application::Run()
 	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
+	std::unique_ptr<FUSIONCORE::Model> shrub = std::make_unique<FUSIONCORE::Model>("Resources\\models\\shrub\\SingleShrub.obj");
+
+	shrub->GetTransformation().ScaleNoTraceBack(glm::vec3(24.0f));
 
 	FUSIONCORE::Model subdModel("Resources\\subDModel.obj");
 	subdModel.GetTransformation().ScaleNoTraceBack({ 9.0f,9.0f,9.0f });
 	subdModel.GetTransformation().TranslateNoTraceBack({ 22.0f,6.0f,-9.0f });
 
 	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
-	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 3);
+	//FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
 	
 
 	//FUSIONPHYSICS::MESHOPERATIONS::SmoothObject(subdModel.Meshes[0]);
@@ -155,9 +163,8 @@ int Application::Run()
 		FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(sofa->Meshes[i] , 3);
 	}*/
 	
-	FUSIONCORE::Model IMPORTTEST;
-	FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\shovel2.obj", IMPORTTEST);
-	IMPORTTEST.GetTransformation().Translate({ 7.0f,7.0f,0.0f });
+
+	
 
 	//FUSIONPHYSICS::MESHOPERATIONS::LoopSubdivision(IMPORTTEST.Meshes[0], 1);
 
@@ -206,6 +213,11 @@ int Application::Run()
 	AnimationModelMaterial.PushTextureMap(TEXTURE_NORMAL0, bearNormal);
 	AnimationModelMaterial.roughness = 0.8f;
 
+	FUSIONCORE::Material ShrubMaterial;
+	ShrubMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShrubDiffuse);
+	ShrubMaterial.PushTextureMap(TEXTURE_NORMAL0, ShrubNormal);
+	ShrubMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShrubSpecular);
+
 	model1->GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 	model1->GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 	MainCharac->GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
@@ -225,15 +237,17 @@ int Application::Run()
 	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-20.0f });
 
 	FUSIONPHYSICS::CollisionBox3DAABB Box1(model1->GetTransformation(), { 1.0f,1.0f,1.0f });
-	FUSIONPHYSICS::CollisionBox3DAABB StoveBox(Stove->GetTransformation(), { 1.0f,1.1f,1.0f });
+	FUSIONPHYSICS::CollisionBox3DAABB StoveBox(Stove->GetTransformation(), { 1.2f,1.1f,1.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB tryBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.7f,0.8f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane2({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane floorBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 
-
-
+	FUSIONCORE::Model IMPORTTEST("Resources\\floor\\grid.obj");
+	//FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\floor\\grid.obj", IMPORTTEST);
+	//IMPORTTEST.GetTransformation().Translate({ 7.0f,7.0f,0.0f });
+	IMPORTTEST.GetTransformation().ScaleNoTraceBack({ 0.05f,0.05f,0.05f });
 
 	Plane.GetTransformation().Scale({ 5.0f,5.0f ,5.0f });
 	Plane2.GetTransformation().Scale({ 2.0f,2.0f ,2.0f });
@@ -257,8 +271,8 @@ int Application::Run()
 	Stove->PushChild(&StoveBox);
 	Stove->UpdateChildren();
 
-	StoveBox.GetTransformation().ScaleNoTraceBack({ 0.5f,0.9f ,1.0f });
-
+	StoveBox.GetTransformation().ScaleNoTraceBack({ 0.5f,0.8f ,1.0f });
+	StoveBox.GetTransformation().Translate({ 0.4f,-0.2f,-1.3f });
 
 	glm::vec4 BackGroundColor(FUSIONCORE::Color(FF_COLOR_AZURE).GetRGBA());
 
@@ -311,11 +325,17 @@ int Application::Run()
 	FUSIONCORE::Animation RunningAnimation("Resources\\taunt\\Running.fbx", &animationModel);
 	FUSIONCORE::Animator animator(&IdleAnimation);
 
-
-	FUSIONPHYSICS::CollisionBox3DAABB Box0(animationModel.GetTransformation(), { 0.4f,0.9f,1.0f });
-	animationModel.PushChild(&Box0);
-	Box0.GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
+	FUSIONCORE::Model Capsule("Resources\\Sphere.obj");
+	FUSIONPHYSICS::CollisionBox Capsule0(Capsule.Meshes[0], Capsule.GetTransformation());
+	Capsule0.GetTransformation().ScaleNoTraceBack(glm::vec3(6.0f, 5.5f, 6.0f));
+	Capsule0.GetTransformation().TranslateNoTraceBack({ 15.0f,5.0f,0.0f});
+	animationModel.PushChild(&Capsule0);
+	Capsule0.GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 	models.push_back(&animationModel);
+
+	FUSIONCORE::VBO instanceVBO;
+	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 2000, 107);
+	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(instanceVBO, DistibutedPoints);
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
@@ -331,18 +351,8 @@ int Application::Run()
 
 	float PreviousZoom = 0.0f;
 
-	camera3d.SetMinMaxZoom(true,-6.0f, 6.0f);
+	camera3d.SetMinMaxZoom(true,-8.0f, 8.0f);
 	camera3d.SetZoomSensitivity(3.0f);
-
-	/*for (size_t mesh = 0; mesh < grid->Meshes.size(); mesh++)
-	{
-		auto& vertices = grid->Meshes[mesh].GetVertices();
-		for (size_t face = 0; face < vertices.size(); face++)
-		{
-			LOG(face << " use count : " << vertices[face].use_count());
-			
-		}
-	}*/
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -371,33 +381,25 @@ int Application::Run()
 		bool Collision = false;
 		glm::vec3 direction;
 
-		/*if (FUSIONPHYSICS::IsCollidingSAT(tryBox, Box0))
+		
+		if (FUSIONPHYSICS::IsCollidingSAT(SofaBox, Capsule0))
 		{
-			LOG("tryBox");
 			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Box0.GetTransformation().Position - tryBox.GetTransformation().Position, tryBox.GetTransformation().GetModelMat4()).second;
-		}*/
-		if (FUSIONPHYSICS::IsCollidingSAT(SofaBox, Box0))
-		{
-			LOG("sofa");
-			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Box0.GetTransformation().Position - SofaBox.GetTransformation().Position, Box0.GetTransformation().GetModelMat4()).second;
+			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position - SofaBox.GetTransformation().Position, Capsule0.GetTransformation()).second;
 		}
-		if (FUSIONPHYSICS::IsCollidingSAT(Box1, Box0))
+		if (FUSIONPHYSICS::IsCollidingSAT(Box1, Capsule0))
 		{
-			LOG("Box1");
 			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Box0.GetTransformation().Position - Box1.GetTransformation().Position, Box0.GetTransformation().GetModelMat4()).second;
+			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position - Box1.GetTransformation().Position, Capsule0.GetTransformation()).second;
 		}
-		if (FUSIONPHYSICS::IsCollidingSAT(StoveBox, Box0))
+		if (FUSIONPHYSICS::IsCollidingSAT(StoveBox, Capsule0))
 		{
-			LOG("StoveBox");
 			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Box0.GetTransformation().Position - StoveBox.GetTransformation().Position, Box0.GetTransformation().GetModelMat4()).second;
+			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position - StoveBox.GetTransformation().Position, Capsule0.GetTransformation()).second;
 		}
 
 		static bool FirstFloorTouch = true;
-		if (!FUSIONPHYSICS::IsCollidingSAT(floorBox, Box0))
+		if (!FUSIONPHYSICS::IsCollidingSAT(floorBox, Capsule0))
 		{
 			if (FirstFloorTouch)
 			{
@@ -612,7 +614,7 @@ int Application::Run()
 		Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
 		//camera3d.Orientation = SofaBox.GetLocalNormals()[4];
-		camera3d.UpdateCameraMatrix(50.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 180.0f, WindowSize);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 180.0f, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
@@ -620,20 +622,16 @@ int Application::Run()
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
 
-		
 
 		auto animationMatrices = animator.GetFinalBoneMatrices();
+		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
+		shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size(), AOamount);
 
 		model1->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		MainCharac->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		grid->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FloorMaterial, shadowMaps, AOamount);
 		Stove->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, MirrorMaterial, shadowMaps, AOamount);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		
 		animationModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, AnimationModelMaterial, shadowMaps, animationMatrices, AOamount);
 		
 		
@@ -642,12 +640,8 @@ int Application::Run()
 		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, redMaterial, shadowMaps, AOamount);
 		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, SofaMaterial, shadowMaps, AOamount);
-		IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-		subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-		sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		Capsule.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+		
 
 		Gbuffer.Unbind();
 		ScreenFrameBuffer.Bind();
@@ -676,7 +670,7 @@ int Application::Run()
 			{
 				Lights[i].Draw(camera3d, *Shaders.LightShader);
 			}
-			Box0.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			Capsule0.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			Box1.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			SofaBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			StoveBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
@@ -684,6 +678,12 @@ int Application::Run()
 			Plane.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			Plane2.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+			subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+			sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 #endif
 		
@@ -724,7 +724,7 @@ int Application::Run()
 
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();
-	Box0.GetBoxMesh()->Clean();
+	Capsule0.GetBoxMesh()->Clean();
 	Box1.GetBoxMesh()->Clean();
 	StoveBox.GetBoxMesh()->Clean();
 	tryBox.GetBoxMesh()->Clean();
@@ -739,6 +739,7 @@ int Application::Run()
 	MirrorMaterial.Clean();
 	WallMaterial.Clean();
 	AnimationModelMaterial.Clean();
+	ShrubMaterial.Clean();
 
 	glfwTerminate();
 	LOG_INF("Window terminated!");

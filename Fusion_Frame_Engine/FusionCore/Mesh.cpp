@@ -219,8 +219,6 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	//LOG("Mesh: " << this->MeshName << " Texture Count: " << textures.size());
-
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
 	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
@@ -246,6 +244,26 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	material.SetMaterialShader(shader);
 	
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations,size_t PrimCount, float EnvironmentAmbientAmount)
+{
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
+	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
+	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
+
+	glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0,PrimCount);
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();

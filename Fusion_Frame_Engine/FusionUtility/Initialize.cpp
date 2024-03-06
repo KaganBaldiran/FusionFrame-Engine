@@ -31,7 +31,6 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height, const char* Wind
 	}
 	LOG_INF("Window initialized!");
 
-
 	glfwMakeContextCurrent(window);
 
 	if (glewInit() != GLEW_OK)
@@ -68,6 +67,8 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.OmniShadowMapShader = std::make_unique<FUSIONCORE::Shader>("Shaders/OmniShadowMap.vs", "Shaders/OmniShadowMap.gs", "Shaders/OmniShadowMap.fs");
 	shaders.GbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/Gbuffer.vs", "Shaders/Gbuffer.fs");
 	shaders.DeferredPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs", "Shaders/DeferredPBR.fs");
+	shaders.InstancedPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/PBR.fs");
+	shaders.InstancedGbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/Gbuffer.fs");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 }
@@ -87,4 +88,6 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.OmniShadowMapShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.GbufferShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.DeferredPBRshader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.InstancedGbufferShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.InstancedPBRshader->GetID());
 }

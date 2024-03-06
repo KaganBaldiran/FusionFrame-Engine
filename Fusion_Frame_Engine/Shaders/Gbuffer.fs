@@ -14,10 +14,12 @@ uniform sampler2D texture_diffuse0;
 uniform sampler2D texture_normal0;
 uniform sampler2D texture_specular0;
 uniform sampler2D texture_metalic0;
+uniform sampler2D texture_alpha0;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_normal1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_metalic1;
+uniform sampler2D texture_alpha1;
 
 uniform vec4 albedo;
 uniform float metallic;
@@ -25,12 +27,27 @@ uniform float roughness;
 
 uniform float TilingCoeff;
 
-uniform int disableclaymaterial[4];
+uniform int disableclaymaterial[5];
 
 void main()
 {
+    
+    float AlphaMap;
+    if(disableclaymaterial[4] == 1)
+    {
+      AlphaMap = 1.0f;
+    }
+    else
+    {
+      AlphaMap = texture(texture_alpha0, FinalTexCoord * TilingCoeff).r;
+    }
+
+    if(AlphaMap < 0.5f)
+    {
+      discard;
+    }
+
     vec3 texturecolor;
-     
     if(disableclaymaterial[0] == 1)
     {
       texturecolor = albedo.rgb;
@@ -77,7 +94,6 @@ void main()
 
     AlbedoSpecularPass = vec4(texturecolor,1.0f);
     NormalMetalicPass = vec4(resultnormal,1.0f);
-
     PositionDepthPass = vec4(CurrentPos,1.0f);
     MetalicRoughnessPass = vec4(roughnessmap ,metalicmap,1.0f,1.0f);
 }

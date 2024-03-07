@@ -207,11 +207,10 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
     }
 }
 
-void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        FUSIONCORE::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
@@ -224,7 +223,39 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferred(camera, shader, shaderPrep, cubemap, material, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setBool("EnableAnimation", false);
+        ShaderPreperations();
+        };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setBool("EnableAnimation", false);
+        ShaderPreperations();
+        };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawDeferredImportedMaterial(camera, shader, shaderPrep, EnvironmentAmbientAmount);
     }
 }
 
@@ -663,7 +694,7 @@ void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& verti
         {
             BoneInfo newBone;
             newBone.id = boneCounter;
-            newBone.OffsetMat = this->ConvertMatrixToGLMFormat(mesh->mBones[i]->mOffsetMatrix);
+            newBone.OffsetMat = ConvertMatrixToGLMFormat(mesh->mBones[i]->mOffsetMatrix);
             Bones[boneName] = newBone;
             boneID = boneCounter;
             boneCounter++;
@@ -706,7 +737,7 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     {
         aiString str;
         mat->GetTexture(type, i, &str);
-
+        
         bool skip = false;
         for (unsigned int j = 0; j < textures_loaded.size(); j++)
         {
@@ -731,7 +762,7 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
                 FilePath += "/" + std::string(str.C_Str());
             }
             
-            Texture2D texture(FilePath.c_str(), GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, false);
+            Texture2D texture(FilePath.c_str(), GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
             texture.PbrMapType = typeName;
 
             Destination.push_back(texture);

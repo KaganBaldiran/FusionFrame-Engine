@@ -81,7 +81,8 @@ namespace FUSIONCORE
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
 		void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, size_t PrimCount, float EnvironmentAmbientAmount = 0.2f);
-		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);
+		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount = 0.2f);
+		void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount = 0.2f);
 
 		void ConstructHalfEdges();
 
@@ -94,10 +95,12 @@ namespace FUSIONCORE
 		void Clean()
 		{
 			ObjectBuffer.clean();
-
 			for (auto it = ImportedMaterial.GetTextureMaps().begin(); it != ImportedMaterial.GetTextureMaps().end(); ++it)
 			{
-				it->second->Clear();
+				if (it->second->GetTextureState() == FF_TEXTURE_SUCCESS)
+				{
+				   it->second->Clear();
+				}
 			}			
 		}
 
@@ -109,22 +112,9 @@ namespace FUSIONCORE
 		inline std::unordered_map<glm::vec3, int, Vec3Hash>& GetDuplicateVertexMap() { return this->DuplicateVertexMap; };
 
 		std::vector<std::shared_ptr<Face>> Faces;
-	};
 
-	class TextureObj
-	{
-	public:
-		TextureObj();
-		~TextureObj();
-
-		void Draw(Camera2D& camera, GLuint shader, Texture2D& texture);
-		void Draw(Camera3D& camera, GLuint shader, Texture2D& texture, std::function<void()> ShaderPreperations);
-
-		WorldTransform* GetTransformation() { return &this->transformation; };
-
-	protected:
-		Buffer ObjectBuffer;
-		WorldTransform transformation;
+		//Copy other meshes data and construct the mesh again. Imported material textures are also copied and share different ids.
+		void CopyMesh(Mesh& other);
 	};
 }
 

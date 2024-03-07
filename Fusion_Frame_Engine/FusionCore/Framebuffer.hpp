@@ -265,7 +265,7 @@ namespace FUSIONCORE
 		void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f, bool DOFenabled = false, float DOFdistance = 0.09f, float DOFintensity = 1.0f)
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f)
 		{
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -295,10 +295,7 @@ namespace FUSIONCORE
 			shader.setVec3("CameraPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
-			shader.setFloat("DOFdistance", DOFdistance);
-			shader.setBool("DOFenabled", DOFenabled);
-			shader.setFloat("DOFintensity", DOFintensity);
-
+		
 			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
 			shader.setInt("ConvDiffCubeMap", 4);

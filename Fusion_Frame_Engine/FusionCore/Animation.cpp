@@ -67,7 +67,7 @@ void FUSIONCORE::Animation::ReadHeirarchyData(BoneNodeData& dest, const aiNode* 
     assert(src);
 
     dest.name = src->mName.data;
-    dest.transformation = Model::ConvertMatrixToGLMFormat(src->mTransformation);
+    dest.transformation = ConvertMatrixToGLMFormat(src->mTransformation);
     dest.childrenCount = src->mNumChildren;
 
     for (int i = 0; i < src->mNumChildren; i++)

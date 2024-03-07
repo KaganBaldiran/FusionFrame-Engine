@@ -55,4 +55,17 @@ extern std::vector<std::string> logTraceBack;
            logFile << log;  \
        } \
        logFile.close(); \
+}
+
+class FFexception : public std::exception
+{
+public:
+
+    FFexception(const std::string& message) : message(message) {}
+    const char* what() const noexcept override
+    {
+        return message.c_str();
     }
+private:
+    std::string message;
+};

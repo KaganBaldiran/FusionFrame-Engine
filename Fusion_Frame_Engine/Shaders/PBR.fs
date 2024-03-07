@@ -31,10 +31,14 @@ uniform float metallic;
 uniform float roughness;
 
 #define MAX_LIGHT_COUNT 100
+#define POINT_LIGHT 0x56400
+#define DIRECTIONAL_LIGHT 0x56401
+#define SPOT_LIGHT 0x56402
 
 uniform vec3 LightPositions[MAX_LIGHT_COUNT];
 uniform vec3 LightColors[MAX_LIGHT_COUNT];
 uniform float LightIntensities[MAX_LIGHT_COUNT];
+uniform int LightTypes[MAX_LIGHT_COUNT];
 uniform int LightCount;
 
 uniform float FogIntesityUniform;
@@ -229,11 +233,24 @@ void main()
       vec3 Lo = vec3(0.0);
       for(int i = 0; i < LightCount;++i)
       {
-          vec3 L = normalize(LightPositions[i] - CurrentPos);
-          vec3 H = normalize(V + L);
-          float distance = length(LightPositions[i] - CurrentPos);
-          float attenuation = 1.0 / (distance * distance);
-          vec3 radiance = LightColors[i].xyz * attenuation;
+          vec3 L;
+          vec3 H;
+          vec3 radiance;
+
+          if(LightTypes[i] == POINT_LIGHT)
+          {
+            L = normalize(LightPositions[i] - CurrentPos);
+            H = normalize(V + L);
+            float distance = length(LightPositions[i] - CurrentPos);
+            float attenuation = 1.0 / (distance * distance);
+            radiance = LightColors[i].xyz * attenuation;
+          }
+          else if(LightTypes[i] == DIRECTIONAL_LIGHT)
+          {
+            L = normalize(LightPositions[i]);
+            H = normalize(V + L); 
+            radiance = LightColors[i].xyz;
+          }
 
           float NDF = DistributionGGX(N,H,roughnessmap);
           float G = GeometrySmith(N,V,L,roughnessmap);

@@ -99,6 +99,7 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 {
 	this->FarPlane = far;
 	this->NearPlane = near;
+	this->FOV = fovDegree;
 
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->RatioMat = glm::scale(glm::mat4(1.0f), glm::vec3(GetScreenRatio(windowSize).x, GetScreenRatio(windowSize).y, 1.0f));

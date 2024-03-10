@@ -66,9 +66,19 @@ namespace FUSIONCORE
 	private:
 
 		GLuint vao;
-
 	};
 
+	class UBO
+	{
+	public:
+		UBO();
+		GLuint Bind();
+		GLuint GetUBOID();
+		~UBO();
+
+	private:
+		GLuint ubo;
+	};
 
 	class EBO
 	{
@@ -88,4 +98,5 @@ namespace FUSIONCORE
 	void BindVBONull();
 	void BindVAONull();
 	void BindEBONull();
+	void BindUBONull();
 }

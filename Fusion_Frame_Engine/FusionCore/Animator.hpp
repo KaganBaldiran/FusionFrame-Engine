@@ -5,6 +5,10 @@
 
 namespace FUSIONCORE
 {
+	extern std::unique_ptr<UBO> AnimationUniformBufferObject;
+
+	void InitializeAnimationUniformBuffer();
+
 	class Animator
 	{
 	public: 

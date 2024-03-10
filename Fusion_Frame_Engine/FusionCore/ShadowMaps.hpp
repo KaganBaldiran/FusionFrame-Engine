@@ -8,9 +8,28 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.hpp"
+#include "Light.hpp"
+#define MAX_SHADOW_MAP_COUNT glm::max(int(MAX_LIGHT_COUNT / 5.0f),1)
+#define MAX_CASCADES 16
 
 namespace FUSIONCORE
 {
+	struct ShadowMapsData {
+		glm::vec3 OmnilightPositions[MAX_SHADOW_MAP_COUNT];
+		glm::vec3 CascadedlightPositions[MAX_SHADOW_MAP_COUNT];
+		GLuint CascadedShadowMaps[MAX_SHADOW_MAP_COUNT];
+		float CascadeDistances[MAX_CASCADES];
+		int CascadeCount;
+		int CascadedShadowMapCount;
+		int OmniShadowMapCount;
+	};
+
+	//Storing large amounts of data related to shadow maps
+	//extern UBO ShadowMapsUniformBufferObject;
+	extern ShadowMapsData ShadowMapsGlobalUniformData;
+
+	//void InitializeShadowMapsUniformBuffer();
+
 	class OmniShadowMap
 	{
 	public:
@@ -37,7 +56,6 @@ namespace FUSIONCORE
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
 			}
 
 			glGenFramebuffers(1, &depthMapFBO);
@@ -45,11 +63,11 @@ namespace FUSIONCORE
 			//glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->ShadowMapId, 0);
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->ShadowMapId, 0);
 
-			//glDrawBuffer(GL_NONE);
-			//glReadBuffer(GL_NONE);
-
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+			ShadowMapsGlobalUniformData.OmniShadowMapCount++;
+			ShadowMapsGlobalUniformData.CascadedShadowMaps[ID] = ShadowMapId;
 		}
 
 		void LightMatrix(glm::vec3 lightPos, GLuint shader)
@@ -73,8 +91,11 @@ namespace FUSIONCORE
 			}
 		}
 
-		void Draw(Shader &shader, glm::vec3 lightPos_i, std::vector<Model*>& models, Camera3D& camera)
+		void Draw(Shader &shader, Light& BoundLight, std::vector<Model*>& models, Camera3D& camera)
 		{
+			glm::vec3 lightPos = BoundLight.GetLightDirectionPosition();
+			ShadowMapsGlobalUniformData.OmnilightPositions[ID] = lightPos;
+
 			glUseProgram(shader.GetID());
 			glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
 			glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
@@ -83,8 +104,8 @@ namespace FUSIONCORE
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, this->ShadowMapId);
 
-			glm::vec3 lightPos = lightPos_i;
-
+			BoundLightID = BoundLight.GetLightID();
+			
 			LightMatrix(lightPos, shader.GetID());
 
 			for (size_t i = 0; i < models.size(); i++)
@@ -130,7 +151,6 @@ namespace FUSIONCORE
 			glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
 			glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
 			glViewport(0, 0, ShadowMapSize.x, ShadowMapSize.y);
-			glEnable(GL_DEPTH_TEST);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, this->ShadowMapId);
 
@@ -151,17 +171,18 @@ namespace FUSIONCORE
 			glUseProgram(0);
 		}
 
-		void Draw(Shader shader, glm::vec3 lightPos_i, std::vector<std::unique_ptr<Model>*>& models, Camera3D& camera)
+		void Draw(Shader shader, Light& BoundLight, std::vector<std::unique_ptr<Model>*>& models, Camera3D& camera)
 		{
+			BoundLightID = BoundLight.GetLightID();
+
 			glUseProgram(shader.GetID());
 			glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
 			glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
 			glViewport(0, 0, ShadowMapSize.x, ShadowMapSize.y);
-			glEnable(GL_DEPTH_TEST);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, this->ShadowMapId);
 
-			glm::vec3 lightPos = lightPos_i;
+			glm::vec3 lightPos = BoundLight.GetLightDirectionPosition();
 
 			LightMatrix(lightPos, shader.GetID());
 
@@ -194,6 +215,7 @@ namespace FUSIONCORE
 		Vec2<float> GetShadowMapSize() { this->ShadowMapSize; };
 		float GetFarPlane() { return far; };
 		unsigned int GetID() { return ID; };
+		unsigned int GetBoundLightID() { return BoundLightID; };
 
 		~OmniShadowMap()
 		{
@@ -207,7 +229,40 @@ namespace FUSIONCORE
 		Vec2<float> ShadowMapSize;
 		glm::mat4 shadowProj;
 		float far;
-		unsigned int ID;
+		unsigned int ID , BoundLightID;
+	};
+
+
+	class CascadedDirectionalShadowMap
+	{
+	public:
+
+		CascadedDirectionalShadowMap(float width, float height , std::vector<float> ShadowCascadeLevels);
+		glm::mat4 GetLightSpaceMatrix(Camera3D& camera, const float nearPlane, const float farPlane, const glm::vec3 LightDirection);
+		std::vector<glm::mat4> GetLightSpaceMatrices(Camera3D& camera, const glm::vec3 LightDirection);
+		void Draw(Shader& CascadedShadowMapShader, Camera3D& camera, std::vector<Model*> &Models, Light& BoundLight);
+		inline ~CascadedDirectionalShadowMap()
+		{
+			glDeleteTextures(1, &ShadowMapId);
+			glDeleteFramebuffers(1, &depthMapFBO);
+			glDeleteBuffers(1, &MatricesUBO);
+			LOG_INF("Cascade Shadow map[ID:" << ID << "] disposed!");
+		}
+
+		inline GLuint GetShadowMap() { return this->ShadowMapId; };
+		inline Vec2<float> GetShadowMapSize() { this->ShadowMapSize; };
+		inline unsigned int GetID() { return ID; };
+		unsigned int GetBoundLightID() { return BoundLightID; };
+		inline const std::vector<float>& GetCascadeLevels() { return this->ShadowCascadeLevels; };
+
+	private:
+
+		GLuint ShadowMapId, depthMapFBO , MatricesUBO;
+		Vec2<float> ShadowMapSize;
+		glm::mat4 shadowProj;
+		unsigned int ID , BoundLightID;
+	
+		std::vector<float> ShadowCascadeLevels;
 	};
 
 }

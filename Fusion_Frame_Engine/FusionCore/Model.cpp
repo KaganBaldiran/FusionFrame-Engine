@@ -1,12 +1,12 @@
 #include "Model.hpp"
 #include "Light.hpp"
 #include "ShadowMaps.hpp"
+#include "Animator.hpp"
 
 unsigned int counter = 0;
 
 FUSIONCORE::Model::Model()
 {
-    LOG("USED THIS ONE");
     this->AnimationEnabled = false;
     FinalAnimationMatrices = nullptr;
     this->ModelID = counter;
@@ -169,7 +169,7 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::fun
         glEnableVertexAttribArray(7);
         glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glVertexAttribDivisor(7, 1); // Tell OpenGL this is an instanced vertex attribute.
+        glVertexAttribDivisor(7, 1); 
 
         ShaderPreperations();
     };
@@ -213,10 +213,14 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
-        for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
+
+        AnimationUniformBufferObject->Bind();
+        for (size_t i = 0; i < AnimationBoneMatrices.size(); i++)
         {
-            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
+            glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), sizeof(glm::mat4), &AnimationBoneMatrices[i]);
         }
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        
         shader.setBool("EnableAnimation", true);
         ShaderPreperations();
         };

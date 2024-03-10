@@ -8,6 +8,8 @@
 #include <memory>
 
 #define SPEED 0.5f
+#define CAMERA_CLOSE_PLANE 0.1f
+#define CAMERA_FAR_PLANE 180.0f
 const float BlendAmount = 0.04f;
 const float InterBlendAmount = 0.04f;
 
@@ -17,6 +19,8 @@ int Application::Run()
 	const int height = 1000;
 
 	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, "FusionFrame Engine");
+
+	FUSIONCORE::InitializeAnimationUniformBuffer();
 	
 	FUSIONUTIL::DefaultShaders Shaders;
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
@@ -71,6 +75,9 @@ int Application::Run()
 	FUSIONCORE::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
 	FUSIONCORE::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
 
+	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 10.0f, CAMERA_FAR_PLANE / 2.0f };
+	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(2048, 2048, shadowCascadeLevels);
+
 	Vec2<int> WindowSize;
 	Vec2<double> mousePos;
 
@@ -88,7 +95,7 @@ int Application::Run()
 
 	std::vector<FUSIONCORE::Light> Lights;
 
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 10; i++)
 	{
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), RandomIntensity(engine));
 	}
@@ -600,10 +607,12 @@ int Application::Run()
 
 		}
 
-		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0].GetTransformation()->Position, models, camera3d);
-		ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1].GetTransformation()->Position, models, camera3d);
-		ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2].GetTransformation()->Position, models, camera3d);
-		ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3].GetTransformation()->Position, models, camera3d);
+		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
+		ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
+		ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
+		ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3], models, camera3d);
+
+		sunShadowMap.Draw(*Shaders.CascadedDirectionalShadowShader, camera3d, models,Sun);
 
 		Gbuffer.Bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -616,7 +625,7 @@ int Application::Run()
 		glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 		Target = { mousePos.x / WindowSize.x , -mousePos.y / WindowSize.y, 0.0f };
 
-		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, 0.1f, 180.0f, WindowSize);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
@@ -648,7 +657,7 @@ int Application::Run()
 		ScreenFrameBuffer.Bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, 0.5f);
+		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps,sunShadowMap, cubemap, 0.5f);
 
 		glViewport(0, 0, WindowSize.x, WindowSize.y);
 
@@ -690,7 +699,7 @@ int Application::Run()
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, true, 0.5f, 3.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,true, 0.5f, 3.0f);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

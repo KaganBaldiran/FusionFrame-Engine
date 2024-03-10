@@ -136,6 +136,11 @@ void FUSIONCORE::BindEBONull()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
 }
 
+void FUSIONCORE::BindUBONull()
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 FUSIONCORE::EBO::EBO()
 {
 	glGenBuffers(1, &ebo);
@@ -157,5 +162,23 @@ FUSIONCORE::EBO::~EBO()
 	glDeleteBuffers(1, &ebo);
 }
 
+FUSIONCORE::UBO::UBO()
+{
+	glGenBuffers(1, &ubo);
+}
 
+GLuint FUSIONCORE::UBO::Bind()
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	return ubo;
+}
 
+GLuint FUSIONCORE::UBO::GetUBOID()
+{
+	return ubo;
+}
+
+FUSIONCORE::UBO::~UBO()
+{
+	glDeleteBuffers(1, &ubo);
+}

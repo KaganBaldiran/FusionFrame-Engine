@@ -1,5 +1,10 @@
 #include "Animator.hpp"
 
+namespace FUSIONCORE
+{
+	std::unique_ptr<UBO> AnimationUniformBufferObject;
+}
+
 FUSIONCORE::Animator::Animator(Animation* Animation)
 {
 	this->CurrentTime = 0.0f;
@@ -172,4 +177,13 @@ void FUSIONCORE::Animator::CalculateBoneTransform(Animation* animation, const Bo
 std::vector<glm::mat4> FUSIONCORE::Animator::GetFinalBoneMatrices()
 {
 	return FinalBoneMatrices;
+}
+
+void FUSIONCORE::InitializeAnimationUniformBuffer()
+{
+	AnimationUniformBufferObject = std::make_unique<UBO>();
+	AnimationUniformBufferObject->Bind();
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * MAX_BONE_COUNT, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, AnimationUniformBufferObject->GetUBOID());
+	BindUBONull();
 }

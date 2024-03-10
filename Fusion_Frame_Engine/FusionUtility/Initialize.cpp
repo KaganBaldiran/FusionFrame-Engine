@@ -69,6 +69,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.DeferredPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs", "Shaders/DeferredPBR.fs");
 	shaders.InstancedPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/PBR.fs");
 	shaders.InstancedGbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/Gbuffer.fs");
+	shaders.CascadedDirectionalShadowShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShader.vs", "Shaders/CascadedDirectionalShadowShader.gs", "Shaders/CascadedDirectionalShadowShader.fs");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 }
@@ -90,4 +91,5 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.DeferredPBRshader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedGbufferShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedPBRshader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.CascadedDirectionalShadowShader->GetID());
 }

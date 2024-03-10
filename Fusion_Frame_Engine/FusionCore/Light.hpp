@@ -7,7 +7,7 @@
 #include "Mesh.h"
 #include <memory>
 #include "Model.hpp"
-#define MAX_LIGHT_COUNT 500
+#define MAX_LIGHT_COUNT 100
 
 #define FF_POINT_LIGHT 0x56400
 #define FF_DIRECTIONAL_LIGHT 0x56401
@@ -35,6 +35,7 @@ namespace FUSIONCORE
 		void Draw(Camera3D& camera, Shader& shader);
 		inline int GetLightType() { return this->LightType; };
 		inline const glm::vec3& GetLightColor() { return this->LightColor; };
+		inline const int GetLightID() { return this->LightID; };
 
 		//Will return position or the direction depending on the light type. Would recommend checking type by calling GetLightType()
         //FF_DIRECTIONAL_LIGHT - Direction

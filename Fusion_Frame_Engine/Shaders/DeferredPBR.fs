@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 Depth;
   
@@ -41,11 +41,81 @@ uniform float ao;
 uniform float ModelID;
 uniform float ObjectScale;
 
-uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT];
-uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT];
+uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT / 10];
+uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT / 10];
+uniform int OmniShadowMapsLightIDS[MAX_LIGHT_COUNT];
+
+#define MAX_CASCADE_PLANE_COUNT 16
+uniform int CascadeCount;
+
+uniform sampler2DArray SunShadowMap;
+uniform float CascadeShadowPlaneDistances[MAX_CASCADE_PLANE_COUNT];
+uniform mat4 ViewMatrix;
+uniform int CascadeShadowMapLightID;
+
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
 
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
+   
+ float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowMapArray , vec3 N, vec3 LightDirection)
+ {
+    vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
+    float Depth = abs(FragPosView.z);
+
+    int Layer = -1;
+     for (int i = 0; i < CascadeCount; ++i)
+     {
+        if(Depth < CascadeShadowPlaneDistances[i])
+        {
+          Layer = i;
+          break;
+        }
+     }
+     if(Layer == -1)
+     {
+      Layer = CascadeCount;
+     }
+
+     vec4 FragPosLightSpace = lightSpaceMatrices[Layer] * vec4(fragPos,1.0f);
+     vec3 ProjectedCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
+     ProjectedCoords = ProjectedCoords * 0.5f + 0.5f;
+
+     float CurrentDepth = ProjectedCoords.z;
+     if(CurrentDepth > 1.0f)
+     {
+        return 0.0f;
+     }
+
+     vec3 normal = N;
+     float bias = max(0.05 * (1.0f - dot(normal , LightDirection)) , 0.005);
+     const float BiasMultiplier = 0.5f;
+
+     if(Layer == CascadeCount)
+     {
+        bias *= 1 / (FarPlane * BiasMultiplier);
+     }
+     else
+     {
+        bias *= 1 / (CascadeShadowPlaneDistances[Layer] * BiasMultiplier);
+     }
+
+     float shadow = 0.0f;
+     vec2 TexelSize = 1.0f / vec2(textureSize(ShadowMapArray,0));
+     for(int x = -1; x <= 1; ++x)
+     {
+        for(int y = -1; y <= 1; ++y)
+        {
+           float FilteredDepth = texture(ShadowMapArray,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layer)).r;
+           shadow += (CurrentDepth - bias) > FilteredDepth ? 1.0f : 0.0f;
+        }
+     }
+     shadow /= 9.0f;
+     return shadow;
+ }
 
  float ShadowCalculationOmni(vec3 fragPos , samplerCube OmnishadowMap , vec3 LightPosition , float farplane)
   {
@@ -155,7 +225,7 @@ void main()
    float Metalic = MetalicRoughness.g;
    vec3 Position = PositionDepth.rgb;
 
-   float shadow;
+      float shadow = 0.0f;
       vec3 N = normalize(Normal);
       vec3 V = normalize(CameraPos - Position);
 
@@ -201,12 +271,21 @@ void main()
           if(i < OmniShadowMapCount)
           {
              shadow = ShadowCalculationOmni(Position,OmniShadowMaps[i],LightPositions[i] , ShadowMapFarPlane[i]);
-             Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
           }
+          if(i == LightCount - 1)
+          {
+             shadow = CascadedDirectionalShadowCalculation(Position,SunShadowMap,N , LightPositions[i]);
+          }
+    
+          /*
           else
           {
              Lo += (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
           }
+          */
+
+          Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
+
 
           //Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
       }
@@ -261,7 +340,7 @@ void main()
       float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
       Depth = vec4(Position,1.0f);
-      //FragColor = vec4(N, 1.0); 
+      //FragColor = vec4(vec3(shadow),1.0f); 
 
       //FragColor = vec4(vec3(roughness),1.0f);
    //vec4 OutColor = vec4(vec3(Metalic),1.0f);

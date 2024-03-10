@@ -76,11 +76,11 @@ const glm::vec3 FUSIONCORE::Light::GetLightDirectionPosition()
 {
 	if (this->LightType == FF_DIRECTIONAL_LIGHT)
 	{
-		return GetTransformation()->Position;
+		return LightDirection;
 	}
 	else
 	{
-		return LightDirection;
+		return GetTransformation()->Position;
 	}
 	assert(0);
 }

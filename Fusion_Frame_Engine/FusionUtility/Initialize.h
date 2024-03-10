@@ -25,6 +25,7 @@ namespace FUSIONUTIL
 		std::unique_ptr<FUSIONCORE::Shader> InstancedGbufferShader;
 		std::unique_ptr<FUSIONCORE::Shader> DeferredPBRshader;
 		std::unique_ptr<FUSIONCORE::Shader> InstancedPBRshader;
+	    std::unique_ptr<FUSIONCORE::Shader> CascadedDirectionalShadowShader;
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);

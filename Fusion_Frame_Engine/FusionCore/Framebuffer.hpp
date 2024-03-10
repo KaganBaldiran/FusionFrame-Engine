@@ -109,7 +109,7 @@ namespace FUSIONCORE
 		inline void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		inline void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize ,bool DOFenabled = false, float DOFdistance = 0.09f , float DOFintensity = 1.0f)
+		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize,CascadedDirectionalShadowMap& sunMap,bool DOFenabled = false, float DOFdistance = 0.09f , float DOFintensity = 1.0f)
 		{
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -265,7 +265,7 @@ namespace FUSIONCORE
 		void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f)
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CascadedDirectionalShadowMap& sunMap,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f)
 		{
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -308,6 +308,20 @@ namespace FUSIONCORE
 			glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
 			shader.setInt("LUT", 6);
 
+			glActiveTexture(GL_TEXTURE7);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, sunMap.GetShadowMap());
+			shader.setInt("SunShadowMap", 7);
+
+			shader.setMat4("ViewMatrix", camera.viewMat);
+
+			auto& CascadeLevels = sunMap.GetCascadeLevels();
+			shader.setInt("CascadeCount", CascadeLevels.size());
+			shader.setInt("CascadeShadowMapLightID", sunMap.GetBoundLightID());
+			for (size_t i = 0; i < CascadeLevels.size(); i++)
+			{
+				shader.setFloat("CascadeShadowPlaneDistances[" + std::to_string(i) + "]", CascadeLevels[i]);
+			}
+
 			shader.setBool("EnableIBL", true);
 			shader.setFloat("ao", EnvironmentAmbientAmount);
 			shader.setInt("OmniShadowMapCount", ShadowMaps.size());
@@ -318,6 +332,7 @@ namespace FUSIONCORE
 				glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
 				glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
 				glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
+				glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMapsLightIDS[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetBoundLightID());	
 			}
 
 			FUSIONCORE::SendLightsShader(shader);

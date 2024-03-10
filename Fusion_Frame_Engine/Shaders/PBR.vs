@@ -1,4 +1,4 @@
- #version 330 core
+ #version 420 core
 
  layout(location = 0) in vec3 vertexdata;
  layout(location = 1) in vec3 aNormal;
@@ -16,13 +16,14 @@
  uniform mat4 model;
  uniform mat4 proj;
  uniform mat4 view;
- uniform mat4 ratioMat;
 
  const int MAX_BONES = 100;
  const int MAX_BONE_INFLUENCE = 4;
- uniform mat4 finalBonesMatrices[MAX_BONES];
 
- uniform mat4 cameramatrix;
+ layout(std140 , binding = 1) uniform AnimationMatrices
+ {
+    mat4 finalBonesMatrices[MAX_BONES];
+ };
  uniform bool EnableAnimation;
 
  void main()

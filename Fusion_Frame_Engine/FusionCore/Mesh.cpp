@@ -110,7 +110,6 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -130,7 +129,6 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, Material material,
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -151,7 +149,6 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -188,7 +185,6 @@ void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::func
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -208,7 +204,6 @@ void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::funct
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -230,7 +225,6 @@ void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& sh
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -334,7 +328,6 @@ void FUSIONCORE::Mesh::DrawImportedMaterial(Camera3D& camera, Shader& shader, st
 	ShaderPreperations();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetRatioMatrixUniformLocation(shader.GetID(), "ratioMat");
 	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);

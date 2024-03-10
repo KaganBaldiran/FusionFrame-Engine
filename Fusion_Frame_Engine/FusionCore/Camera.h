@@ -59,11 +59,13 @@ namespace FUSIONCORE
 		void SetTarget(Object* object, float Distance);
 		void SetTarget(Object* object, float Distance , glm::vec3 Offset);
 		void SetMinMaxZoom(bool clampZoom = false , float minZoom = -1.0f, float maxZoom = -1.0f);
+		inline float GetCameraZoom() { return this->Zoom; };
 		void SetZoomSensitivity(float Speed);
 #endif
 		void Matrix(GLuint shaderprogram, const char* uniform);
 		void HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON, float speed = 0.03f);
 		const glm::vec3 GetUpVector() {return this->Up; };
+		inline const float& GetCameraFOV() { return this->FOV; };
 
 		glm::vec3 Orientation;
 		glm::vec3 Position;
@@ -82,6 +84,8 @@ namespace FUSIONCORE
 		float MaxZoom = 1.2f;
 		float ZoomSpeed = 1.0f;
 		bool ClampZoom = false;
+
+		float FOV = 45.0f;
 
 		glm::vec3 targetPosition;
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);

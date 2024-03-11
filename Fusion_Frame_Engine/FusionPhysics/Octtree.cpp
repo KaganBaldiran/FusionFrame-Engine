@@ -82,6 +82,8 @@ std::pair<glm::vec3, glm::vec3> FUSIONPHYSICS::GetGridSize()
 	return {WorldSizeMin,WorldSizeMax};
 }
 
+
+
 std::pair<int, int> ReadNodeID(std::string& NodeID)
 {
 	auto seperatorPos = NodeID.find(":");

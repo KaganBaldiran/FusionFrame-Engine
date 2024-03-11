@@ -41,6 +41,7 @@ namespace FUSIONCORE
         //FF_DIRECTIONAL_LIGHT - Direction
 		//FF_POINT_LIGHT - Position
 		const glm::vec3 GetLightDirectionPosition();
+		inline const void SetLightDirection(glm::vec3 Direction) { this->LightDirection = Direction; };
 
 		//if light is on stack to be used in the shading calculations
 		inline bool IsLightBeingUsed() { return this->LightState; };

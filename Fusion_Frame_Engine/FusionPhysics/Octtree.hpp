@@ -4,6 +4,7 @@
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionCore/Object.hpp"
+#include "../FusionCore/Model.hpp"
 #include "Physics.hpp"
 #include "unordered_map"
 
@@ -46,6 +47,9 @@ namespace FUSIONPHYSICS
 	void DisposeNodes();
 	void Subdivide(FUSIONPHYSICS::QuadNode& Node, std::map<std::string, QuadNode*>& SubdividedQuads);
 
+	
+
 	std::pair<glm::vec3, glm::vec3> GetGridSize();
+
 	//std::unordered_map<glm::ivec3, int, Ivec3Hash> NodeMap;
 }

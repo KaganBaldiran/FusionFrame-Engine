@@ -350,25 +350,24 @@ void FUSIONCORE::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader, s
 
 void FUSIONCORE::Model::FindGlobalMeshScales()
 {
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    float minZ = std::numeric_limits<float>::max();
+    float maxZ = std::numeric_limits<float>::lowest();
 
-	float maxX = -std::numeric_limits<float>::infinity();
-	float maxY = -std::numeric_limits<float>::infinity();
-	float maxZ = -std::numeric_limits<float>::infinity();
-	float minX = std::numeric_limits<float>::infinity();
-	float minY = std::numeric_limits<float>::infinity();
-	float minZ = std::numeric_limits<float>::infinity();
-
+    std::vector<glm::vec3> originPoints;
 	for (size_t j = 0; j < Meshes.size(); j++)
 	{
 		auto& VertexArray = Meshes[j].GetVertices();
-		Vertex origin = *VertexArray[0]; 
 
 		for (unsigned int k = 0; k < VertexArray.size(); k++) {
 
 			Vertex vertex;
-			vertex.Position.x = VertexArray[k]->Position.x - origin.Position.x;
-			vertex.Position.y = VertexArray[k]->Position.y - origin.Position.y;
-			vertex.Position.z = VertexArray[k]->Position.z - origin.Position.z;
+			vertex.Position.x = VertexArray[k]->Position.x;
+			vertex.Position.y = VertexArray[k]->Position.y;
+			vertex.Position.z = VertexArray[k]->Position.z;
 
 			maxX = std::max(maxX, vertex.Position.x);
 			maxY = std::max(maxY, vertex.Position.y);
@@ -377,6 +376,11 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 			minY = std::min(minY, vertex.Position.y);
 			minZ = std::min(minZ, vertex.Position.z);
 		}
+        float centerX = (minX + maxX) / 2.0f;
+        float centerY = (minY + maxY) / 2.0f;
+        float centerZ = (minZ + maxZ) / 2.0f;
+
+        originPoints.push_back(glm::vec3(centerX, centerY, centerZ));
 	}
 
 
@@ -404,9 +408,20 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 
 	transformation.InitialObjectScales = transformation.ObjectScales;
 
-	std::cout << "Model width: " << transformation.ObjectScales.x << " Model height: " << transformation.ObjectScales.y << " Model Depth: " << transformation.ObjectScales.z << "\n";
-	std::cout << "Scale avg: " << transformation.scale_avg << "\n";
+    float overallCenterX = 0.0f, overallCenterY = 0.0f, overallCenterZ = 0.0f;
+    for (unsigned int i = 0; i < originPoints.size(); i++) {
+        overallCenterX += originPoints[i].x;
+        overallCenterY += originPoints[i].y;
+        overallCenterZ += originPoints[i].z;
+    }
+    overallCenterX /= originPoints.size();
+    overallCenterY /= originPoints.size();
+    overallCenterZ /= originPoints.size();
 
+    originpoint = { overallCenterX,overallCenterY,overallCenterZ };
+    transformation.OriginPoint = &this->originpoint;
+    transformation.Position = glm::vec3(originpoint.x, originpoint.y, originpoint.z);
+    dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
 }
 
 void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool AnimationModel)
@@ -430,46 +445,6 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     }
 
     directory = path.substr(0, path.find_last_of('/'));
-
-    std::vector<glm::vec3> originPoints;
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[i];
-
-
-        float minX = mesh->mVertices[0].x, minY = mesh->mVertices[0].y, minZ = mesh->mVertices[0].z;
-        float maxX = mesh->mVertices[0].x, maxY = mesh->mVertices[0].y, maxZ = mesh->mVertices[0].z;
-        for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
-            if (mesh->mVertices[j].x < minX) minX = mesh->mVertices[j].x;
-            if (mesh->mVertices[j].y < minY) minY = mesh->mVertices[j].y;
-            if (mesh->mVertices[j].z < minZ) minZ = mesh->mVertices[j].z;
-            if (mesh->mVertices[j].x > maxX) maxX = mesh->mVertices[j].x;
-            if (mesh->mVertices[j].y > maxY) maxY = mesh->mVertices[j].y;
-            if (mesh->mVertices[j].z > maxZ) maxZ = mesh->mVertices[j].z;
-        }
-        float centerX = (minX + maxX) / 2.0f;
-        float centerY = (minY + maxY) / 2.0f;
-        float centerZ = (minZ + maxZ) / 2.0f;
-
-        originPoints.push_back(glm::vec3(centerX, centerY, centerZ));
-    }
-
-
-    float overallCenterX = 0.0f, overallCenterY = 0.0f, overallCenterZ = 0.0f;
-    for (unsigned int i = 0; i < originPoints.size(); i++) {
-        overallCenterX += originPoints[i].x;
-        overallCenterY += originPoints[i].y;
-        overallCenterZ += originPoints[i].z;
-    }
-    overallCenterX /= originPoints.size();
-    overallCenterY /= originPoints.size();
-    overallCenterZ /= originPoints.size();
-
-    originpoint = { overallCenterX,overallCenterY,overallCenterZ };
-    transformation.OriginPoint = &this->originpoint;
-    transformation.Position = glm::vec3(originpoint.x, originpoint.y, originpoint.z);
-    dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
-
-    std::cout << "Overall origin point: (" << overallCenterX << ", " << overallCenterY << ", " << overallCenterZ << ")" << std::endl;
 
     if (Async)
     {

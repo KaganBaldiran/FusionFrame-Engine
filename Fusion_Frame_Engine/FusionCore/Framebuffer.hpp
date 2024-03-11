@@ -128,9 +128,9 @@ namespace FUSIONCORE
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
 			shader.setInt("DepthAttac", 1);
 
-			glActiveTexture(GL_TEXTURE2);
+			/*glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, fboID);
-			shader.setInt("ID", 2);
+			shader.setInt("ID", 2);*/
 
 			shader.setVec3("CamPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);

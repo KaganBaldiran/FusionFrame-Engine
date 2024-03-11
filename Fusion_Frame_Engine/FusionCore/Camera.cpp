@@ -4,6 +4,7 @@
 #include "../FusionUtility/glm/gtc/type_ptr.hpp"
 #include "../FusionUtility/glm/gtx/rotate_vector.hpp"
 #include "../FusionUtility/glm/gtx/vector_angle.hpp"
+#include "Model.hpp"
 
 Vec2<double> ScrollAmount;
 Vec2<double> MousePosCamera;
@@ -102,10 +103,9 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 	this->FOV = fovDegree;
 
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
-	this->RatioMat = glm::scale(glm::mat4(1.0f), glm::vec3(GetScreenRatio(windowSize).x, GetScreenRatio(windowSize).y, 1.0f));
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);
 
-	this->CameraMat = this->RatioMat * projMat * viewMat;
+	this->CameraMat = projMat * viewMat;
 }
 
 void FUSIONCORE::Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
@@ -405,5 +405,38 @@ void FUSIONCORE::scrollCallback(GLFWwindow* window, double xoffset, double yoffs
 {
 	ScrollAmount({ xoffset, yoffset });
 }
+
+bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera)
+{
+	auto CameraMatrix = camera.CameraMat;
+	auto& ModelScales = model.GetTransformation().InitialObjectScales;
+	auto ModelMatrix = model.GetTransformation().GetModelMat4();
+	auto& ModelPosition = *model.GetTransformation().OriginPoint;
+	auto HalfScales = (ModelScales / 2.0f);
+	for (size_t x = 0; x < 2; x++)
+	{
+		for (size_t y = 0; y < 2; y++)
+		{
+			for (size_t z = 0; z < 2; z++)
+			{
+				glm::vec3 Vertex(ModelPosition.x + ((2.0f * x - 1.0f) * HalfScales.x),
+					ModelPosition.y + ((2.0f * y - 1.0f) * HalfScales.y),
+					ModelPosition.z + ((2.0f * z - 1.0f) * HalfScales.z));
+
+				Vertex = ModelMatrix * glm::vec4(Vertex, 1.0f);
+				auto TransformedVertex = CameraMatrix * glm::vec4(Vertex, 1.0f);
+				TransformedVertex = TransformedVertex / TransformedVertex.w;
+				if ((TransformedVertex.x >= -1.0f && TransformedVertex.x <= 1.0f) && (TransformedVertex.y >= -1.0f && TransformedVertex.y <= 1.0f))
+				{
+					if (glm::dot(glm::normalize(Vertex - camera.Position), glm::normalize(camera.Orientation)) >= 0.0f)
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+};
 
 

@@ -2,7 +2,7 @@
 #include "../FusionCore/Camera.h"
 #include "../FusionCore/Cubemap.h"
 
-GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height, const char* WindowName)
+GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion, const char* WindowName)
 {
 	if (!glfwInit())
 	{
@@ -16,8 +16,8 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height, const char* Wind
 
 	glEnable(GL_MULTISAMPLE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MajorGLversion);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MinorGLversion);
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -40,7 +40,11 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height, const char* Wind
 		return nullptr;
 	}
 	LOG_INF("Glew initialized!");
-	LOG_INF("OpenGL version : 3.3 core");
+
+	int major, minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	LOG_INF("OpenGL version : " << major << "." << minor << " core");
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);

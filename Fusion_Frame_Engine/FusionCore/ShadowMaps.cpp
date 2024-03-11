@@ -109,7 +109,7 @@ glm::mat4 FUSIONCORE::CascadedDirectionalShadowMap::GetLightSpaceMatrix(Camera3D
 		maxZ = std::max(maxZ, LightSpaceCorner.z);
 	}
 
-	const float Zmultiplier = 10.0f;
+	const float Zmultiplier = std::abs(camera.FarPlane - camera.NearPlane) * 0.05f;
 	if (minZ < 0.0f)
 	{
 		minZ *= Zmultiplier;
@@ -184,11 +184,6 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(Shader& CascadedShadowMapSha
 		std::function<void()> shaderPrep = [&]() {
 			if (model->IsAnimationEnabled())
 			{
-
-				/*for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
-				{
-					CascadedShadowMapShader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", AnimationBoneMatrices[i]);
-				}*/
 				AnimationUniformBufferObject->Bind();
 				auto& AnimationBoneMatrices = *model->GetAnimationMatricesPointer();
 				for (size_t i = 0; i < AnimationBoneMatrices.size(); i++)

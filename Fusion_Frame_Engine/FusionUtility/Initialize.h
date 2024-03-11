@@ -30,5 +30,5 @@ namespace FUSIONUTIL
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);
 	void DisposeDefaultShaders(DefaultShaders& shaders);
-	GLFWwindow* InitializeWindow(int width , int height , const char* WindowName);
+	GLFWwindow* InitializeWindow(int width , int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
 }

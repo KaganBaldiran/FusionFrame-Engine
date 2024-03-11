@@ -18,7 +18,7 @@ int Application::Run()
 	const int width = 1000;
 	const int height = 1000;
 
-	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, "FusionFrame Engine");
+	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height,4,6, "FusionFrame Engine");
 
 	FUSIONCORE::InitializeAnimationUniformBuffer();
 	
@@ -26,7 +26,7 @@ int Application::Run()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/sunflowers_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/steinbach_field_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode->width, mode->height);
@@ -246,10 +246,11 @@ int Application::Run()
 	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-20.0f });
 
 	FUSIONPHYSICS::CollisionBox3DAABB Box1(model1->GetTransformation(), { 1.0f,1.0f,1.0f });
-	FUSIONPHYSICS::CollisionBox3DAABB StoveBox(Stove->GetTransformation(), { 1.2f,1.1f,1.0f });
+	FUSIONPHYSICS::CollisionBox3DAABB StoveBox(Stove->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBox3DAABB tryBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
-	FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.7f,0.8f,1.0f });
+	//FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.7f,0.8f,1.0f });
+	FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBoxPlane Plane2({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane floorBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 
@@ -268,7 +269,7 @@ int Application::Run()
 	grid->GetTransformation().ScaleNoTraceBack({ 5.0f,5.0f ,5.0f });
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 
-	SofaBox.GetTransformation().Translate({ 0.0f,-1.0f,0.0f });
+	//SofaBox.GetTransformation().Translate({ 0.0f,-1.0f,0.0f });
 
 	model1->PushChild(&Box1);
 	sofa->PushChild(&SofaBox);
@@ -280,8 +281,8 @@ int Application::Run()
 	Stove->PushChild(&StoveBox);
 	Stove->UpdateChildren();
 
-	StoveBox.GetTransformation().ScaleNoTraceBack({ 0.5f,0.8f ,1.0f });
-	StoveBox.GetTransformation().Translate({ 0.4f,-0.2f,-1.3f });
+	//StoveBox.GetTransformation().ScaleNoTraceBack({ 0.5f,0.8f ,1.0f });
+	//StoveBox.GetTransformation().Translate({ 0.4f,-0.2f,-1.3f });
 
 	glm::vec4 BackGroundColor(FUSIONCORE::Color(FF_COLOR_AZURE).GetRGBA());
 
@@ -369,6 +370,8 @@ int Application::Run()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		//LOG("FPS: " << 1.0f / deltaTime);
+
 		auto start_time = std::chrono::high_resolution_clock::now();
 
 		tryBox.GetTransformation().Translate({ 0.0f,0.0f,std::sin(time(0)) / 5.0f });
@@ -380,12 +383,13 @@ int Application::Run()
 
 		Stove->UpdateChildren();
 		//SofaBox.UpdateAttributes();
-		sofa->UpdateChildren();
+		//sofa->UpdateChildren();
 
 		model1->GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
 		model1->UpdateChildren();
 
 		animationModel.UpdateChildren();
+
 
 		bool Collision = false;
 		glm::vec3 direction;
@@ -629,6 +633,10 @@ int Application::Run()
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
+		
+		bool StoveDrawn = ;
+		
+
 		std::function<void()> shaderPrepe = [&]() {};
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
@@ -638,19 +646,29 @@ int Application::Run()
 		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size(), AOamount);
 
-		model1->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, shovelMaterial, AOamount);
+		if (FUSIONCORE::IsModelInsideCameraFrustum(*model1, camera3d))
+		{
+			model1->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, shovelMaterial, AOamount);
+		}
 		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, shovelMaterial, AOamount);
 		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FloorMaterial, AOamount);
-		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, MirrorMaterial, AOamount);
 
+		if (FUSIONCORE::IsModelInsideCameraFrustum(*Stove, camera3d))
+		{
+			Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, MirrorMaterial, AOamount);
+		}
+	
 		animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices, AOamount);
-		
+
 		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, WallMaterial, AOamount);
 
 		
 		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, redMaterial, AOamount);
-		sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, SofaMaterial, AOamount);
+		if (FUSIONCORE::IsModelInsideCameraFrustum(*sofa, camera3d))
+		{
+			sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, SofaMaterial, AOamount);
+		}
 		Capsule.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material(), AOamount);
 		
 		Gbuffer.Unbind();
@@ -688,12 +706,6 @@ int Application::Run()
 			Plane.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			Plane2.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-			subdModel.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-			sofa->Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, FUSIONCORE::Material(), shadowMaps, AOamount);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 #endif
 		

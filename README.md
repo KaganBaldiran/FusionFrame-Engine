@@ -3,7 +3,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/KaganBaldiran/FusionFrame-Engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 # FusionFrame-Engine
-3D Game framework written in c++.
+Fusion Frame engine is a framework type game engine that focuses on delivering a compact and easy-to-use interface for 3d game development while preserving speed. It also supports different physics algorithms to speed up the game development. 
 ## Current Look
 
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/64129f1a-5155-463f-83f1-2dd4f2d48d19)

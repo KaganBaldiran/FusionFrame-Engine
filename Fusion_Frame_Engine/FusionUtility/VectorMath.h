@@ -16,6 +16,8 @@ typedef long long int int64;
 
 float Q_rsqrt(float number);
 int GiveRandomNumf(int min, int max, int sizeofarray, bool exclude_on_off, int numtoexclude);
+
+glm::vec3 ProjectVectorOntoPlane(glm::vec3 PlaneNormal, glm::vec3 Vector);
 // // // // // // // // // // // // //<
 
 /// <summary>

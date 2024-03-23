@@ -101,6 +101,7 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 	this->FarPlane = far;
 	this->NearPlane = near;
 	this->FOV = fovDegree;
+	this->Aspect = aspect;
 
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);
@@ -412,7 +413,7 @@ bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE
 	auto& ModelScales = model.GetTransformation().InitialObjectScales;
 	auto ModelMatrix = model.GetTransformation().GetModelMat4();
 	auto& ModelPosition = *model.GetTransformation().OriginPoint;
-	auto HalfScales = (ModelScales / 2.0f);
+	auto HalfScales = (ModelScales * 0.5f);
 	for (size_t x = 0; x < 2; x++)
 	{
 		for (size_t y = 0; y < 2; y++)

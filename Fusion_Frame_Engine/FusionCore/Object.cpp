@@ -1,4 +1,5 @@
 #include "Object.hpp"
+#include "../FusionPhysics/Octtree.hpp"
 
 void FUSIONCORE::Object::PushChild(Object* child)
 {

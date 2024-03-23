@@ -157,6 +157,7 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 	this->GetTransformation().ScalingMatrix = transformation.ScalingMatrix;
 	this->GetTransformation().RotationMatrix = transformation.RotationMatrix;
 	this->GetTransformation().OriginPoint = transformation.OriginPoint;
+	this->GetTransformation().InitialObjectScales = transformation.InitialObjectScales * BoxSizeCoeff;
 
 	LocalBoxNormals.clear();
 	auto rotation = glm::toQuat(GetTransformation().RotationMatrix);
@@ -279,6 +280,9 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 
 	BoxVertices.push_back(vertex);
 
+	this->GetTransformation().InitialObjectScales = Size * BoxSizeCoeff;
+	this->GetTransformation().OriginPoint = &ModelOriginPoint;
+
 	const GLuint indices[] = {
 		// Upper part
 		0, 1, 2,
@@ -364,6 +368,7 @@ FUSIONPHYSICS::CollisionBox::CollisionBox(FUSIONCORE::Mesh &InputMesh, FUSIONCOR
 	this->GetTransformation().ScalingMatrix = transformation.ScalingMatrix;
 	this->GetTransformation().RotationMatrix = transformation.RotationMatrix;
 	this->GetTransformation().OriginPoint = transformation.OriginPoint;
+	this->GetTransformation().InitialObjectScales = transformation.InitialObjectScales;
 
 	auto& MeshVertices = BoxMesh->GetVertices();
 	this->BoxNormals.reserve(MeshVertices.size());
@@ -402,6 +407,11 @@ void FUSIONPHYSICS::CollisionBox::DrawBoxMesh(FUSIONCORE::Camera3D& camera, FUSI
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	BoxMesh->Draw(camera, shader, boxprep);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+FUSIONPHYSICS::CollisionBox::~CollisionBox()
+{
+	this->Clean();
 }
 
 void FUSIONPHYSICS::CollisionBox::Clean()
@@ -510,6 +520,11 @@ void FUSIONPHYSICS::CollisionBox3DAABB::Clear()
 	this->GetBoxMesh()->Clean();
 }
 
+FUSIONPHYSICS::CollisionBox3DAABB::~CollisionBox3DAABB()
+{
+	this->Clean();
+}
+
 void FUSIONPHYSICS::CollisionBox3DAABB::Update()
 {
 	auto& lastScales = this->Parent->GetTransformation().LastScales;
@@ -604,7 +619,6 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 	for (size_t i = 0; i < Normals.size(); i++)
 	{
 		float dotProduct = glm::dot(glm::normalize(Normals[i]), glm::normalize(targetVector));
-
 		if (dotProduct > max)
 		{
 			max = dotProduct;
@@ -826,6 +840,8 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 
 	BoxVertices.push_back(vertex);
 
+	this->GetTransformation().InitialObjectScales = Size * BoxSizeCoeff;
+
 	const GLuint indices[] = {
 		// Upper part
 		0, 1, 2,0,
@@ -896,6 +912,11 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	}
 
 	BoxMesh = std::make_unique<FUSIONCORE::Mesh>(sharedPtrVertices, BoxIndices, MeshFaces, textures);
+}
+
+FUSIONPHYSICS::CollisionBoxPlane::~CollisionBoxPlane()
+{
+	this->Clear();
 }
 
 void FUSIONPHYSICS::CollisionBoxPlane::Clear()

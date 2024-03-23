@@ -178,7 +178,7 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations,size_t PrimCount, float EnvironmentAmbientAmount)
+void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations,size_t PrimCount, float EnvironmentAmbientAmount)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();

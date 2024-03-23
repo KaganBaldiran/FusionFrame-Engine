@@ -1,0 +1,13 @@
+# Blender 4.0.2 MTL File: 'Project_Upload.blend'
+# www.blender.org
+
+newmtl Default_OBJ
+Ns 477.110199
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Diffuse_Shadow.png
+map_Ns textures/Specular_Shadow.png
+map_Bump -bm 0.360000 textures/Normal.png

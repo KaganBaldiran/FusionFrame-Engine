@@ -2,6 +2,7 @@
 #include "Light.hpp"
 #include "ShadowMaps.hpp"
 #include "Animator.hpp"
+#include <filesystem>
 
 unsigned int counter = 0;
 
@@ -176,7 +177,7 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::fun
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawInstanced(camera, shader, shaderPrep,InstanceCount, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep,InstanceCount, EnvironmentAmbientAmount);
     }
 }
 
@@ -203,7 +204,37 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawInstanced(camera, shader, shaderPrep, InstanceCount, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep, InstanceCount, EnvironmentAmbientAmount);
+    }
+}
+
+void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount, float EnvironmentAmbientAmount)
+{
+    auto shaderPrep = [&](Material& material) {
+        return [&]() {
+            this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+            FUSIONCORE::SendLightsShader(shader);
+            shader.setFloat("ModelID", this->GetModelID());
+            shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+            material.SetMaterialShader(shader);
+
+            if (InstanceDataVBO.IsVBOchanged())
+            {
+                InstanceDataVBO.Bind();
+                glEnableVertexAttribArray(7);
+                glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glVertexAttribDivisor(7, 1);
+                InstanceDataVBO.SetVBOstate(false);
+            }
+            ShaderPreperations();
+        };
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        auto& mesh = Meshes[i];
+        mesh.DrawDeferredInstanced(camera, shader, shaderPrep(mesh.ImportedMaterial), InstanceCount, EnvironmentAmbientAmount);
     }
 }
 
@@ -247,7 +278,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -383,7 +414,6 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
         originPoints.push_back(glm::vec3(centerX, centerY, centerZ));
 	}
 
-
 	float meshWidth = maxX - minX;
 	float meshHeight = maxY - minY;
 	float meshDepth = maxZ - minZ;
@@ -401,10 +431,6 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 
 	transformation.scale_avg = (transformation.ObjectScales.x + transformation.ObjectScales.y + transformation.ObjectScales.z) / 3;
 	transformation.dynamic_scale_avg = transformation.scale_avg;
-
-	transformation.ObjectScales.x = transformation.ObjectScales.x;
-	transformation.ObjectScales.y = transformation.ObjectScales.y;
-	transformation.ObjectScales.z = transformation.ObjectScales.z;
 
 	transformation.InitialObjectScales = transformation.ObjectScales;
 
@@ -440,12 +466,12 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     this->scene = (aiScene*)scene;
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+        this->ModelImportStateCode = FF_ERROR_CODE;
+        LOG_ERR("Error reading the object file :: " << importer.GetErrorString());
         return;
     }
 
-    directory = path.substr(0, path.find_last_of('/'));
-
+    directory = path;
     if (Async)
     {
         processNodeAsync(scene->mRootNode, scene);
@@ -454,6 +480,7 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     {
         processNode(scene->mRootNode, scene);
     }
+    this->ModelImportStateCode = FF_SUCCESS_CODE;
 }
 
 void FUSIONCORE::Model::processNode(aiNode* node, const aiScene* scene)
@@ -750,3 +777,22 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     }
 }
 
+//Import multiple models into a vector from a directory. It's not safe for files other than mtl(except object supported formats).
+std::vector<std::unique_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel)
+{
+    std::vector<std::unique_ptr<FUSIONCORE::Model>> Models;
+    std::string path = DirectoryFilePath;
+    for (const auto& entry : std::filesystem::directory_iterator(path))
+    {
+        std::string EntryPath = entry.path().generic_string();
+        if (EntryPath.find(".mtl") == std::string::npos && EntryPath.find(".") != std::string::npos)
+        {
+           std::unique_ptr<FUSIONCORE::Model> NewModel = std::make_unique<Model>(EntryPath, false, AnimationModel);
+           if (NewModel->GetModelImportStateCode() == FF_SUCCESS_CODE)
+           {
+              Models.push_back(std::move(NewModel));
+           }
+        }
+    }
+    return Models;
+}

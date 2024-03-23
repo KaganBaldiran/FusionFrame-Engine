@@ -10,25 +10,89 @@ namespace FUSIONUTIL
 	class DefaultShaders
 	{
 	public:
+		/**
+        * @brief Default shader for rendering basic objects with a single color.
+        * This shader does not support lighting or texturing.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> BasicShader;
+		/**
+        * @brief Shader for rendering basic mesh objects with per-vertex lighting.
+        * This shader supports diffuse and specular lighting.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> MeshBasicShader;
+        /**
+        * @brief Default shader for rendering light representation meshes with a single color.
+        * This shader could also be used to render other meshes with a solid color.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> LightShader;
+		/**
+        * @brief Shader for rendering frame buffer objects (FBOs).
+        * This shader is typically used for post-processing effects.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> FBOShader;
+		/**
+        * @brief Physically Based Rendering (PBR) shader.
+        * This shader simulates light interactions with materials using PBR principles.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> PBRShader;
+		/**
+	    * @brief Shader for convoluting a cube map.
+        * This shader is used in pre-processing steps for environment mapping.
+       */
 		std::unique_ptr<FUSIONCORE::Shader> ConvolutateCubeMapShader;
+		/**
+        * @brief Shader for pre-filtering a cube map.
+        * This shader is used in pre-processing steps for environment mapping.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> PreFilterCubeMapShader;
+		/**
+        * @brief Shader for generating a BRDF (Bidirectional Reflectance Distribution Function) Look-Up Table (LUT).
+        * This shader is used in pre-processing steps for PBR rendering.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> brdfLUTShader;
+		/**
+        * @brief Shader for rendering High Dynamic Range (HDR) images.
+        * This shader is typically used for environment mapping.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> HDRIShader;
+		/**
+        * @brief Shader for rendering cube maps.
+        * This shader is typically used for environment mapping.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> CubeMapShader;
+		/**
+        * @brief Shader for rendering omni-directional shadow maps.
+        * This shader is used for shadow mapping from point light sources.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> OmniShadowMapShader;
+		/**
+        * @brief Shader for rendering geometry buffer (G-buffer) components.
+        * This shader is used in deferred rendering pipeline.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> GbufferShader;
+		/**
+        * @brief Shader for rendering instanced geometry buffer (G-buffer) components.
+        * This shader supports rendering multiple instances of geometry in a single draw call.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> InstancedGbufferShader;
+		/**
+        * @brief Deferred Physically Based Rendering (PBR) shader.
+        * This shader is used in deferred rendering pipeline for PBR materials.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> DeferredPBRshader;
+		/**
+        * @brief Instanced Deferred Physically Based Rendering (PBR) shader.
+        * This shader supports rendering multiple instances of PBR materials in a single draw call.
+        */
 		std::unique_ptr<FUSIONCORE::Shader> InstancedPBRshader;
-	    std::unique_ptr<FUSIONCORE::Shader> CascadedDirectionalShadowShader;
+		/**
+        * @brief Shader for rendering cascaded directional shadow maps.
+        * This shader is used for shadow mapping from directional light sources with cascaded shadow maps.
+        */
+		std::unique_ptr<FUSIONCORE::Shader> CascadedDirectionalShadowShader;
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);
 	void DisposeDefaultShaders(DefaultShaders& shaders);
-	GLFWwindow* InitializeWindow(int width , int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
+	GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
 }

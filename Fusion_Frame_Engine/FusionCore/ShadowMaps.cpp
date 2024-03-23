@@ -62,8 +62,7 @@ FUSIONCORE::CascadedDirectionalShadowMap::CascadedDirectionalShadowMap(float wid
 
 glm::mat4 FUSIONCORE::CascadedDirectionalShadowMap::GetLightSpaceMatrix(Camera3D& camera,const float nearPlane, const float farPlane, const glm::vec3 LightDirection)
 {
-
-	const auto proj = glm::perspective(glm::radians(camera.GetCameraFOV()), (float)this->ShadowMapSize.x / (float)this->ShadowMapSize.y, nearPlane,farPlane);
+	const auto proj = glm::perspective(glm::radians(camera.GetCameraFOV()), camera.GetCameraAspectRatio(), nearPlane, farPlane);
 	glm::mat4 inverseMatrix = glm::inverse(proj * camera.viewMat);
 
 	std::vector<glm::vec4> FrustumCorners;

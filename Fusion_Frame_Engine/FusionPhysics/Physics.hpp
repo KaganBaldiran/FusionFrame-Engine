@@ -34,7 +34,7 @@ namespace FUSIONPHYSICS
 	{
 	public:
 		CollisionBox() = default;
-		CollisionBox(FUSIONCORE::Mesh &InputMesh , FUSIONCORE::WorldTransform transformation = FUSIONCORE::WorldTransform());
+		CollisionBox(FUSIONCORE::Mesh& InputMesh, FUSIONCORE::WorldTransform transformation = FUSIONCORE::WorldTransform());
 		FUSIONCORE::Mesh* GetBoxMesh() { return BoxMesh.get(); };
 		const std::vector<glm::vec3>& GetLocalNormals() { return this->LocalBoxNormals; };
 		const std::vector<glm::vec3>& GetLocalEdgeNormals() { return this->LocalEdgeNormals; };
@@ -42,6 +42,7 @@ namespace FUSIONPHYSICS
 		const std::vector<FUSIONCORE::Vertex>& GetVertices() { return this->BoxVertices; };
 		void DrawBoxMesh(FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader);
 
+		~CollisionBox();
 		void Clean();
 		void Update();
 		//Update without a parent
@@ -65,6 +66,7 @@ namespace FUSIONPHYSICS
 	public:
 		CollisionBoxPlane(glm::vec3 Size, glm::vec3 BoxSizeCoeff);
 		
+		~CollisionBoxPlane();
 		void Clear();		
 		void Update() override;
 		//Update without a parent
@@ -81,6 +83,7 @@ namespace FUSIONPHYSICS
 		CollisionBox3DAABB(glm::vec3 Size, glm::vec3 BoxSizeCoeff = glm::vec3(1.0f));
 		std::vector<FUSIONCORE::Face>& GetFaces() { return this->Faces; };
 
+		~CollisionBox3DAABB();
 		void Update() override;
 		//Update without a parent
 		void UpdateAttributes() override;

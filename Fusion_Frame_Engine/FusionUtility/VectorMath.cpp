@@ -60,4 +60,15 @@ int GiveRandomNumf(int min, int max, int sizeofarray, bool exclude_on_off, int n
 	delete[] randarray;
 	return finalresult;
 
-};
+}
+
+glm::vec3 ProjectVectorOntoPlane(glm::vec3 PlaneNormal, glm::vec3 Vector)
+{
+	double dot = Vector.x * PlaneNormal.x + Vector.y * PlaneNormal.y + Vector.z * PlaneNormal.z;
+	glm::vec3 projection;
+	projection.x = Vector.x - dot * PlaneNormal.x;
+	projection.y = Vector.y - dot * PlaneNormal.y;
+	projection.z = Vector.z - dot * PlaneNormal.z;
+	return projection;
+}
+

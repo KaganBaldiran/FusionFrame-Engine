@@ -68,6 +68,7 @@ namespace FUSIONCORE
 		void HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON, float speed = 0.03f);
 		const glm::vec3 GetUpVector() {return this->Up; };
 		inline const float& GetCameraFOV() { return this->FOV; };
+		inline const float& GetCameraAspectRatio() { return this->Aspect; };
 
 		glm::vec3 Orientation;
 		glm::vec3 Position;
@@ -85,6 +86,8 @@ namespace FUSIONCORE
 		float MinZoom = 0.8f;
 		float MaxZoom = 1.2f;
 		float ZoomSpeed = 1.0f;
+		float Aspect;
+
 		bool ClampZoom = false;
 
 		float FOV = 45.0f;

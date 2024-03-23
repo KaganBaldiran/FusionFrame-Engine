@@ -7,6 +7,11 @@
 
 extern std::vector<std::string> logTraceBack;
 
+#define FF_ERROR_CODE -0x100011
+#define FF_SUCCESS_CODE 0x100012
+#define FF_WARNING_CODE -0x100013
+#define FF_INITIAL_CODE -0x130032
+
 #define LOG(message) std::cout<< "LOG:: " __FUNCTION__ " :: "<< message << std::endl
 #define LOG_INF(message) std::cout<< "INFO:: " __FUNCTION__ " :: "<< message << std::endl
 #define LOG_ERR(message) std::cerr<<"ERROR:: " __FUNCTION__ " :: " << message << std::endl

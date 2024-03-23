@@ -80,7 +80,7 @@ namespace FUSIONCORE
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
-		void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, size_t PrimCount, float EnvironmentAmbientAmount = 0.2f);
+		void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations, size_t PrimCount, float EnvironmentAmbientAmount = 0.2f);
 		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount = 0.2f);
 		void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount = 0.2f);
 

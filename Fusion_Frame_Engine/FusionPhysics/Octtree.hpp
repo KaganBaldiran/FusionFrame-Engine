@@ -10,7 +10,8 @@
 
 namespace FUSIONPHYSICS
 {
-	extern std::vector<CollisionBox*> ObjectInstances;
+	extern std::vector<FUSIONCORE::Object*> ObjectInstances;
+	inline int NodeIDiterator = 0;
 
 	struct Ivec3Hash
 	{
@@ -29,27 +30,53 @@ namespace FUSIONPHYSICS
 		}
 	};
 
+	class ObjectBoundingBox
+	{
+	public:
+		ObjectBoundingBox()
+		{
+			Vertices.reserve(8);
+			Min.x = std::numeric_limits<float>::max();
+			Max.x = std::numeric_limits<float>::lowest();
+			Min.y = std::numeric_limits<float>::max();
+			Max.y = std::numeric_limits<float>::lowest();
+			Min.z = std::numeric_limits<float>::max();
+			Max.z = std::numeric_limits<float>::lowest();
+		};
+
+		void CompareVec3MinMax(glm::vec3 v);
+
+		std::vector<glm::vec3> Vertices;
+		glm::vec3 Min;
+		glm::vec3 Max;
+		FUSIONCORE::Object* Object;
+	};
+
 	class QuadNode
 	{
 	public:
-		std::vector<FUSIONCORE::Object*> Objects;
-		std::vector<QuadNode> ChildrenNode;
-		std::string NodeID;
+		std::vector<ObjectBoundingBox*> Objects;
+		std::vector<std::shared_ptr<QuadNode>> ChildrenNode;
+		glm::vec3 Center;
+		glm::vec3 Size;
+		int NodeID;
 
-		QuadNode(std::string ID) : NodeID(ID)
+		QuadNode()
+		{
+			NodeID = NodeIDiterator;
+			NodeIDiterator++;
+		}
+
+		QuadNode(int ID) : NodeID(ID)
 		{};
 	};
 
-	std::string LinearKeyToRelative(unsigned int LinearKey);
-	int RelativeKeyToLinear(std::string &RelativerKey);
-	void CalculateGridSize();
-	void UpdateWorldBoundries(FUSIONPHYSICS::QuadNode& HeadNode);
-	void DisposeNodes();
-	void Subdivide(FUSIONPHYSICS::QuadNode& Node, std::map<std::string, QuadNode*>& SubdividedQuads);
-
-	
-
+	void UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode);
+	//Internal use
+	void DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode);
+	//Internal use
+	void SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node, std::deque<QuadNode*>& NodesToProcess);
 	std::pair<glm::vec3, glm::vec3> GetGridSize();
-
-	//std::unordered_map<glm::ivec3, int, Ivec3Hash> NodeMap;
+	//Internal use
+	void CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox> &BoundingBoxes);
 }

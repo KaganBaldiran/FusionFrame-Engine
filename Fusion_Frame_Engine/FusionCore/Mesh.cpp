@@ -243,16 +243,19 @@ void FUSIONCORE::Mesh::BookKeepDuplicateVertices(Vertex* vertex)
 {
 	if (DuplicateVertexMap.find(vertex->Position) == DuplicateVertexMap.end())
 	{
-		DuplicateVertexMap[vertex->Position] = 1;
+		std::vector<Vertex*> newVector;
+		newVector.push_back(vertex);
+		DuplicateVertexMap[vertex->Position] = newVector;
 	}
 	else
 	{
-		DuplicateVertexMap[vertex->Position] += 1;
+		DuplicateVertexMap[vertex->Position].push_back(vertex);
 	}
 }
 
 void FUSIONCORE::Mesh::ConstructHalfEdges()
 {
+	HalfEdges.reserve(Faces.size() * 3);
 	for (auto& face : this->Faces)
 	{
 		auto& indices = face->Indices;

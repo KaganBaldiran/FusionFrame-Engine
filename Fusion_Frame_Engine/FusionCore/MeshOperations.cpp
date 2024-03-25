@@ -386,6 +386,14 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 		} while (RelatedEdge != vertex->halfEdge);
 
 		AveragedPosition /= EdgeIterationCount;
+		/*if (DuplicateVertexMap.find(vertex->Position) != DuplicateVertexMap.end())
+		{
+			auto& DuplicateVertices = DuplicateVertexMap[vertex->Position];
+			for (size_t y = 0; y < DuplicateVertices.size(); y++)
+			{
+				DuplicateVertices[y]->Position = AveragedPosition;
+			}
+		}*/
 		vertex->Position = AveragedPosition;
 		SmoothedVertices.push_back(vertex);
 		LOG("EdgeIterationCount: " << EdgeIterationCount);

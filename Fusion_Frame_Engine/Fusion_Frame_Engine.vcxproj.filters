@@ -295,5 +295,8 @@
     <ClInclude Include="FusionCore\MeshOperations.h">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
+    <ClInclude Include="FusionUtility\Hashing.hpp">
+      <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,32 @@
 #include "Object.hpp"
 #include "../FusionPhysics/Octtree.hpp"
 
+std::unordered_set<FUSIONCORE::Object*, PointerHash<FUSIONCORE::Object*>> FUSIONCORE::Object::GetUniqueQuadsObjects()
+{
+	std::unordered_set<Object*, PointerHash<Object*>> UniqueBoxes;
+	unsigned int ReserveCount = 0;
+	for (size_t i = 0; i < AssociatedQuads.size(); i++)
+	{
+		ReserveCount += AssociatedQuads[i]->Objects.size();
+	}
+	UniqueBoxes.reserve(ReserveCount);
+	for (auto& Quad : AssociatedQuads)
+	{
+		for (size_t i = 0; i < Quad->Objects.size(); i++)
+		{
+			auto& object = Quad->Objects[i]->Object;
+			if (object != nullptr)
+			{
+				if (!this->IsSameObject(object))
+				{
+					UniqueBoxes.insert(object);
+				}
+			}
+		}
+	}
+	return UniqueBoxes;
+}
+
 void FUSIONCORE::Object::PushChild(Object* child)
 {
 	child->Parent = this;

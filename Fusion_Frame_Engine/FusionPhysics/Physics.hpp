@@ -47,6 +47,7 @@ namespace FUSIONPHYSICS
 		void Update();
 		//Update without a parent
 		virtual void UpdateAttributes();
+		inline void SetMeshColor(glm::vec3 color) { this->MeshColor = color; };
 
 		glm::vec3 Min;
 		glm::vec3 Max;
@@ -101,4 +102,7 @@ namespace FUSIONPHYSICS
 	bool IsCollidingSAT(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
 	bool IsCollidingSAT(CollisionBox& Plane, CollisionBox3DAABB& Box);
 	bool IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);
+
+	//Sphere-Sphere collision
+	bool IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radius1, glm::vec3 center2, glm::vec3 radius2);
 }

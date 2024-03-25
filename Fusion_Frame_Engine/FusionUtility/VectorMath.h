@@ -643,6 +643,24 @@ struct Vec_n
 	}
 };
 
+template<typename T>
+struct PointerHash
+{
+	size_t operator()(const T& Object) const
+	{
+		return std::hash<const T*>{}(&Object);
+	}
+};
+
+template<typename T>
+struct ObjectHash
+{
+	size_t operator()(const T& Object) const
+	{
+		return std::hash<const T*>{}(&Object);
+	}
+};
+
 
 
 

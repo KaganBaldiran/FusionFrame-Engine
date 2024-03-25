@@ -2,6 +2,6 @@
 .vs
 
 # x64 files
-/2D_Graphic_Engine_Kagan_Pavlo/x64
-/x64/Release/2D_Graphic_Engine_Kagan_Pavlo.exe
-/x64/Release/2D_Graphic_Engine_Kagan_Pavlo.pdb
+/Fusion_Frame_Engine/x64
+/x64/Release/Fusion_Frame_Engine.exe
+/x64/Release/Fusion_Frame_Engine.pdb

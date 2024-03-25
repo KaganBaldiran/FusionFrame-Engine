@@ -122,6 +122,7 @@ void FUSIONCORE::Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
 void FUSIONCORE::Camera3D::SetOrientation(glm::vec3 Orien)
 {
 	this->Orientation = Orien;
+	this->PlanarOrientation = { Orien.x , 0.0f , Orien.z };
 }
 
 void FUSIONCORE::Camera3D::SetPosition(glm::vec3 Pos)

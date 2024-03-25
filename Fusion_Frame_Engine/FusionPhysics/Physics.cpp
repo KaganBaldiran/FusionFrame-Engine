@@ -61,9 +61,9 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 	MeshColor.y = RandomFloats(engine);
 	MeshColor.z = RandomFloats(engine);
 
-	float Xsize = (transformation.InitialObjectScales.x / 2.0f) * BoxSizeCoeff.x;
-	float Ysize = (transformation.InitialObjectScales.y / 2.0f) * BoxSizeCoeff.y;
-	float Zsize = (transformation.InitialObjectScales.z / 2.0f) * BoxSizeCoeff.z;
+	float Xsize = (transformation.InitialObjectScales.x * 0.5f) * BoxSizeCoeff.x;
+	float Ysize = (transformation.InitialObjectScales.y * 0.5f) * BoxSizeCoeff.y;
+	float Zsize = (transformation.InitialObjectScales.z * 0.5f) * BoxSizeCoeff.z;
 
 	auto OriginPosition = *transformation.OriginPoint;
 
@@ -159,7 +159,7 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 	this->GetTransformation().OriginPoint = transformation.OriginPoint;
 	this->GetTransformation().InitialObjectScales = transformation.InitialObjectScales * BoxSizeCoeff;
 
-	LocalBoxNormals.clear();
+	LocalBoxNormals.reserve(this->BoxNormals.size());
 	auto rotation = glm::toQuat(GetTransformation().RotationMatrix);
 	for (size_t i = 0; i < this->BoxNormals.size(); i++)
 	{
@@ -167,6 +167,7 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 		LocalBoxNormals.push_back(glm::normalize(Normal));
 	}
 
+	LocalEdgeNormals.reserve(12);
 	for (size_t i = 0; i < 6; i++)
 	{
 		if (i != 2 && i != 3)
@@ -189,7 +190,9 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 	std::vector<FUSIONCORE::Texture2D> textures;
 
 	std::vector<std::shared_ptr<FUSIONCORE::Face>> MeshFaces;
-	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 3)
+	unsigned int IndexCount = (sizeof(indices) / sizeof(indices[0]));
+	MeshFaces.reserve(IndexCount / 3);
+	for (size_t i = 0; i < IndexCount; i += 3)
 	{
 		FUSIONCORE::Face newFace;
 		newFace.Indices.push_back(indices[i]);
@@ -223,9 +226,9 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 	MeshColor.y = RandomFloats(engine);
 	MeshColor.z = RandomFloats(engine);
 
-	float Xsize = (Size.x / 2.0f) * BoxSizeCoeff.x;
-	float Ysize = (Size.y / 2.0f) * BoxSizeCoeff.y;
-	float Zsize = (Size.z / 2.0f) * BoxSizeCoeff.z;
+	float Xsize = (Size.x * 0.5f) * BoxSizeCoeff.x;
+	float Ysize = (Size.y * 0.5f) * BoxSizeCoeff.y;
+	float Zsize = (Size.z * 0.5f) * BoxSizeCoeff.z;
 
 	auto OriginPosition = FF_ORIGIN;
 
@@ -400,10 +403,10 @@ FUSIONPHYSICS::CollisionBox::CollisionBox(FUSIONCORE::Mesh &InputMesh, FUSIONCOR
 void FUSIONPHYSICS::CollisionBox::DrawBoxMesh(FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader)
 {
 	std::function<void()> boxprep = [&]()
-		{
-			shader.setVec3("LightColor", MeshColor);
-			shader.setMat4("model", GetTransformation().GetModelMat4());
-		};
+	{
+		shader.setVec3("LightColor", MeshColor);
+		shader.setMat4("model", GetTransformation().GetModelMat4());
+	};
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	BoxMesh->Draw(camera, shader, boxprep);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -618,7 +621,7 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 	glm::vec4 transformed;
 	for (size_t i = 0; i < Normals.size(); i++)
 	{
-		float dotProduct = glm::dot(glm::normalize(Normals[i]), glm::normalize(targetVector));
+		float dotProduct = glm::dot(glm::normalize(Normals[i]), targetVector);
 		if (dotProduct > max)
 		{
 			max = dotProduct;
@@ -796,6 +799,13 @@ bool FUSIONPHYSICS::IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2)
 	return true;
 }
 
+bool FUSIONPHYSICS::IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radius1, glm::vec3 center2, glm::vec3 radius2)
+{
+	float CentersDifference = glm::length(center1 - center2);
+	float RadiusSum = glm::length(radius1) + glm::length(radius2);
+	return RadiusSum >= CentersDifference;
+}
+
 FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 BoxSizeCoeff)
 {
 	this->ModelOriginPoint = FF_ORIGIN;
@@ -809,9 +819,9 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	MeshColor.y = RandomFloats(engine);
 	MeshColor.z = RandomFloats(engine);
 
-	float Xsize = (Size.x / 2.0f) * BoxSizeCoeff.x;
-	float Ysize = (Size.y / 2.0f) * BoxSizeCoeff.y;
-	float Zsize = (Size.z / 2.0f) * BoxSizeCoeff.z;
+	float Xsize = (Size.x * 0.5f) * BoxSizeCoeff.x;
+	float Ysize = (Size.y * 0.5f) * BoxSizeCoeff.y;
+	float Zsize = (Size.z * 0.5f) * BoxSizeCoeff.z;
 
 	auto OriginPosition = FF_ORIGIN;
 
@@ -841,6 +851,7 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	BoxVertices.push_back(vertex);
 
 	this->GetTransformation().InitialObjectScales = Size * BoxSizeCoeff;
+	this->GetTransformation().OriginPoint = &OriginPosition;
 
 	const GLuint indices[] = {
 		// Upper part

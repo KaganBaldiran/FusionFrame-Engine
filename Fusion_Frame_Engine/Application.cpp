@@ -6,14 +6,13 @@
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <unordered_set>
 
 #define SPEED 24.0f
 #define CAMERA_CLOSE_PLANE 0.1f
 #define CAMERA_FAR_PLANE 180.0f
 const float BlendAmount = 0.04f;
 const float InterBlendAmount = 0.04f;
-
-FUSIONCORE::WorldTransform NodeToWorldTransform(FUSIONPHYSICS::QuadNode& Node);
 
 int Application::Run()
 {
@@ -156,18 +155,20 @@ int Application::Run()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 
-	FUSIONCORE::Model subdModel("Resources\\subDModel.obj");
+	FUSIONCORE::Model subdModel;
+	FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\subDModel.obj", subdModel);
 	subdModel.GetTransformation().ScaleNoTraceBack({ 9.0f,9.0f,9.0f });
 	subdModel.GetTransformation().TranslateNoTraceBack({ 22.0f,6.0f,-9.0f });
 
 	auto ImportedModels = FUSIONCORE::ImportMultipleModelsFromDirectory("Resources\\models\\Grasses",false);
 	auto shrub = std::move(ImportedModels[1]);
 	ImportedModels.erase(ImportedModels.begin() + 1);
-
-	//auto Tower = std::move(ImportedModels[2]);
-	//ImportedModels.erase(ImportedModels.begin() + 2);
+	auto Tower = std::move(ImportedModels[1]);
+	ImportedModels.erase(ImportedModels.begin() + 1);
+	Tower->GetTransformation().TranslateNoTraceBack({ 39.0f,0.0f,-9.0f });
+	FUSIONPHYSICS::CollisionBox3DAABB TowerBox(Tower->GetTransformation(), glm::vec3(1.0f));
 	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
-	//FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
+	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
 	
 	shrub->GetTransformation().ScaleNoTraceBack(glm::vec3(24.0f));
 	//FUSIONPHYSICS::MESHOPERATIONS::SmoothObject(subdModel.Meshes[0]);
@@ -324,7 +325,7 @@ int Application::Run()
 	models.push_back(MainCharac.get());
 	models.push_back(&IMPORTTEST);
 	models.push_back(&subdModel);
-	models.push_back(ImportedModels[1].get());
+	models.push_back(Tower.get());
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
 
@@ -351,20 +352,26 @@ int Application::Run()
 	Capsule0.GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 	models.push_back(&animationModel);
 
-	FUSIONPHYSICS::ObjectInstances.push_back(&Capsule0);
+	std::vector<FUSIONCORE::Object*> ObjectInstances;
+	ObjectInstances.push_back(&Capsule0);
 	//FUSIONPHYSICS::ObjectInstances.push_back(Stove.get());
 	//FUSIONPHYSICS::ObjectInstances.push_back(sofa.get());
 	//FUSIONPHYSICS::ObjectInstances.push_back(model1.get());
 	//FUSIONPHYSICS::ObjectInstances.push_back(MainCharac.get());
-	//FUSIONPHYSICS::ObjectInstances.push_back(&subdModel);
-	FUSIONPHYSICS::ObjectInstances.push_back(&SofaBox);
-	FUSIONPHYSICS::ObjectInstances.push_back(&StoveBox);
-	FUSIONPHYSICS::ObjectInstances.push_back(&Box1);
-
+	ObjectInstances.push_back(&TowerBox);
+	ObjectInstances.push_back(&SofaBox);
+	ObjectInstances.push_back(&StoveBox);
+	ObjectInstances.push_back(&Box1);
+	ObjectInstances.push_back(&tryBox);
+	ObjectInstances.push_back(&Plane);
 
 	FUSIONCORE::VBO instanceVBO;
 	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 2000, 109);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(instanceVBO, DistibutedPoints);
+
+	/*FUSIONCORE::VBO TowerinstanceVBO;
+	auto TowerDistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 4, 109);
+	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(TowerinstanceVBO, TowerDistibutedPoints);*/
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
@@ -418,43 +425,22 @@ int Application::Run()
 
 		shrub->GetTransformation().RotateNoTraceBack({ 1.0f,0.0f,1.0f}, std::sin(time(0)) * 0.1f);
 
-		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode);
-		auto& CurrentQuad = Capsule0.GetAssociatedQuads();
-		for (auto& Quad : CurrentQuad)
+		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode, ObjectInstances,2,5);
+		auto UniqueQuadObjects = Capsule0.GetUniqueQuadsObjects();
+		LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
+		for (const auto& Box : UniqueQuadObjects)
 		{
-			for (size_t i = 0; i < Quad->Objects.size(); i++)
+			auto QuadModel = dynamic_cast<FUSIONPHYSICS::CollisionBox*>(Box);
+			if (QuadModel != nullptr)
 			{
-				auto QuadModel = dynamic_cast<FUSIONPHYSICS::CollisionBox*>(Quad->Objects[i]->Object);
-				if (QuadModel != nullptr)
+				if (FUSIONPHYSICS::IsCollidingSAT(*QuadModel, Capsule0))
 				{
-					if (!QuadModel->IsSameObject(&Capsule0))
-					{
-						if (FUSIONPHYSICS::IsCollidingSAT(*QuadModel, Capsule0))
-						{
-							Collision = true;
-							direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position, QuadModel->GetLocalNormals()).second;
-						}
-					}
-					//QuadModel->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material(), AOamount);
+					Collision = true;
+					glm::vec3 ObjectPosition = Capsule0.GetTransformation().Position;
+					direction = FUSIONPHYSICS::CheckCollisionDirection(glm::normalize(glm::vec3(ObjectPosition.x ,0.0f,ObjectPosition.z)), QuadModel->GetLocalNormals()).second;
 				}
 			}
 		}
-
-		/*if (FUSIONPHYSICS::IsCollidingSAT(SofaBox, Capsule0))
-		{
-			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position, SofaBox.GetLocalNormals()).second;
-		}
-		if (FUSIONPHYSICS::IsCollidingSAT(Box1, Capsule0))
-		{
-			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position , Box1.GetLocalNormals()).second;
-		}
-		if (FUSIONPHYSICS::IsCollidingSAT(StoveBox, Capsule0))
-		{
-			Collision = true;
-			direction = FUSIONPHYSICS::CheckCollisionDirection(Capsule0.GetTransformation().Position, StoveBox.GetLocalNormals()).second;
-		}*/
 
 		static bool FirstFloorTouch = true;
 		if (!FUSIONPHYSICS::IsCollidingSAT(floorBox, Capsule0))
@@ -477,8 +463,8 @@ int Application::Run()
 		}
 
 
-		//auto Front = glm::vec3(camera3d.Orientation.x, 0.0f, camera3d.Orientation.z);
-		auto Front = ProjectVectorOntoPlane(camera3d.GetUpVector() , camera3d.Orientation);
+		auto Front = glm::normalize(glm::vec3(camera3d.Orientation.x,0.0f,camera3d.Orientation.z));
+		//LOG("Front: " << Vec3<float>(Front));
 		auto Back = -Front;
 		auto Right = glm::normalize(glm::cross(Front, camera3d.GetUpVector()));
 		auto Left = -Right;
@@ -499,22 +485,23 @@ int Application::Run()
 				}
 			}
 
-			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(-direction, Front) <= glm::epsilon<float>())
+			const float E = -0.07f;
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
 			{
 				Moving = true;
 				animationModel.GetTransformation().Translate(Front * SPEED * deltaTime);
 			}
-			else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glm::dot(-direction, Back) <= glm::epsilon<float>())
+			else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glm::dot(direction, Back) <= E)
 			{
 				Moving = true;
 				animationModel.GetTransformation().Translate(Back * SPEED * deltaTime);
 			}
-			else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glm::dot(-direction, Right) <= glm::epsilon<float>())
+			else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glm::dot(direction, Right) <= E)
 			{
 				Moving = true;
 				animationModel.GetTransformation().Translate(Right * SPEED * deltaTime);
 			}
-			else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glm::dot(-direction, Left) <= glm::epsilon<float>())
+			else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glm::dot(direction, Left) <= E)
 			{
 				Moving = true;
 				animationModel.GetTransformation().Translate(Left * SPEED * deltaTime);
@@ -706,23 +693,8 @@ int Application::Run()
 		}
 
 		
-		/*std::deque<FUSIONPHYSICS::QuadNode*> nodes;
-		nodes.push_back(&headNode);
-		while (!nodes.empty())
-		{
-			auto node = nodes.back();
-			nodes.pop_back();
-			auto NodeTranform = NodeToWorldTransform(*node);
-			FUSIONPHYSICS::CollisionBox3DAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
-			HeadNodeBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
-			if (!node->ChildrenNode.empty())
-			{
-				for (size_t i = 0; i < node->ChildrenNode.size(); i++)
-				{
-					nodes.push_back(node->ChildrenNode[i].get());
-				}
-			}
-		}*/
+		Tower->DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe, AOamount);
+
 
 		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, WallMaterial, AOamount);
 
@@ -730,6 +702,7 @@ int Application::Run()
 		{
 		   animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices, AOamount);
 		}
+		
 		
 		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, redMaterial, AOamount);
@@ -774,12 +747,19 @@ int Application::Run()
 			Plane.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			Plane2.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			TowerBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
+
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material(), AOamount);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+			FUSIONPHYSICS::VisualizeQuadTree(headNode, camera3d, *Shaders.LightShader, FF_COLOR_RED);
 		}
 #endif
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,false, 0.5f, 3.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,true, 0.7f, 3.0f);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
@@ -814,15 +794,7 @@ int Application::Run()
 
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();
-	/*Capsule0.GetBoxMesh()->Clean();
-	Box1.GetBoxMesh()->Clean();
-	StoveBox.GetBoxMesh()->Clean();
-	tryBox.GetBoxMesh()->Clean();
-	Plane.GetBoxMesh()->Clean();
-	Plane2.GetBoxMesh()->Clean();
-	SofaBox.GetBoxMesh()->Clean();
-	floorBox.GetBoxMesh()->Clean();*/
-
+	
 	shovelMaterial.Clean();
 	FloorMaterial.Clean();
 	SofaMaterial.Clean();
@@ -867,13 +839,7 @@ float Application::RoundNonZeroToOne(float input)
 	return result;
 }
 
-FUSIONCORE::WorldTransform NodeToWorldTransform(FUSIONPHYSICS::QuadNode &Node)
-{
-	FUSIONCORE::WorldTransform newTranform;
-	newTranform.InitialObjectScales = Node.Size;
-	newTranform.OriginPoint = &Node.Center;
-	return newTranform;
-}
+
 
 
 

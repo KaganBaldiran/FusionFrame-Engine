@@ -460,7 +460,7 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     }
     else
     {
-        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_JoinIdenticalVertices;
     }
     const aiScene* scene = importer.ReadFile(path, flags);
     this->scene = (aiScene*)scene;
@@ -616,6 +616,7 @@ FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* sce
     std::vector<Texture2D> textures;
     std::vector<std::shared_ptr<Face>> Faces;
 
+    vertices.reserve(mesh->mNumVertices);
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
         Vertex vertex;
@@ -662,6 +663,7 @@ FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* sce
         vertices.push_back(std::make_shared<Vertex>(vertex));
     }
 
+    Faces.reserve(mesh->mNumFaces);
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];

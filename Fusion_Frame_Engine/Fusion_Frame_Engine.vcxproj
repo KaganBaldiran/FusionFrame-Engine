@@ -219,6 +219,7 @@
     <ClInclude Include="FusionPhysics\Octtree.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
     <ClInclude Include="FusionPhysics\QuickHull.hpp" />
+    <ClInclude Include="FusionUtility\Hashing.hpp" />
     <ClInclude Include="FusionUtility\Initialize.h" />
     <ClInclude Include="FusionUtility\Log.h" />
     <ClInclude Include="FusionUtility\StopWatch.h" />

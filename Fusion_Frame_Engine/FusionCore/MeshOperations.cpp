@@ -641,6 +641,7 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 	size_t CastedPointCount = 0;
 	std::vector<glm::vec3> Points;
 
+	Points.reserve(PointCount);
 	while (CastedPointCount < PointCount)
 	{
 		for (size_t i = 0; i < MeshFaces.size(); i++)
@@ -694,6 +695,7 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 	std::vector<glm::vec3> Points;
 	std::mt19937 gen(seed);
 
+	Points.reserve(PointCount);
 	while (CastedPointCount < PointCount)
 	{
 		for (size_t i = 0; i < MeshFaces.size(); i++)
@@ -737,6 +739,20 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 		}
 	}
 	return Points;
+}
+
+std::vector<FUSIONPHYSICS::CollisionBox> FUSIONCORE::MESHOPERATIONS::GridSubdivideCollisionBox(FUSIONPHYSICS::CollisionBox& collisionBox, unsigned int DivisionCountX, unsigned int DivisionCountY, unsigned int DivisionCountZ)
+{
+	/*unsigned int TotalNewBoxCount = DivisionCountX * DivisionCountY * DivisionCountZ;
+	std::vector<FUSIONPHYSICS::CollisionBox> DividedBoxes;
+	DividedBoxes.reserve(TotalNewBoxCount);
+
+	auto& ParentTransformation = collisionBox.GetTransformation();
+	auto ParentModelMatrix = ParentTransformation.GetModelMat4();
+
+
+
+	return DividedBoxes;*/
 }
 
 void FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO, std::vector<glm::vec3> &InstanceData)

@@ -101,7 +101,9 @@ int Application::Run()
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), RandomIntensity(engine));
 	}
 
-	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.477182), glm::vec3(FF_COLOR_LEMONADE), 3.0f, FF_DIRECTIONAL_LIGHT);
+	FUSIONCORE::Color SunColor(FF_COLOR_LEMONADE);
+	SunColor.Brighter();
+	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.477182),SunColor.GetRGB(), 6.0f, FF_DIRECTIONAL_LIGHT);
 
 	//FUSIONUTIL::ThreadPool threads(5, 20);
 //#define ASYNC
@@ -167,6 +169,7 @@ int Application::Run()
 	ImportedModels.erase(ImportedModels.begin() + 1);
 	Tower->GetTransformation().TranslateNoTraceBack({ 39.0f,0.0f,-9.0f });
 	FUSIONPHYSICS::CollisionBox3DAABB TowerBox(Tower->GetTransformation(), glm::vec3(1.0f));
+	TowerBox.UpdateAttributes();
 	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
 	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
 	
@@ -267,6 +270,8 @@ int Application::Run()
 	IMPORTTEST.GetTransformation().ScaleNoTraceBack({ 0.05f,0.05f,0.05f });
 
 	Plane.GetTransformation().Scale({ 7.0f,7.0f ,7.0f });
+	Plane.GetTransformation().Translate({ 0.7f,10.0f,0.0f });
+	Plane.UpdateAttributes();
 	Plane2.GetTransformation().Scale({ 2.0f,2.0f ,2.0f });
 	Plane2.GetTransformation().Translate({ 0.7f,0.0f,0.0f });
 
@@ -354,16 +359,12 @@ int Application::Run()
 
 	std::vector<FUSIONCORE::Object*> ObjectInstances;
 	ObjectInstances.push_back(&Capsule0);
-	//FUSIONPHYSICS::ObjectInstances.push_back(Stove.get());
-	//FUSIONPHYSICS::ObjectInstances.push_back(sofa.get());
-	//FUSIONPHYSICS::ObjectInstances.push_back(model1.get());
-	//FUSIONPHYSICS::ObjectInstances.push_back(MainCharac.get());
 	ObjectInstances.push_back(&TowerBox);
 	ObjectInstances.push_back(&SofaBox);
 	ObjectInstances.push_back(&StoveBox);
 	ObjectInstances.push_back(&Box1);
-	ObjectInstances.push_back(&tryBox);
 	ObjectInstances.push_back(&Plane);
+	ObjectInstances.push_back(&tryBox);
 
 	FUSIONCORE::VBO instanceVBO;
 	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 2000, 109);
@@ -430,14 +431,15 @@ int Application::Run()
 		LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
 		for (const auto& Box : UniqueQuadObjects)
 		{
-			auto QuadModel = dynamic_cast<FUSIONPHYSICS::CollisionBox*>(Box);
+			auto QuadModel = Box->DynamicObjectCast<FUSIONPHYSICS::CollisionBox*>();
 			if (QuadModel != nullptr)
 			{
 				if (FUSIONPHYSICS::IsCollidingSAT(*QuadModel, Capsule0))
 				{
 					Collision = true;
-					glm::vec3 ObjectPosition = Capsule0.GetTransformation().Position;
-					direction = FUSIONPHYSICS::CheckCollisionDirection(glm::normalize(glm::vec3(ObjectPosition.x ,0.0f,ObjectPosition.z)), QuadModel->GetLocalNormals()).second;
+					glm::vec3 ObjectPosition = FUSIONCORE::TranslateVertex(Capsule0.GetTransformation().GetModelMat4(), *Capsule0.GetTransformation().OriginPoint) -
+						                       FUSIONCORE::TranslateVertex(QuadModel->GetTransformation().GetModelMat4(), *QuadModel->GetTransformation().OriginPoint);
+					direction = glm::normalize(ObjectPosition);
 				}
 			}
 		}
@@ -464,7 +466,6 @@ int Application::Run()
 
 
 		auto Front = glm::normalize(glm::vec3(camera3d.Orientation.x,0.0f,camera3d.Orientation.z));
-		//LOG("Front: " << Vec3<float>(Front));
 		auto Back = -Front;
 		auto Right = glm::normalize(glm::cross(Front, camera3d.GetUpVector()));
 		auto Left = -Right;
@@ -485,7 +486,10 @@ int Application::Run()
 				}
 			}
 
-			const float E = -0.07f;
+			animationModel.GetTransformation().Translate(glm::normalize(glm::vec3(direction.x,0.0f,direction.z)) * SPEED * 0.5f * deltaTime);
+
+			direction = -direction;
+			const float E = -0.3f;
 			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
 			{
 				Moving = true;
@@ -698,10 +702,10 @@ int Application::Run()
 
 		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, WallMaterial, AOamount);
 
-		if (!Collision)
-		{
+		//if (!Collision)
+		//{
 		   animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices, AOamount);
-		}
+		//}
 		
 		
 		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });

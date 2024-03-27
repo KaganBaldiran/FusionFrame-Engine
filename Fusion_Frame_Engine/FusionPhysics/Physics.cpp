@@ -372,6 +372,7 @@ FUSIONPHYSICS::CollisionBox::CollisionBox(FUSIONCORE::Mesh &InputMesh, FUSIONCOR
 	this->GetTransformation().RotationMatrix = transformation.RotationMatrix;
 	this->GetTransformation().OriginPoint = transformation.OriginPoint;
 	this->GetTransformation().InitialObjectScales = transformation.InitialObjectScales;
+	ModelOriginPoint = *transformation.OriginPoint;
 
 	auto& MeshVertices = BoxMesh->GetVertices();
 	this->BoxNormals.reserve(MeshVertices.size());
@@ -502,13 +503,13 @@ void FUSIONPHYSICS::CollisionBox3DAABB::UpdateAttributes()
 
 float FUSIONPHYSICS::CollisionBox3DAABB::ProjectOntoAxis(const glm::vec3& axis)
 {
-
-	glm::vec4 transformed0 = this->GetTransformation().GetModelMat4() * glm::vec4(BoxVertices[0].Position, 1.0f);
+	auto ModelMatrix = this->GetTransformation().GetModelMat4();
+	glm::vec4 transformed0 = ModelMatrix * glm::vec4(BoxVertices[0].Position, 1.0f);
 	float minProjection = glm::dot({ transformed0.x, transformed0.y, transformed0.z }, axis);
 
 	for (const auto& vertex : BoxVertices)
 	{
-		glm::vec4 transformed = this->GetTransformation().GetModelMat4() * glm::vec4(vertex.Position, 1.0f);
+		glm::vec4 transformed = ModelMatrix * glm::vec4(vertex.Position, 1.0f);
 		float projection = glm::dot({ transformed.x, transformed.y, transformed.z }, axis);
 
 		if (projection < minProjection)
@@ -621,7 +622,7 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 	glm::vec4 transformed;
 	for (size_t i = 0; i < Normals.size(); i++)
 	{
-		float dotProduct = glm::dot(glm::normalize(Normals[i]), targetVector);
+		float dotProduct = glm::dot(glm::normalize(Normals[i]), glm::normalize(targetVector));
 		if (dotProduct > max)
 		{
 			max = dotProduct;
@@ -851,7 +852,7 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	BoxVertices.push_back(vertex);
 
 	this->GetTransformation().InitialObjectScales = Size * BoxSizeCoeff;
-	this->GetTransformation().OriginPoint = &OriginPosition;
+	this->GetTransformation().OriginPoint = &ModelOriginPoint;
 
 	const GLuint indices[] = {
 		// Upper part
@@ -867,12 +868,13 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	};
 	BoxNormals.assign(Normals, Normals + sizeof(Normals) / sizeof(Normals[0]));
 
-	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
+	auto ModelMatrix = this->GetTransformation().GetModelMat4();
+	glm::vec4 transformedOrigin = ModelMatrix * glm::vec4(this->ModelOriginPoint, 1.0f);
 
 	FUSIONCORE::Face face;
 
 	face.Vertices.assign(BoxVertices.begin() , BoxVertices.end());
-	face.Normal = FindNormal(this->GetTransformation().GetModelMat4(), face.Vertices);
+	face.Normal = FindNormal(ModelMatrix, face.Vertices);
 
 	auto faceNormal = face.GetNormal();
 
@@ -889,8 +891,8 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 
 	for (size_t i = 0; i < 4; i++)
 	{
-		auto Vertex1 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i]].Position);
-		auto Vertex2 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i + 1]].Position);
+		auto Vertex1 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i]].Position);
+		auto Vertex2 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i + 1]].Position);
 		glm::vec3 Edge = Vertex1 - Vertex2;
 		glm::vec3 EdgeMidPoint = (Vertex1 + Vertex2) / glm::vec3(2.0f);
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
@@ -898,7 +900,7 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 		LocalBoxNormals.push_back(EdgeNormal);
 	}
 
-	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
+	auto MinMax = FindMinMax(BoxVertices, ModelMatrix);
 
 	Min = MinMax.first;
 	Max = MinMax.second;
@@ -954,10 +956,11 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 		this->transformation.Translate(lastTransforms[i].Transformation);
 	}
 
+	auto ModelMatrix = this->GetTransformation().GetModelMat4();
 	LocalBoxNormals.clear();
-	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
+	glm::vec4 transformedOrigin = ModelMatrix * glm::vec4(this->ModelOriginPoint, 1.0f);
 
-	Faces[0].Normal = FindNormal(this->GetTransformation().GetModelMat4() , Faces[0].Vertices);
+	Faces[0].Normal = FindNormal(ModelMatrix, Faces[0].Vertices);
 	auto faceNormal = Faces[0].GetNormal();
 
 	LocalBoxNormals.push_back(faceNormal);
@@ -971,8 +974,8 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 
 	for (size_t i = 0; i < 4; i++)
 	{
-		auto Vertex1 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i]].Position);
-		auto Vertex2 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i + 1]].Position);
+		auto Vertex1 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i]].Position);
+		auto Vertex2 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i + 1]].Position);
 		glm::vec3 Edge = Vertex1 - Vertex2;
 		glm::vec3 EdgeMidPoint = (Vertex1 + Vertex2) / glm::vec3(2.0f);
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
@@ -981,7 +984,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 		LocalBoxNormals.push_back(EdgeNormal);
 	}
 
-	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
+	auto MinMax = FindMinMax(BoxVertices, ModelMatrix);
 
 	Min = MinMax.first;
 	Max = MinMax.second;
@@ -992,9 +995,10 @@ void FUSIONPHYSICS::CollisionBoxPlane::Update()
 void FUSIONPHYSICS::CollisionBoxPlane::UpdateAttributes()
 {
 	LocalBoxNormals.clear();
-	glm::vec4 transformedOrigin = this->GetTransformation().GetModelMat4() * glm::vec4(this->ModelOriginPoint, 1.0f);
+	auto ModelMatrix = this->GetTransformation().GetModelMat4();
+	glm::vec4 transformedOrigin = ModelMatrix * glm::vec4(this->ModelOriginPoint, 1.0f);
 
-	Faces[0].Normal = FindNormal(this->GetTransformation().GetModelMat4(), Faces[0].Vertices);
+	Faces[0].Normal = FindNormal(ModelMatrix, Faces[0].Vertices);
 	auto faceNormal = Faces[0].GetNormal();
 
 	LocalBoxNormals.push_back(faceNormal);
@@ -1008,8 +1012,8 @@ void FUSIONPHYSICS::CollisionBoxPlane::UpdateAttributes()
 
 	for (size_t i = 0; i < 4; i++)
 	{
-		auto Vertex1 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i]].Position);
-		auto Vertex2 = FUSIONCORE::TranslateVertex(this->GetTransformation().GetModelMat4(), BoxVertices[EdgeIndices[i + 1]].Position);
+		auto Vertex1 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i]].Position);
+		auto Vertex2 = FUSIONCORE::TranslateVertex(ModelMatrix, BoxVertices[EdgeIndices[i + 1]].Position);
 		glm::vec3 Edge = Vertex1 - Vertex2;
 		glm::vec3 EdgeMidPoint = (Vertex1 + Vertex2) / glm::vec3(2.0f);
 		glm::vec3 EdgeNormal = glm::cross(LocalBoxNormals[0], Edge);
@@ -1017,7 +1021,7 @@ void FUSIONPHYSICS::CollisionBoxPlane::UpdateAttributes()
 		LocalBoxNormals.push_back(EdgeNormal);
 	}
 
-	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
+	auto MinMax = FindMinMax(BoxVertices, ModelMatrix);
 
 	Min = MinMax.first;
 	Max = MinMax.second;

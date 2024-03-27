@@ -6,7 +6,18 @@ glm::vec3 WorldSizeMin;
 glm::vec3 WorldSizeMax;
 std::vector<FUSIONPHYSICS::ObjectBoundingBox> BoundingBoxes;
 
-void FUSIONPHYSICS::ObjectBoundingBox::CompareVec3MinMax(glm::vec3 v)
+FUSIONPHYSICS::ObjectBoundingBox::ObjectBoundingBox()
+{
+	Vertices.reserve(8);
+	Min.x = std::numeric_limits<float>::max();
+	Max.x = std::numeric_limits<float>::lowest();
+	Min.y = std::numeric_limits<float>::max();
+	Max.y = std::numeric_limits<float>::lowest();
+	Min.z = std::numeric_limits<float>::max();
+	Max.z = std::numeric_limits<float>::lowest();
+}
+
+void FUSIONPHYSICS::ObjectBoundingBox::CompareVec3MinMax(glm::vec3 &v)
 {
 	Min.x = glm::min(v.x, Min.x);
 	Min.y = glm::min(v.y, Min.y);
@@ -139,7 +150,9 @@ std::pair<glm::vec3, glm::vec3> FUSIONPHYSICS::GetGridSize()
 	return {WorldSizeMin,WorldSizeMax};
 }
 
-bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, const FUSIONPHYSICS::QuadNode* node) {
+
+bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, const FUSIONPHYSICS::QuadNode* node) 
+{
 	const auto& nodeCenter = node->Center;
 	const auto& nodeHalfSize = node->Size * 0.5f;
 
@@ -149,12 +162,9 @@ bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, cons
 	const glm::vec3 nodeMin = nodeCenter - nodeHalfSize;
 	const glm::vec3 nodeMax = nodeCenter + nodeHalfSize;
 
-	bool partiallyInside =
-		MaxObject.x >= nodeMin.x && MinObject.x <= nodeMax.x &&
-		MaxObject.y >= nodeMin.y && MinObject.y <= nodeMax.y &&
-		MaxObject.z >= nodeMin.z && MinObject.z <= nodeMax.z;
-
-	return partiallyInside;
+	return MaxObject.x >= nodeMin.x && MinObject.x <= nodeMax.x &&
+		   MaxObject.y >= nodeMin.y && MinObject.y <= nodeMax.y &&
+		   MaxObject.z >= nodeMin.z && MinObject.z <= nodeMax.z;
 }
 
 void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode, std::vector<FUSIONCORE::Object*> &ObjectInstances, unsigned int SingleQuadObjectCountLimit, unsigned int SubdivisionLimit)
@@ -181,7 +191,7 @@ void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& Hea
 	{
 		auto Node = std::move(NodesToProcess.back());
 		NodesToProcess.pop_back();
-		if (Node->Objects.size() > SingleQuadObjectCountLimit)
+		if (Node->Objects.size() > SingleQuadObjectCountLimit && Node->SubdivisionCount < SubdivisionLimit)
 		{
 			Node->SubdivisionCount++;
 			SubdivideQuadNode(*Node, NodesToProcess);
@@ -202,10 +212,6 @@ void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& Hea
 				CurrentObject->Object->SetAssociatedQuads(AssociatedNodes);
 			}
 			Node->Objects.clear();
-		}
-		if (Node->SubdivisionCount >= SubdivisionLimit)
-		{
-			return;
 		}
 	}	
 }

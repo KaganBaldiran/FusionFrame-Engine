@@ -32,18 +32,8 @@ namespace FUSIONPHYSICS
 	class ObjectBoundingBox
 	{
 	public:
-		ObjectBoundingBox()
-		{
-			Vertices.reserve(8);
-			Min.x = std::numeric_limits<float>::max();
-			Max.x = std::numeric_limits<float>::lowest();
-			Min.y = std::numeric_limits<float>::max();
-			Max.y = std::numeric_limits<float>::lowest();
-			Min.z = std::numeric_limits<float>::max();
-			Max.z = std::numeric_limits<float>::lowest();
-		};
-
-		void CompareVec3MinMax(glm::vec3 v);
+		ObjectBoundingBox();
+		void CompareVec3MinMax(glm::vec3 &v);
 
 		std::vector<glm::vec3> Vertices;
 		glm::vec3 Min;

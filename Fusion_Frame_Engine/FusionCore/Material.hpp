@@ -50,108 +50,21 @@ namespace FUSIONCORE
 			std::fill_n(this->DisableClayMaterial, 5, 1);
 		}
 
-		inline void PushTextureMap(const char* Key, Texture2D& TextureMap)
-		{
-			TextureMaps[Key] = &TextureMap;
+		void PushTextureMap(const char* Key, Texture2D& TextureMap);
+		void PushTextureMap(const char* Key, const char* TextureMap, GLenum TextureType = GL_TEXTURE_2D, GLenum PixelType = GL_UNSIGNED_BYTE, 
+			                GLuint Mag_filter = GL_LINEAR, GLuint Min_filter = GL_LINEAR, GLuint Wrap_S_filter = GL_CLAMP_TO_EDGE, GLuint Wrap_T_filter = GL_CLAMP_TO_EDGE, bool Flip = true);
+		void PopTextureMap(const char* Key);
+		
+		inline Texture2D* GetTextureMap(const char* Key) { return TextureMaps[Key]; };
+		inline void SetTiling(float Amount = 1.0f) { this->TilingCoeff = Amount; };
 
-			std::string KeyValue(Key);
-			if (KeyValue.find("texture_diffuse") != std::string::npos)
-			{
-				DisableClayMaterial[0] = 0;
-			}
-			else if (KeyValue.find("texture_specular") != std::string::npos)
-			{
-				DisableClayMaterial[1] = 0;
-			}
-			else if (KeyValue.find("texture_normal") != std::string::npos)
-			{
-				DisableClayMaterial[2] = 0;
-			}
-			else if (KeyValue.find("texture_metalic") != std::string::npos)
-			{
-				DisableClayMaterial[3] = 0;
-			}
-			else if (KeyValue.find("texture_alpha") != std::string::npos)
-			{
-				DisableClayMaterial[4] = 0;
-			}
-		}
-
-		inline void PopTextureMap(const char* Key)
-		{
-			if (TextureMaps.find(Key) != TextureMaps.end())
-			{
-				std::string KeyValue(Key);
-				if (KeyValue.find("texture_diffuse") != std::string::npos)
-				{
-					DisableClayMaterial[0] = 1;
-				}
-				else if (KeyValue.find("texture_specular") != std::string::npos)
-				{
-					DisableClayMaterial[1] = 1;
-				}
-				else if (KeyValue.find("texture_normal") != std::string::npos)
-				{
-					DisableClayMaterial[2] = 1;
-				}
-				else if (KeyValue.find("texture_metalic") != std::string::npos)
-				{
-					DisableClayMaterial[3] = 1;
-				}
-				else if (KeyValue.find("texture_alpha") != std::string::npos)
-				{
-					DisableClayMaterial[4] = 1;
-				}
-
-				TextureMaps.erase(Key);
-			}
-		}
-
-		inline Texture2D* GetTextureMap(const char* Key)
-		{
-			return TextureMaps[Key];
-		}
-
-		inline void SetTiling(float Amount = 1.0f)
-		{
-			this->TilingCoeff = Amount;
-		}
-
-		inline std::map<std::string, Texture2D*>& GetTextureMaps()
-		{
-			return TextureMaps;
-		}
-
-		inline void SetMaterialShader(Shader& shader)
-		{
-			int slot = 4;
-			for (auto it = TextureMaps.begin(); it != TextureMaps.end(); ++it)
-			{
-				it->second->Bind(slot, shader.GetID(), it->first.c_str());
-				slot++;
-			}
-
-			glUniform1iv(glGetUniformLocation(shader.GetID(), "disableclaymaterial"), 5, &DisableClayMaterial[0]);
-			shader.setFloat("metallic", this->metalic);
-			shader.setFloat("roughness", this->roughness);
-			shader.setFloat("TilingCoeff", this->TilingCoeff);
-			shader.setVec4("albedo", Albedo);
-		}
-
-		inline void EnableClayMaterial()
-		{
-			std::fill_n(this->DisableClayMaterial, 5, 1);
-		}
+		inline std::map<std::string, Texture2D*>& GetTextureMaps() { return TextureMaps; };
+		void SetMaterialShader(Shader& shader);
+		inline void EnableClayMaterial() { std::fill_n(this->DisableClayMaterial, 5, 1); };
 
 		//If called , there is no need to dispose the individual taxtures.
-		void Clean()
-		{
-			for (auto it = TextureMaps.begin(); it != TextureMaps.end(); ++it)
-			{
-				it->second->Clear();
-			}
-		}
-
+		void Clean();
+		
 		float roughness;
 		float metalic;
 		float TilingCoeff = 1.0f;

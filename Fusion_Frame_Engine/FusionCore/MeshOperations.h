@@ -4,6 +4,7 @@
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionCore/Model.hpp"
+#include "../FusionPhysics/Physics.hpp"
 #include <memory>
 
 namespace FUSIONCORE
@@ -21,6 +22,7 @@ namespace FUSIONCORE
 	  std::vector<glm::vec3> DistributePointsOnMeshSurface(FUSIONCORE::Mesh& Mesh, unsigned int PointCount , unsigned int seed);
 	  std::vector<glm::vec3> DistributePointsOnMeshSurface(FUSIONCORE::Mesh& Mesh,FUSIONCORE::WorldTransform& Transformation, unsigned int PointCount, unsigned int seed);
 	  
+	  std::vector<FUSIONPHYSICS::CollisionBox> GridSubdivideCollisionBox(FUSIONPHYSICS::CollisionBox& collisionBox , unsigned int DivisionCountX , unsigned int DivisionCountY, unsigned int DivisionCountZ);
 	  //Filling instance vbo with given data.
 	  void FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO ,std::vector<glm::vec3> &InstanceData);
 	}

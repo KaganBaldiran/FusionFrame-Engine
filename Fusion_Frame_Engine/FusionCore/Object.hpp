@@ -45,6 +45,9 @@ namespace FUSIONCORE
         int GetChildrenCount();
         WorldTransform& GetTransformation() { return this->transformation; };
 
+        template<typename T>
+        T DynamicObjectCast() { return dynamic_cast<T>(this); };
+
         //Checking if two objects memory addresses are the same(Doesn't check for object state) 
         inline bool IsSameObject(Object* other) {
             return this == other;

@@ -62,7 +62,6 @@ namespace FUSIONCORE
 		GLuint Bind();
 		GLuint GetVertexArrID();
 		~VAO();
-
 	private:
 
 		GLuint vao;
@@ -73,6 +72,7 @@ namespace FUSIONCORE
 	public:
 		UBO();
 		GLuint Bind();
+		void BindUBO(unsigned int BindingPoint);
 		GLuint GetUBOID();
 		~UBO();
 
@@ -95,8 +95,24 @@ namespace FUSIONCORE
 
 	};
 
+	class SSBO
+	{
+	public:
+		void BindSSBO(unsigned int BindingPoint);
+		SSBO();
+		~SSBO();
+		void clean();
+
+		void Bind();
+		void Unbind();
+		void BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+	private:
+		GLuint ssbo;
+	};
+
 	void BindVBONull();
 	void BindVAONull();
 	void BindEBONull();
 	void BindUBONull();
+	void BindSSBONull();
 }

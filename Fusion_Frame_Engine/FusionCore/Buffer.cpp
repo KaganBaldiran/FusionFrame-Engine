@@ -141,6 +141,11 @@ void FUSIONCORE::BindUBONull()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void FUSIONCORE::BindSSBONull()
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
 FUSIONCORE::EBO::EBO()
 {
 	glGenBuffers(1, &ebo);
@@ -173,6 +178,11 @@ GLuint FUSIONCORE::UBO::Bind()
 	return ubo;
 }
 
+void FUSIONCORE::UBO::BindUBO(unsigned int BindingPoint)
+{
+	glBindBufferBase(GL_UNIFORM_BUFFER, BindingPoint, this->ubo);
+}
+
 GLuint FUSIONCORE::UBO::GetUBOID()
 {
 	return ubo;
@@ -181,4 +191,39 @@ GLuint FUSIONCORE::UBO::GetUBOID()
 FUSIONCORE::UBO::~UBO()
 {
 	glDeleteBuffers(1, &ubo);
+}
+
+void FUSIONCORE::SSBO::BindSSBO(unsigned int BindingPoint)
+{
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BindingPoint, this->ssbo);
+}
+
+FUSIONCORE::SSBO::SSBO()
+{
+	glGenBuffers(1, &ssbo);
+}
+
+FUSIONCORE::SSBO::~SSBO()
+{
+	this->clean();
+}
+
+void FUSIONCORE::SSBO::clean()
+{
+	glDeleteBuffers(1, &this->ssbo);
+}
+
+void FUSIONCORE::SSBO::Bind()
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+}
+
+void FUSIONCORE::SSBO::Unbind()
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void FUSIONCORE::SSBO::BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+{
+	glBufferData(target, size, data, usage);
 }

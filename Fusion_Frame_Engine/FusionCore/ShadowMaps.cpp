@@ -5,6 +5,7 @@ namespace FUSIONCORE
 {
 	//UBO ShadowMapsUniformBufferObject;
 	ShadowMapsData ShadowMapsGlobalUniformData;
+	unsigned int OmniShadowMapBoundLightCount = 0;
 }
 
 /*
@@ -16,6 +17,13 @@ void FUSIONCORE::InitializeShadowMapsUniformBuffer()
 	BindUBONull();
 }
 */
+
+void FUSIONCORE::OmniShadowMap::BindShadowMapLight(Light& light)
+{
+	
+	auto temp = LightColors[light.GetLightID()];
+
+}
 
 FUSIONCORE::CascadedDirectionalShadowMap::CascadedDirectionalShadowMap(float width, float height, std::vector<float> ShadowCascadeLevels)
 {

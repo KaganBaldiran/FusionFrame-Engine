@@ -370,10 +370,10 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 			}
 			else
 			{
-				LOG("STILL IN LOOP");
+				//LOG("STILL IN LOOP");
 				if (RelatedEdge->PrevHalfEdge->BoundryEdge)
 				{
-					LOG("SHOULD BREAK");
+					//LOG("SHOULD BREAK");
 
 					break;
 				}
@@ -396,7 +396,7 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 		}*/
 		vertex->Position = AveragedPosition;
 		SmoothedVertices.push_back(vertex);
-		LOG("EdgeIterationCount: " << EdgeIterationCount);
+		//LOG("EdgeIterationCount: " << EdgeIterationCount);
 	}
 	std::swap(Vertices, SmoothedVertices);
 }
@@ -623,7 +623,7 @@ void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Mesh& Mesh, int lev
 	}
 	else
 	{
-		SmoothObject(Mesh);
+	    SmoothObject(Mesh);
 		Mesh.ConstructMesh();
 	}
 }

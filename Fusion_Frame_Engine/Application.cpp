@@ -21,7 +21,7 @@ int Application::Run()
 
 	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height,4,6, "FusionFrame Engine");
 
-	FUSIONCORE::InitializeAnimationUniformBuffer();
+	//FUSIONCORE::InitializeAnimationUniformBuffer();
 	
 	FUSIONUTIL::DefaultShaders Shaders;
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
@@ -101,9 +101,9 @@ int Application::Run()
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), RandomIntensity(engine));
 	}
 
-	FUSIONCORE::Color SunColor(FF_COLOR_LEMONADE);
+	FUSIONCORE::Color SunColor(FF_COLOR_AMBER_YELLOW);
 	SunColor.Brighter();
-	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.477182),SunColor.GetRGB(), 6.0f, FF_DIRECTIONAL_LIGHT);
+	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.777182),SunColor.GetRGB(), 6.0f, FF_DIRECTIONAL_LIGHT);
 
 	//FUSIONUTIL::ThreadPool threads(5, 20);
 //#define ASYNC
@@ -300,7 +300,8 @@ int Application::Run()
 
 	Shaders.DeferredPBRshader->use();
 
-	FUSIONCORE::SetEnvironmentIBL(*Shaders.DeferredPBRshader, 2.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
+	FUSIONCORE::SetEnvironment(*Shaders.DeferredPBRshader, 1.0f, FF_COLOR_CORNFLOWER_BLUE, FF_COLOR_CORNFLOWER_BLUE);
+	//FUSIONCORE::SetEnvironmentIBL(*Shaders.DeferredPBRshader, 2.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 	FUSIONCORE::UseShaderProgram(0);
 
 	const double TARGET_FRAME_TIME = 1.0 / TARGET_FPS;
@@ -393,6 +394,11 @@ int Application::Run()
 
 	FUSIONPHYSICS::QuadNode headNode;
 
+	FUSIONPHYSICS::ParticleEmitter emitter0(20000,*Shaders.ParticleInitializeShader);
+
+	FUSIONCORE::WorldTransform particleTransform;
+	particleTransform.Scale(glm::vec3(0.009f));
+	
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = glfwGetTime();
@@ -428,7 +434,7 @@ int Application::Run()
 
 		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode, ObjectInstances,2,5);
 		auto UniqueQuadObjects = Capsule0.GetUniqueQuadsObjects();
-		LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
+		//LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
 		for (const auto& Box : UniqueQuadObjects)
 		{
 			auto QuadModel = Box->DynamicObjectCast<FUSIONPHYSICS::CollisionBox*>();
@@ -654,6 +660,8 @@ int Application::Run()
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
+		emitter0.UpdateParticleEmitter(*Shaders.ParticleUpdateComputeShader, *Shaders.ParticleSpawnComputeShader, deltaTime);
+
 		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
 		ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
 		ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
@@ -674,7 +682,7 @@ int Application::Run()
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
 
-
+		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		auto animationMatrices = animator.GetFinalBoneMatrices();
 		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		//shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size(), AOamount);
@@ -763,7 +771,7 @@ int Application::Run()
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,true, 0.7f, 3.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,false, 0.7f, 3.0f);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

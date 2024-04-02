@@ -90,6 +90,12 @@ namespace FUSIONUTIL
         * This shader is used for shadow mapping from directional light sources with cascaded shadow maps.
         */
 		std::unique_ptr<FUSIONCORE::Shader> CascadedDirectionalShadowShader;
+
+        std::unique_ptr<FUSIONCORE::Shader> ParticleSpawnComputeShader;
+        std::unique_ptr<FUSIONCORE::Shader> ParticleUpdateComputeShader;
+        std::unique_ptr<FUSIONCORE::Shader> ParticleRenderShader;
+        std::unique_ptr<FUSIONCORE::Shader> ParticleInitializeShader;
+
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);

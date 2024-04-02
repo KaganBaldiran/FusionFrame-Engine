@@ -63,6 +63,44 @@ GLuint FUSIONCORE::CompileGeoShader(const char* Geosource)
     return Geoshader;
 }
 
+GLuint FUSIONCORE::CompileComputeShader(const char* Computesource)
+{
+    GLuint ComputeShader = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(ComputeShader, 1, &Computesource, nullptr);
+    glCompileShader(ComputeShader);
+
+    GLint status;
+    glGetShaderiv(ComputeShader, GL_COMPILE_STATUS, &status);
+    if (status != GL_TRUE)
+    {
+        char buffer[512];
+        glGetShaderInfoLog(ComputeShader, 512, nullptr, buffer);
+        std::cerr << "Failed to compile compute shader :: " << buffer << "\n";
+    }
+
+    return ComputeShader;
+}
+
+GLuint FUSIONCORE::CompileShaderProgram(GLuint ComputeShader)
+{
+    GLuint m_program;
+    m_program = glCreateProgram();
+    glAttachShader(m_program, ComputeShader);
+    glLinkProgram(m_program);
+
+    glDeleteShader(ComputeShader);
+  
+    GLint status;
+    glGetProgramiv(m_program, GL_LINK_STATUS, &status);
+    if (status != GL_TRUE) {
+        char buffer[512];
+        glGetProgramInfoLog(m_program, 512, nullptr, buffer);
+        std::cerr << "Failed to link program :: " << buffer << "\n";
+    }
+
+    return m_program;
+}
+
 GLuint FUSIONCORE::CompileShaderProgram(GLuint vertexshader, GLuint geoshader, GLuint fragmentshader)
 {
     GLuint m_program;
@@ -135,6 +173,14 @@ void FUSIONCORE::UseShaderProgram(GLuint program)
 void FUSIONCORE::DeleteShaderProgram(GLuint program)
 {
     glDeleteProgram(program);
+}
+
+FUSIONCORE::Shader::Shader(const char* ComputeShaderSourcePath)
+{
+    std::string ComputeSource = ReadTextFile(ComputeShaderSourcePath);
+
+    GLuint ComputeShader = CompileComputeShader(ComputeSource.c_str());
+    shaderID = CompileShaderProgram(ComputeShader);
 }
 
 FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* fragsourcepath)

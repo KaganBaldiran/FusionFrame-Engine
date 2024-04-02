@@ -19,6 +19,7 @@
 #include "FusionCore/ShadowMaps.hpp"
 #include "FusionCore/Animator.hpp"
 #include "FusionCore/MeshOperations.h"
+#include "FusionPhysics/ParticleSystem.hpp"
 
 namespace FUSIONUTIL
 {

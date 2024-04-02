@@ -110,6 +110,7 @@ namespace FUSIONCORE
 		inline std::vector<std::shared_ptr<Vertex>>& GetVertices() { return vertices; };
 		inline std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash>& GetEdgeHashMap() { return this->HalfEdgeMap; };
 		inline std::unordered_map<glm::vec3, std::vector<Vertex*>, Vec3Hash>& GetDuplicateVertexMap() { return this->DuplicateVertexMap; };
+		inline Buffer3D& GetMeshBuffer() { return this->ObjectBuffer; };
 
 		std::vector<std::shared_ptr<Face>> Faces;
 

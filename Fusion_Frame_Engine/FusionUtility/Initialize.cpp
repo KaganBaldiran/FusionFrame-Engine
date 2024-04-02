@@ -1,6 +1,8 @@
 #include "Initialize.h"
 #include "../FusionCore/Camera.h"
 #include "../FusionCore/Cubemap.h"
+#include "../FusionCore/Animator.hpp"
+#include "../FusionPhysics/ParticleSystem.hpp"
 
 GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion, const char* WindowName)
 {
@@ -74,8 +76,14 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.InstancedPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/PBR.fs");
 	shaders.InstancedGbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/Gbuffer.fs");
 	shaders.CascadedDirectionalShadowShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShader.vs", "Shaders/CascadedDirectionalShadowShader.gs", "Shaders/CascadedDirectionalShadowShader.fs");
+	shaders.ParticleSpawnComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesSpawn.comp.glsl");
+	shaders.ParticleUpdateComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesUpdate.comp.glsl");
+	shaders.ParticleRenderShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticleRenderShader.vs", "Shaders/ParticleRenderShader.fs");
+	shaders.ParticleInitializeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesInitialize.comp.glsl");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
+	FUSIONCORE::InitializeAnimationUniformBuffer();
+	FUSIONPHYSICS::InitializeParticleEmitterUBO();
 }
 
 void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
@@ -96,4 +104,8 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedGbufferShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedPBRshader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CascadedDirectionalShadowShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ParticleSpawnComputeShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ParticleUpdateComputeShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ParticleRenderShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ParticleInitializeShader->GetID());
 }

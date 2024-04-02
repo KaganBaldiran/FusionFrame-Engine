@@ -145,7 +145,7 @@ namespace FUSIONCORE
 			glUseProgram(0);
 		}
 
-		void Draw(Shader shader, glm::vec3 lightPos_i, Model &model, Camera3D& camera)
+		void Draw(Shader shader, Light& BoundLight, Model &model, Camera3D& camera)
 		{
 			glUseProgram(shader.GetID());
 			glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
@@ -154,7 +154,7 @@ namespace FUSIONCORE
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, this->ShadowMapId);
 
-			glm::vec3 lightPos = lightPos_i;
+			glm::vec3 lightPos = BoundLight.GetLightDirectionPosition();
 
 			LightMatrix(lightPos, shader.GetID());
 
@@ -216,6 +216,7 @@ namespace FUSIONCORE
 		float GetFarPlane() { return far; };
 		unsigned int GetID() { return ID; };
 		unsigned int GetBoundLightID() { return BoundLightID; };
+		void BindShadowMapLight(Light& light);
 
 		~OmniShadowMap()
 		{

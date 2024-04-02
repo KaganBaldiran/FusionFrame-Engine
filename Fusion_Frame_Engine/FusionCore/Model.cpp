@@ -166,11 +166,15 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::fun
 
         material.SetMaterialShader(shader);
 
-        InstanceDataVBO.Bind();
-        glEnableVertexAttribArray(7);
-        glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glVertexAttribDivisor(7, 1); 
+        if (InstanceDataVBO.IsVBOchanged())
+        {
+            InstanceDataVBO.Bind();
+            glEnableVertexAttribArray(7);
+            glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glVertexAttribDivisor(7, 1);
+            InstanceDataVBO.SetVBOstate(false);
+        }
 
         ShaderPreperations();
     };
@@ -185,7 +189,6 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        FUSIONCORE::SendLightsShader(shader);
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         material.SetMaterialShader(shader);
@@ -213,7 +216,6 @@ void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, 
     auto shaderPrep = [&](Material& material) {
         return [&]() {
             this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-            FUSIONCORE::SendLightsShader(shader);
             shader.setFloat("ModelID", this->GetModelID());
             shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
             material.SetMaterialShader(shader);
@@ -392,7 +394,6 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 	for (size_t j = 0; j < Meshes.size(); j++)
 	{
 		auto& VertexArray = Meshes[j].GetVertices();
-
 		for (unsigned int k = 0; k < VertexArray.size(); k++) {
 
 			Vertex vertex;

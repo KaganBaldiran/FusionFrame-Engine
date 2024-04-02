@@ -14,12 +14,8 @@ uniform float DOFdistance;
 uniform bool DOFenabled;
 uniform float DOFintensity;
 
-uniform sampler2DArray SunShadowMap;
-
-
 void main()
 { 
-    
 	if(DOFenabled)
     {
 	    float DeltaDistance = FarPlane - NearPlane;
@@ -57,8 +53,9 @@ void main()
 
       vec4 OutColor = texture(Viewport, TexCoords);
       FragColor = vec4(pow(OutColor.xyz,vec3(0.9)),OutColor.w);
+	  //uint seed = uint(TexCoords.x * 10000);
+	  //FragColor = RandPcgRangeVec4(seed,vec4(0.0f),vec4(1.0f));
 	  //FragColor = vec4(vec3(texture(SunShadowMap, vec3(TexCoords,2)).r),1.0f); 
-
 	  //FragColor = vec4(vec3(CamDistance),1.0f);
 	  //float OutColor = texture(ID , TexCoords).r / 10.0f;
       //FragColor = vec4(pow(vec3(OutColor),vec3(0.9)),1.0f);

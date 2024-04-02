@@ -23,7 +23,6 @@ namespace FUSIONCORE
 	extern int LightCount;
 
 	void SendLightsShader(Shader& shader);
-
 	class Light : public Object
 	{
 	public:
@@ -58,7 +57,5 @@ namespace FUSIONCORE
 		float LightIntensity;
 		glm::vec3 LightColor , LightDirection;
 		bool LightState;
-
-
 	};
 }

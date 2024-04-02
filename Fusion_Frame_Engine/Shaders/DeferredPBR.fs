@@ -286,7 +286,6 @@ void main()
 
           Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
 
-
           //Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
       }
 
@@ -336,8 +335,8 @@ void main()
          FinalFogColor = FogColor;
       }
 
-
-      float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
+      //float NormalizedDeltaPlane = normalize(DeltaPlane);
+      //float EnvironmentRadianceIntensity = 1.0f / NormalizedDeltaPlane * NormalizedDeltaPlane;
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
       Depth = vec4(Position,1.0f);
       //FragColor = vec4(vec3(shadow),1.0f); 

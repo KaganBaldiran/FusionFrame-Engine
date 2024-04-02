@@ -157,6 +157,12 @@
     <None Include="Shaders\OmniShadowMap.fs" />
     <None Include="Shaders\OmniShadowMap.gs" />
     <None Include="Shaders\OmniShadowMap.vs" />
+    <None Include="Shaders\Particle.glsl" />
+    <None Include="Shaders\ParticleRenderShader.fs" />
+    <None Include="Shaders\ParticleRenderShader.vs" />
+    <None Include="Shaders\ParticlesInitialize.comp.glsl" />
+    <None Include="Shaders\ParticlesSpawn.comp.glsl" />
+    <None Include="Shaders\ParticlesUpdate.comp.glsl" />
     <None Include="Shaders\PBR.fs" />
     <None Include="Shaders\PBR.vs" />
     <None Include="Shaders\PBRinstanced.vs" />
@@ -185,6 +191,7 @@
     <ClCompile Include="FusionCore\Transformation.cpp" />
     <ClCompile Include="FusionFrame.cpp" />
     <ClCompile Include="FusionPhysics\Octtree.cpp" />
+    <ClCompile Include="FusionPhysics\ParticleSystem.cpp" />
     <ClCompile Include="FusionPhysics\Physics.cpp" />
     <ClCompile Include="FusionUtility\Initialize.cpp" />
     <ClCompile Include="FusionUtility\Log.cpp" />
@@ -217,6 +224,7 @@
     <ClInclude Include="FusionCore\Transformation.hpp" />
     <ClInclude Include="FusionFrame.h" />
     <ClInclude Include="FusionPhysics\Octtree.hpp" />
+    <ClInclude Include="FusionPhysics\ParticleSystem.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
     <ClInclude Include="FusionPhysics\QuickHull.hpp" />
     <ClInclude Include="FusionUtility\Hashing.hpp" />

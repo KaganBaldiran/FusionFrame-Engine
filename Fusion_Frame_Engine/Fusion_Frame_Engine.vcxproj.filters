@@ -88,6 +88,24 @@
     <None Include="Shaders\CascadedDirectionalShadowShader.fs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\ParticlesSpawn.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ParticlesUpdate.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ParticleRenderShader.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ParticleRenderShader.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ParticlesInitialize.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Particle.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -200,6 +218,7 @@
     <ClCompile Include="FusionCore\MeshOperations.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
+    <ClCompile Include="FusionPhysics\ParticleSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -297,6 +316,9 @@
     </ClInclude>
     <ClInclude Include="FusionUtility\Hashing.hpp">
       <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionPhysics\ParticleSystem.hpp">
+      <Filter>Headers\FusionPhysics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

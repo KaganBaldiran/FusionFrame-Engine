@@ -72,9 +72,9 @@ int Application::Run()
 	int shadowMapSize = 512;
 
 	FUSIONCORE::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
-	FUSIONCORE::OmniShadowMap ShadowMap1(shadowMapSize, shadowMapSize, 75.0f);
-	FUSIONCORE::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
-	FUSIONCORE::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
+	//FUSIONCORE::OmniShadowMap ShadowMap1(shadowMapSize, shadowMapSize, 75.0f);
+	//FUSIONCORE::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
+	//FUSIONCORE::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
 
 	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 10.0f, CAMERA_FAR_PLANE / 2.0f };
 	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(2048, 2048, shadowCascadeLevels);
@@ -103,7 +103,7 @@ int Application::Run()
 
 	FUSIONCORE::Color SunColor(FF_COLOR_AMBER_YELLOW);
 	SunColor.Brighter();
-	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.777182),SunColor.GetRGB(), 6.0f, FF_DIRECTIONAL_LIGHT);
+	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.777182),SunColor.GetRGB(), 5.0f, FF_DIRECTIONAL_LIGHT);
 
 	//FUSIONUTIL::ThreadPool threads(5, 20);
 //#define ASYNC
@@ -165,6 +165,20 @@ int Application::Run()
 	auto ImportedModels = FUSIONCORE::ImportMultipleModelsFromDirectory("Resources\\models\\Grasses",false);
 	auto shrub = std::move(ImportedModels[1]);
 	ImportedModels.erase(ImportedModels.begin() + 1);
+
+	FUSIONCORE::Model Terrain("Resources\\Terrain.obj");
+	//FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\Terrain.obj", Terrain);
+	Terrain.GetTransformation().Scale(glm::vec3(250.0f));
+	std::vector<FUSIONPHYSICS::CollisionBox> TerrainCollisionBoxes;
+
+	//FUSIONCORE::MESHOPERATIONS::ExportObj("TerrainExport.obj", Terrain);
+
+	TerrainCollisionBoxes.reserve(Terrain.Meshes.size());
+	for (size_t i = 0; i < Terrain.Meshes.size(); i++)
+	{
+		TerrainCollisionBoxes.emplace_back(Terrain.Meshes[i], Terrain.GetTransformation());
+	}
+
 	auto Tower = std::move(ImportedModels[1]);
 	ImportedModels.erase(ImportedModels.begin() + 1);
 	Tower->GetTransformation().TranslateNoTraceBack({ 39.0f,0.0f,-9.0f });
@@ -337,9 +351,9 @@ int Application::Run()
 
 	std::vector<FUSIONCORE::OmniShadowMap*> shadowMaps;
 	shadowMaps.push_back(&ShadowMap0);
-	shadowMaps.push_back(&ShadowMap1);
-	shadowMaps.push_back(&ShadowMap2);
-	shadowMaps.push_back(&ShadowMap3);
+	//shadowMaps.push_back(&ShadowMap1);
+	//shadowMaps.push_back(&ShadowMap2);
+	//shadowMaps.push_back(&ShadowMap3);
 
 	FUSIONCORE::Model animationModel("Resources\\taunt\\Jumping.fbx", false, true);
 	animationModel.GetTransformation().ScaleNoTraceBack({ 0.1f,0.1f,0.1f });
@@ -366,6 +380,12 @@ int Application::Run()
 	ObjectInstances.push_back(&Box1);
 	ObjectInstances.push_back(&Plane);
 	ObjectInstances.push_back(&tryBox);
+
+	/*ObjectInstances.reserve(TerrainCollisionBoxes.size());
+	for (size_t i = 0; i < TerrainCollisionBoxes.size(); i++)
+	{
+		ObjectInstances.push_back(&TerrainCollisionBoxes[i]);
+	}*/
 
 	FUSIONCORE::VBO instanceVBO;
 	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 2000, 109);
@@ -394,10 +414,22 @@ int Application::Run()
 
 	FUSIONPHYSICS::QuadNode headNode;
 
-	FUSIONPHYSICS::ParticleEmitter emitter0(20000,*Shaders.ParticleInitializeShader);
+	FUSIONPHYSICS::ParticleEmitter emitter0(100000,*Shaders.ParticleInitializeShader, 
+		glm::vec4(1.0f, 1.0f, 1.0f, 0.9f),
+		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+		glm::vec3(-50.3f, 0.0f, -50.3f),
+		glm::vec3(100.3f, 70.0f, 100.3f),
+		glm::vec3(0.0f),
+		glm::vec3(-0.1f),
+		glm::vec3(0.0f),
+		glm::vec3(-1.0f),
+		glm::vec3(0.0f),
+		1.0f,
+		6.0f,
+		0.00001f);
 
 	FUSIONCORE::WorldTransform particleTransform;
-	particleTransform.Scale(glm::vec3(0.009f));
+	particleTransform.Scale(glm::vec3(0.0025f));
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -440,18 +472,20 @@ int Application::Run()
 			auto QuadModel = Box->DynamicObjectCast<FUSIONPHYSICS::CollisionBox*>();
 			if (QuadModel != nullptr)
 			{
-				if (FUSIONPHYSICS::IsCollidingSAT(*QuadModel, Capsule0))
+				auto CollisionResponse = FUSIONPHYSICS::IsCollidingSAT(Capsule0,*QuadModel);
+				if (CollisionResponse.first)
 				{
 					Collision = true;
-					glm::vec3 ObjectPosition = FUSIONCORE::TranslateVertex(Capsule0.GetTransformation().GetModelMat4(), *Capsule0.GetTransformation().OriginPoint) -
-						                       FUSIONCORE::TranslateVertex(QuadModel->GetTransformation().GetModelMat4(), *QuadModel->GetTransformation().OriginPoint);
-					direction = glm::normalize(ObjectPosition);
+					//glm::vec3 ObjectPosition = FUSIONCORE::TranslateVertex(Capsule0.GetTransformation().GetModelMat4(), *Capsule0.GetTransformation().OriginPoint) -
+					//	                       FUSIONCORE::TranslateVertex(QuadModel->GetTransformation().GetModelMat4(), *QuadModel->GetTransformation().OriginPoint);
+					//direction = glm::normalize(ObjectPosition);
+					direction = CollisionResponse.second;
 				}
 			}
 		}
 
 		static bool FirstFloorTouch = true;
-		if (!FUSIONPHYSICS::IsCollidingSAT(floorBox, Capsule0))
+		if (!FUSIONPHYSICS::IsCollidingSAT(floorBox, Capsule0).first)
 		{
 			if (FirstFloorTouch)
 			{
@@ -476,11 +510,10 @@ int Application::Run()
 		auto Right = glm::normalize(glm::cross(Front, camera3d.GetUpVector()));
 		auto Left = -Right;
 
-		//LOG("FRONT: " << Vec3<float>(Front));
-
+		//LOG("direction: " << Vec3<float>(direction));
 		if (Collision)
 		{
-			if (glm::dot(-direction, camera3d.GetUpVector()) < glm::epsilon<float>())
+			if (glm::dot(-direction, camera3d.GetUpVector()) < 0.0f)
 			{
 				if (FirstFloorTouch)
 				{
@@ -491,12 +524,11 @@ int Application::Run()
 					animationModel.GetTransformation().Translate({ 0.0f,0.3f,0.0f });
 				}
 			}
-
-			animationModel.GetTransformation().Translate(glm::normalize(glm::vec3(direction.x,0.0f,direction.z)) * SPEED * 0.5f * deltaTime);
-
+		
+			//animationModel.GetTransformation().Translate(glm::normalize(glm::vec3(direction.x, 0.0f, direction.z)) * SPEED * 0.5f * deltaTime);
 			direction = -direction;
-			const float E = -0.3f;
-			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
+			const float E = 0.0f;
+			/*if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
 			{
 				Moving = true;
 				animationModel.GetTransformation().Translate(Front * SPEED * deltaTime);
@@ -519,7 +551,65 @@ int Application::Run()
 			else
 			{
 				Moving = false;
+			}*/
+
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
+			{
+				if (WalkingSide != 0)
+				{
+					AnimationModelInterpolationDirection = AnimationModelDirection;
+					InterpolatingBlendCoeff = 0.0f;
+				}
+				WalkingSide = 0;
+				Moving = true;
+				AnimationModelDirection = glm::normalize(glm::mix(AnimationModelInterpolationDirection, { Front.x , 0.0f , -Front.z }, InterpolatingBlendCoeff));
+				animationModel.GetTransformation().RotationMatrix = glm::lookAt(glm::vec3(0.0f), AnimationModelDirection, camera3d.GetUpVector());
+				animationModel.GetTransformation().Translate(Front * SPEED * deltaTime);
 			}
+			else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glm::dot(direction, Back) <= E)
+			{
+				if (WalkingSide != 1)
+				{
+					AnimationModelInterpolationDirection = AnimationModelDirection;
+					InterpolatingBlendCoeff = 0.0f;
+				}
+				WalkingSide = 1;
+				Moving = true;
+				AnimationModelDirection = glm::normalize(glm::mix(AnimationModelInterpolationDirection, { Back.x , 0.0f , -Back.z }, InterpolatingBlendCoeff));
+				animationModel.GetTransformation().RotationMatrix = glm::lookAt(glm::vec3(0.0f), AnimationModelDirection, camera3d.GetUpVector());
+				animationModel.GetTransformation().Translate(Back * SPEED * deltaTime);
+			}
+			else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glm::dot(direction, Right) <= E)
+			{
+				if (WalkingSide != 2)
+				{
+					AnimationModelInterpolationDirection = AnimationModelDirection;
+					InterpolatingBlendCoeff = 0.0f;
+				}
+				WalkingSide = 2;
+				Moving = true;
+				AnimationModelDirection = glm::normalize(glm::mix(AnimationModelInterpolationDirection, { Right.x , 0.0f , -Right.z }, InterpolatingBlendCoeff));
+				animationModel.GetTransformation().RotationMatrix = glm::lookAt(glm::vec3(0.0f), AnimationModelDirection, camera3d.GetUpVector());
+				animationModel.GetTransformation().Translate(Right * SPEED * deltaTime);
+			}
+			else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glm::dot(direction, Left) <= E)
+			{
+				if (WalkingSide != 3)
+				{
+					AnimationModelInterpolationDirection = AnimationModelDirection;
+					InterpolatingBlendCoeff = 0.0f;
+				}
+				WalkingSide = 3;
+				Moving = true;
+				AnimationModelDirection = glm::normalize(glm::mix(AnimationModelInterpolationDirection, { Left.x , 0.0f , -Left.z }, InterpolatingBlendCoeff));
+				animationModel.GetTransformation().RotationMatrix = glm::lookAt(glm::vec3(0.0f), AnimationModelDirection, camera3d.GetUpVector());
+				animationModel.GetTransformation().Translate(Left * SPEED * deltaTime);
+			}
+			else
+			{
+				Moving = false;
+			}
+
 		}
 		else
 		{
@@ -656,6 +746,10 @@ int Application::Run()
 		}
 
 		glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
+		/*if (direction != glm::vec3(0.0f))
+		{
+		  camera3d.Orientation = direction;
+		}*/
 		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
@@ -663,9 +757,9 @@ int Application::Run()
 		emitter0.UpdateParticleEmitter(*Shaders.ParticleUpdateComputeShader, *Shaders.ParticleSpawnComputeShader, deltaTime);
 
 		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
-		ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
-		ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
-		ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3], models, camera3d);
+		//ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
+		//ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
+		//ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3], models, camera3d);
 
 		sunShadowMap.Draw(*Shaders.CascadedDirectionalShadowShader, camera3d, models,Sun);
 
@@ -682,7 +776,6 @@ int Application::Run()
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
 
-		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		auto animationMatrices = animator.GetFinalBoneMatrices();
 		//IMPORTTEST.Draw(camera3d, *Shaders.GbufferShader, shaderPrepe, cubemap, shovelMaterial, shadowMaps, AOamount);
 		//shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size(), AOamount);
@@ -707,7 +800,7 @@ int Application::Run()
 		
 		Tower->DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe, AOamount);
 
-
+		//Terrain.DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe, AOamount);
 		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, WallMaterial, AOamount);
 
 		//if (!Collision)
@@ -716,7 +809,7 @@ int Application::Run()
 		//}
 		
 		
-		FUSIONCORE::Material redMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+		FUSIONCORE::Material redMaterial(0.3f, 0.6f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, redMaterial, AOamount);
 		//if (FUSIONCORE::IsModelInsideCameraFrustum(*sofa, camera3d))
 		{
@@ -736,6 +829,7 @@ int Application::Run()
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
 
+		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
 
 #ifdef ENGINE_DEBUG
@@ -761,6 +855,11 @@ int Application::Run()
 			floorBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			TowerBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
 
+			for (auto& Box : TerrainCollisionBoxes)
+			{
+				Box.DrawBoxMesh(camera3d, *Shaders.LightShader);
+			}
+
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material(), AOamount);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -771,7 +870,7 @@ int Application::Run()
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,false, 0.7f, 3.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,true,0.7f,0.15f, 5.0f);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

@@ -393,26 +393,45 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
     std::vector<glm::vec3> originPoints;
 	for (size_t j = 0; j < Meshes.size(); j++)
 	{
-		auto& VertexArray = Meshes[j].GetVertices();
-		for (unsigned int k = 0; k < VertexArray.size(); k++) {
+        auto& Mesh = Meshes[j];
+		auto& VertexArray = Mesh.GetVertices();
 
+        float MeshminX = std::numeric_limits<float>::max();
+        float MeshmaxX = std::numeric_limits<float>::lowest();
+        float MeshminY = std::numeric_limits<float>::max();
+        float MeshmaxY = std::numeric_limits<float>::lowest();
+        float MeshminZ = std::numeric_limits<float>::max();
+        float MeshmaxZ = std::numeric_limits<float>::lowest();
+
+		for (unsigned int k = 0; k < VertexArray.size(); k++) 
+        {
 			Vertex vertex;
 			vertex.Position.x = VertexArray[k]->Position.x;
 			vertex.Position.y = VertexArray[k]->Position.y;
 			vertex.Position.z = VertexArray[k]->Position.z;
 
-			maxX = std::max(maxX, vertex.Position.x);
-			maxY = std::max(maxY, vertex.Position.y);
-			maxZ = std::max(maxZ, vertex.Position.z);
-			minX = std::min(minX, vertex.Position.x);
-			minY = std::min(minY, vertex.Position.y);
-			minZ = std::min(minZ, vertex.Position.z);
+            MeshmaxX = std::max(MeshmaxX, vertex.Position.x);
+            MeshmaxY = std::max(MeshmaxY, vertex.Position.y);
+            MeshmaxZ = std::max(MeshmaxZ, vertex.Position.z);
+            MeshminX = std::min(MeshminX, vertex.Position.x);
+            MeshminY = std::min(MeshminY, vertex.Position.y);
+            MeshminZ = std::min(MeshminZ, vertex.Position.z);
 		}
-        float centerX = (minX + maxX) / 2.0f;
-        float centerY = (minY + maxY) / 2.0f;
-        float centerZ = (minZ + maxZ) / 2.0f;
+        Mesh.SetInitialMeshMin({ MeshminX,MeshminY ,MeshminZ });
+        Mesh.SetInitialMeshMax({ MeshmaxX,MeshmaxY ,MeshmaxZ });
 
-        originPoints.push_back(glm::vec3(centerX, centerY, centerZ));
+        maxX = std::max(MeshmaxX, maxX);
+        maxY = std::max(MeshmaxY, maxY);
+        maxZ = std::max(MeshmaxZ, maxZ);
+        minX = std::min(MeshminX, minX);
+        minY = std::min(MeshminY, minY);
+        minZ = std::min(MeshminZ, minZ);
+
+        float MeshCenterX = (MeshminX + MeshmaxX) / 2.0f;
+        float MeshCenterY = (MeshminY + MeshmaxY) / 2.0f;
+        float MeshCenterZ = (MeshminZ + MeshmaxZ) / 2.0f;
+
+        Mesh.SetMeshOriginPoint({ MeshCenterX,MeshCenterY ,MeshCenterZ });
 	}
 
 	float meshWidth = maxX - minX;
@@ -423,28 +442,15 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 	transformation.ObjectScales.y = meshHeight;
 	transformation.ObjectScales.z = meshDepth;
 
-	maxX = -std::numeric_limits<float>::infinity();
-	maxY = -std::numeric_limits<float>::infinity();
-	maxZ = -std::numeric_limits<float>::infinity();
-	minX = std::numeric_limits<float>::infinity();
-	minY = std::numeric_limits<float>::infinity();
-	minZ = std::numeric_limits<float>::infinity();
-
 	transformation.scale_avg = (transformation.ObjectScales.x + transformation.ObjectScales.y + transformation.ObjectScales.z) / 3;
 	transformation.dynamic_scale_avg = transformation.scale_avg;
 
 	transformation.InitialObjectScales = transformation.ObjectScales;
 
-    float overallCenterX = 0.0f, overallCenterY = 0.0f, overallCenterZ = 0.0f;
-    for (unsigned int i = 0; i < originPoints.size(); i++) {
-        overallCenterX += originPoints[i].x;
-        overallCenterY += originPoints[i].y;
-        overallCenterZ += originPoints[i].z;
-    }
-    overallCenterX /= originPoints.size();
-    overallCenterY /= originPoints.size();
-    overallCenterZ /= originPoints.size();
-
+    float overallCenterX = (maxX + minX) * 0.5f,
+          overallCenterY = (maxY + minY) * 0.5f,
+          overallCenterZ = (maxZ + minZ) * 0.5f;
+  
     originpoint = { overallCenterX,overallCenterY,overallCenterZ };
     transformation.OriginPoint = &this->originpoint;
     transformation.Position = glm::vec3(originpoint.x, originpoint.y, originpoint.z);
@@ -461,7 +467,7 @@ void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool Ani
     }
     else
     {
-        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_JoinIdenticalVertices;
+        flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
     }
     const aiScene* scene = importer.ReadFile(path, flags);
     this->scene = (aiScene*)scene;
@@ -489,7 +495,6 @@ void FUSIONCORE::Model::processNode(aiNode* node, const aiScene* scene)
     this->ModelName = scene->mName.data;
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
-
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         Meshes.push_back(processMesh(mesh, scene));
     }
@@ -781,16 +786,16 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
 }
 
 //Import multiple models into a vector from a directory. It's not safe for files other than mtl(except object supported formats).
-std::vector<std::unique_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel)
+std::vector<std::shared_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel)
 {
-    std::vector<std::unique_ptr<FUSIONCORE::Model>> Models;
+    std::vector<std::shared_ptr<FUSIONCORE::Model>> Models;
     std::string path = DirectoryFilePath;
     for (const auto& entry : std::filesystem::directory_iterator(path))
     {
         std::string EntryPath = entry.path().generic_string();
         if (EntryPath.find(".mtl") == std::string::npos && EntryPath.find(".") != std::string::npos)
         {
-           std::unique_ptr<FUSIONCORE::Model> NewModel = std::make_unique<Model>(EntryPath, false, AnimationModel);
+           std::shared_ptr<FUSIONCORE::Model> NewModel = std::make_shared<Model>(EntryPath, false, AnimationModel);
            if (NewModel->GetModelImportStateCode() == FF_SUCCESS_CODE)
            {
               Models.push_back(std::move(NewModel));

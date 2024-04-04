@@ -39,17 +39,17 @@ namespace FUSIONPHYSICS
 	public:
 		ParticleEmitter(unsigned int MaxParticleCount,
 			FUSIONCORE::Shader& ParticleInitializerShader,
-			glm::vec4 minColor = glm::vec4(0.1f),   
-			glm::vec4 maxColor = glm::vec4(1.0f),    
+			glm::vec4 minColor = glm::vec4(0.5f, 0.0f, 0.0f, 0.5f),
+			glm::vec4 maxColor = glm::vec4(1.0f,0.0f,0.0f,1.0f),    
 			glm::vec3 minOffset = glm::vec3(0.0f),   
 			glm::vec3 maxOffset = glm::vec3(4.0f),   
 			glm::vec3 minVelocity = glm::vec3(0.0f), 
 			glm::vec3 maxVelocity = glm::vec3(0.1f), 
 			glm::vec3 minAccel = glm::vec3(0.0f),    
-			glm::vec3 maxAccel = glm::vec3(2.0f),    
+			glm::vec3 maxAccel = glm::vec3(1.0f),    
 			glm::vec3 ForceOrigin = glm::vec3(1.0f), 
 			float minLife = 1.0f,                    
-			float maxLife = 10.0f,                    
+			float maxLife = 5.0f,                    
 			float spawnInterval = 0.0001f              
 		);
 		void UpdateParticleEmitter(FUSIONCORE::Shader& ParticleUpdateShader, FUSIONCORE::Shader& ParticleInitializerShader, const float DeltaTime);

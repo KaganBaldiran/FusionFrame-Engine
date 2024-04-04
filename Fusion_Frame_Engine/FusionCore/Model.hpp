@@ -137,7 +137,7 @@ namespace FUSIONCORE
             int ModelImportStateCode = FF_INITIAL_CODE;
     };
 
-    std::vector<std::unique_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);
+    std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);
 
 }
 

@@ -16,7 +16,7 @@ layout(std430, binding = 1) restrict buffer ParticleBuffer0
 
 layout(std140, binding = 3) uniform EmitterSetting
 {
-   vec4 minColor;
+    vec4 minColor;
     vec4 maxColor;
     vec3 minOffset;
     float padding1;
@@ -88,8 +88,7 @@ float rand(inout uint state)
 void SpawnParticle(inout Particle particle, uint index)
 {
     uint RandomSeed = index;
-    particle.life = RandPcgRange(RandomSeed, EmitterSettings.minLife, EmitterSettings.maxLife);
-    //particle.life = RandPcgRange(RandomSeed, 10.0f, 100.0f);
+    particle.life = RandPcgRange(RandomSeed, 0.0f,0.1f);
     particle.color = RandPcgRangeVec4(RandomSeed, EmitterSettings.minColor, EmitterSettings.maxColor);
     particle.acceleration = RandPcgRangeVec3(RandomSeed, EmitterSettings.minAccel, EmitterSettings.maxAccel);
     particle.velocity = RandPcgRangeVec3(RandomSeed, EmitterSettings.minVelocity, EmitterSettings.maxVelocity);
@@ -106,6 +105,6 @@ void main()
         return;
     }
 
-    SpawnParticle(particles[index], uint(index)+TimeSeed);
+    SpawnParticle(particles[index], uint(index) * TimeSeed);
 };
 

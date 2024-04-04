@@ -1,10 +1,6 @@
  #version 420 core
 
  layout(location = 0) in vec3 vertexdata;
- layout(location = 1) in vec3 aNormal;
- layout(location = 2) in vec2 textcoord;
- layout(location = 3) in vec3 tangentnormal;
- layout(location = 4) in vec3 bitangentnormal;
  layout(location = 5) in ivec4 boneIds; 
  layout(location = 6) in vec4 weights;
 

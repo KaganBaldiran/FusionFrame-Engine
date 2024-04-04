@@ -109,7 +109,7 @@ namespace FUSIONCORE
 		inline void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		inline void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize,CascadedDirectionalShadowMap& sunMap,bool DOFenabled = false, float DOFdistance = 0.09f , float DOFintensity = 1.0f)
+		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize,CascadedDirectionalShadowMap& sunMap,bool DOFenabled = false, float DOFdistanceFar = 0.09f , float DOFdistanceClose = 0.02f, float DOFintensity = 1.0f)
 		{
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -131,11 +131,12 @@ namespace FUSIONCORE
 			/*glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, fboID);
 			shader.setInt("ID", 2);*/
-
+		
 			shader.setVec3("CamPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
-			shader.setFloat("DOFdistance", DOFdistance);
+			shader.setFloat("DOFdistanceFar", DOFdistanceFar);
+			shader.setFloat("DOFdistanceClose", DOFdistanceClose);
 			shader.setBool("DOFenabled", DOFenabled);
 			shader.setFloat("DOFintensity", DOFintensity);
 

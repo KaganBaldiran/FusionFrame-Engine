@@ -30,10 +30,16 @@
 
  void main()
  { 
+   mat3 NormalMatrix = transpose(inverse(mat3(model)));
+   FinalTexCoord = textcoord;
+
    if(EnableAnimation)
    {
     vec4 totalPosition = vec4(0.0f);
     vec3 localNormal = aNormal;
+    vec3 totalNormal = vec3(0.0f);
+    vec3 totalTangent = vec3(0.0f);
+    vec3 totalBitangent = vec3(0.0f);
     vec3 localTangent = tangentnormal;
     vec3 localBitangent = bitangentnormal;
     for(int i = 0 ; i < MAX_BONE_INFLUENCE ; i++)
@@ -45,35 +51,43 @@
             totalPosition = vec4(vertexdata,1.0f);
             break;
         }
-        vec4 localPosition = finalBonesMatrices[boneIds[i]] * vec4(vertexdata,1.0f);
-        totalPosition += localPosition * weights[i];
-        localNormal = mat3(finalBonesMatrices[boneIds[i]]) * localNormal;
-        localTangent = mat3(finalBonesMatrices[boneIds[i]]) * localTangent;
-        localBitangent = mat3(finalBonesMatrices[boneIds[i]]) * localBitangent;
+        mat4 BoneMat = finalBonesMatrices[boneIds[i]];
+        mat3 BoneNormalMat = transpose(inverse(mat3(BoneMat)));
+        float weight = weights[i];
+      
+        vec4 localPosition = BoneMat * vec4(vertexdata,1.0f);
+        totalPosition += localPosition * weight;
+
+        localNormal = BoneNormalMat * localNormal;
+        totalNormal += localNormal * weight;
+
+        localTangent = BoneNormalMat * localTangent;
+        totalTangent += localTangent * weight;
+
+        localBitangent = BoneNormalMat * localBitangent;
+        totalBitangent += localBitangent * weight;
    }
    
      CurrentPos = vec3(model * totalPosition);
      gl_Position = proj * view * vec4(CurrentPos,1.0f);
 
-     vec3 T = normalize(vec3(model* vec4(localTangent,0.0f)));
-     vec3 B = normalize(vec3(model* vec4(localBitangent,0.0f)));
-     vec3 N = normalize(vec3(model* vec4(localNormal,0.0f)));
+     vec3 T = normalize(vec3(NormalMatrix* totalTangent));
+     vec3 B = normalize(vec3(NormalMatrix* totalBitangent));
+     vec3 N = normalize(vec3(NormalMatrix* totalNormal));
      TBN = mat3(T,B,N);
 
-     FinalTexCoord = textcoord;
-     Normal = vec3(model * vec4(localNormal,0.0));
+     Normal = N;
    }
    else
    {
      CurrentPos = vec3(model * vec4(vertexdata,1.0f));
      gl_Position = proj * view * vec4(CurrentPos,1.0f);
 
-     vec3 T = normalize(vec3(model* vec4(tangentnormal,0.0f)));
-     vec3 B = normalize(vec3(model* vec4(bitangentnormal,0.0f)));
-     vec3 N = normalize(vec3(model* vec4(aNormal,0.0f)));
+     vec3 T = normalize(vec3(NormalMatrix* tangentnormal));
+     vec3 B = normalize(vec3(NormalMatrix* bitangentnormal));
+     vec3 N = normalize(vec3(NormalMatrix* aNormal));
      TBN = mat3(T,B,N);
 
-     FinalTexCoord = textcoord;
-     Normal = vec3(model * vec4(aNormal,0.0));
+     Normal = N;
    }
  }

@@ -57,7 +57,7 @@ namespace FUSIONPHYSICS
 		std::vector<glm::vec3> BoxNormals;
 		std::vector<glm::vec3> LocalBoxNormals;
 		std::vector<glm::vec3> LocalEdgeNormals;
-		std::unique_ptr<FUSIONCORE::Mesh> BoxMesh;
+		std::shared_ptr<FUSIONCORE::Mesh> BoxMesh;
 		glm::vec3 ModelOriginPoint;
 		glm::vec3 MeshColor;
 	};
@@ -98,10 +98,10 @@ namespace FUSIONPHYSICS
 	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, FUSIONCORE::WorldTransform& Entity1Transformation);
 	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals);
 	std::pair<bool, int> BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
-	bool FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
+	std::pair<bool, float> FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
 	bool IsCollidingSAT(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2);
 	bool IsCollidingSAT(CollisionBox& Plane, CollisionBox3DAABB& Box);
-	bool IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);
+	std::pair<bool, glm::vec3> IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);
 
 	//Sphere-Sphere collision
 	bool IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radius1, glm::vec3 center2, glm::vec3 radius2);

@@ -30,12 +30,12 @@ FUSIONPHYSICS::ParticleEmitter::ParticleEmitter(unsigned int MaxParticleCount, F
 	emitterSettings.ForceOrigin = ForceOrigin;
 	emitterSettings.maxAccel = maxAccel;
 	emitterSettings.maxColor = maxColor;
-	emitterSettings.maxLife = 100.0f;
+	emitterSettings.maxLife = maxLife;
 	emitterSettings.maxOffset = maxOffset;
 	emitterSettings.maxVelocity = maxVelocity;
 	emitterSettings.minAccel = minAccel;
 	emitterSettings.minColor = minColor;
-	emitterSettings.minLife = 10.0f;
+	emitterSettings.minLife = minLife;
 	emitterSettings.minOffset = minOffset;
 	emitterSettings.minVelocity = minVelocity;
 	emitterSettings.position = this->GetTransformation().Position;
@@ -126,9 +126,11 @@ void FUSIONPHYSICS::ParticleEmitter::DrawParticles(FUSIONCORE::Shader& ParticleS
 
 	camera.SetProjMatrixUniformLocation(ParticleShader.GetID(), "proj");
 	camera.SetViewMatrixUniformLocation(ParticleShader.GetID(), "view");
-	ParticleTranform.SetModelMatrixUniformLocation(ParticleShader.GetID(), "model");
+	
+	glm::mat4 LookatMat = glm::lookAt(glm::vec3(0.0f), {-camera.Orientation.x,camera.Orientation.y,-camera.Orientation.z}, camera.GetUpVector());
+	ParticleShader.setMat4("LookAtMat", LookatMat);
+	ParticleShader.setMat4("model",ParticleTranform.GetModelMat4());
 
-	//EmitterSettingsUBO->BindUBO(3);
 	particlesBuffer.BindSSBO(1);
 
 	glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(ParticleMesh.GetIndices().size()), GL_UNSIGNED_INT, 0, maxParticles);

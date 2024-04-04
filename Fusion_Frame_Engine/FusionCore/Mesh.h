@@ -71,6 +71,10 @@ namespace FUSIONCORE
 		std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash> HalfEdgeMap;
 		std::unordered_map<glm::vec3, std::vector<Vertex*>, Vec3Hash> DuplicateVertexMap;
 
+		glm::vec3 InitialMeshMin;
+		glm::vec3 InitialMeshMax;
+		glm::vec3 OriginPoint;
+
 		void BookKeepDuplicateVertices(Vertex* vertex);
 
 	public:
@@ -111,6 +115,12 @@ namespace FUSIONCORE
 		inline std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, PairVec3Hash>& GetEdgeHashMap() { return this->HalfEdgeMap; };
 		inline std::unordered_map<glm::vec3, std::vector<Vertex*>, Vec3Hash>& GetDuplicateVertexMap() { return this->DuplicateVertexMap; };
 		inline Buffer3D& GetMeshBuffer() { return this->ObjectBuffer; };
+		inline glm::vec3 GetInitialMeshMin() { return this->InitialMeshMin; };
+		inline glm::vec3 GetInitialMeshMax() { return this->InitialMeshMax; };
+		inline void SetInitialMeshMin(glm::vec3 min) { this->InitialMeshMin = min; };
+		inline void SetInitialMeshMax(glm::vec3 max) { this->InitialMeshMax = max; };
+		inline glm::vec3 GetMeshOriginPoint() { return this->OriginPoint; };
+		inline void SetMeshOriginPoint(glm::vec3 Origin) { this->OriginPoint = Origin; };
 
 		std::vector<std::shared_ptr<Face>> Faces;
 

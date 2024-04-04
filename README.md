@@ -6,7 +6,8 @@
 Fusion Frame engine is a framework type game engine that focuses on delivering a compact and easy-to-use interface for 3d game development while preserving speed. It also supports different physics algorithms to speed up the game development. 
 ## Current Look
 
-![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/64129f1a-5155-463f-83f1-2dd4f2d48d19)
+![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/863e6313-d569-42a5-ae36-3a443a79d2e8)
+![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/f6ab652a-cad7-4e3b-b869-52614d832b0d)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/b0f429e7-9e8e-4c0e-9b93-6b61ec8a4702)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/8db95ca3-9ef6-4770-b484-c3bf79ca6dc0)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/25126184-6aa0-42a3-ab59-977022807888)

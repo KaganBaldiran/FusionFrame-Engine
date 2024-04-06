@@ -7,23 +7,23 @@ Fusion Frame engine is a framework type game engine that focuses on delivering a
 
 # Rendering Abilities
 
--Deferred rendering(soon to be clustered deferred as well as forward+ as an option)
--Omnidirectional shadows for point lights
--Linear shadows for directional lights
--PBR-IBL shading
--HDRI and cubemap support
--Deferred and forward mesh instancing 
--Compute shader based particle emitter
--Skeletal animation support
+- Deferred rendering(soon to be clustered deferred as well as forward+ as an option)
+- Omnidirectional shadows for point lights
+- Linear shadows for directional lights
+- PBR-IBL shading
+- HDRI and cubemap support
+- Deferred and forward mesh instancing 
+- Compute shader based particle emitter
+- Skeletal animation support
 
 Also planning to implement a voxel based GI soon.
 
 # Physics Abilities and Data Structures
 
--Oct/Quad tree for general object class
--Half-edge mesh structure
--Easy collision mesh creation from meshes and bounding boxes
--AABB and SAT collisions
+- Oct/Quad tree for general object class
+- Half-edge mesh structure
+- Easy collision mesh creation from meshes and bounding boxes
+- AABB and SAT collisions
 
 Also using half-edge data structure , wrote couple of premature mesh algorithms like subdivision for triangular meshes. 
 Mesh utility algorithms like quickhull to create collision boxes are also in the TO-DO list

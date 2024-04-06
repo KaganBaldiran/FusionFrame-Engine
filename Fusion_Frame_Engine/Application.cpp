@@ -43,18 +43,18 @@ int Application::Run()
 	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/diagonal_parquet_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
-	FUSIONCORE::Texture2D FloorNormal("Resources/floor/diagonal_parquet_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
-	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/diagonal_parquet_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/snow_02_rough_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+	FUSIONCORE::Texture2D FloorNormal("Resources/floor/snow_02_nor_gl_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/snow_02_diff_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
 
 	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_gl_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
-	FUSIONCORE::Texture2D MirrorDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-	FUSIONCORE::Texture2D MirrorNormal("Resources\\models\\stove\\textures\\electric_stove_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-	FUSIONCORE::Texture2D MirrorSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-	FUSIONCORE::Texture2D MirrorMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D StoveDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D StoveNormal("Resources\\models\\stove\\textures\\electric_stove_nor_gl_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D StoveSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D StoveMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
 	FUSIONCORE::Texture2D WallDiffuse("Resources\\wall\\textures\\painted_plaster_wall_diff_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D WallNormal("Resources\\wall\\textures\\painted_plaster_wall_nor_dx_2k.jpg", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
@@ -65,7 +65,7 @@ int Application::Run()
 	FUSIONCORE::Texture2D bearSpecular("Resources\\taunt\\textures\\bear_roughness.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
 	FUSIONCORE::Texture2D ShrubDiffuse("Resources\\models\\shrub\\textures\\shrub_04_diff_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
-	FUSIONCORE::Texture2D ShrubNormal("Resources\\models\\shrub\\textures\\shrub_04_nor_dx_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D ShrubNormal("Resources\\models\\shrub\\textures\\shrub_04_nor_gl_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D ShrubSpecular("Resources\\models\\shrub\\textures\\shrub_04_rough_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D ShrubAlpha("Resources\\models\\shrub\\textures\\shrub_04_alpha_1k.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 
@@ -229,10 +229,10 @@ int Application::Run()
 	SofaMaterial.PushTextureMap(TEXTURE_SPECULAR0, SofaSpecular);
 
 	FUSIONCORE::Material MirrorMaterial;
-	MirrorMaterial.PushTextureMap(TEXTURE_DIFFUSE0, MirrorDiffuse);
-	MirrorMaterial.PushTextureMap(TEXTURE_NORMAL0, MirrorNormal);
-	MirrorMaterial.PushTextureMap(TEXTURE_SPECULAR0, MirrorSpecular);
-	MirrorMaterial.PushTextureMap(TEXTURE_METALIC0, MirrorMetalic);
+	MirrorMaterial.PushTextureMap(TEXTURE_DIFFUSE0, StoveDiffuse);
+	MirrorMaterial.PushTextureMap(TEXTURE_NORMAL0, StoveNormal);
+	MirrorMaterial.PushTextureMap(TEXTURE_SPECULAR0, StoveSpecular);
+	MirrorMaterial.PushTextureMap(TEXTURE_METALIC0, StoveMetalic);
 
 	FUSIONCORE::Material WallMaterial;
 	WallMaterial.PushTextureMap(TEXTURE_DIFFUSE0, WallDiffuse);
@@ -414,22 +414,25 @@ int Application::Run()
 
 	FUSIONPHYSICS::QuadNode headNode;
 
-	FUSIONPHYSICS::ParticleEmitter emitter0(100000,*Shaders.ParticleInitializeShader, 
+	FUSIONPHYSICS::ParticleEmitter emitter0(10000,*Shaders.ParticleInitializeShader, 
 		glm::vec4(1.0f, 1.0f, 1.0f, 0.9f),
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
-		glm::vec3(-50.3f, 0.0f, -50.3f),
-		glm::vec3(100.3f, 70.0f, 100.3f),
-		glm::vec3(0.0f),
-		glm::vec3(-0.1f),
-		glm::vec3(0.0f),
-		glm::vec3(-1.0f),
-		glm::vec3(0.0f),
+		glm::vec3(-30.3f, 0.0f, -30.3f),
+		glm::vec3(30.3f, 70.0f, 30.3f),
+		glm::vec3(-0.2f),
+		glm::vec3(0.2f, -0.8f,0.2f),
+		glm::vec3(-0.5f),
+		glm::vec3(0.5f, -3.0f, 0.5f),
+		glm::vec3(30.0f),
 		1.0f,
-		6.0f,
-		0.00001f);
+		14.0f,
+		0.0001f);
 
 	FUSIONCORE::WorldTransform particleTransform;
-	particleTransform.Scale(glm::vec3(0.0025f));
+	particleTransform.Scale(glm::vec3(0.003f));
+	particleTransform.Rotate(glm::vec3(1.0f,0.0f,0.0f),90);
+
+	std::shared_ptr<FILE> screenCaptureFile;
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -466,6 +469,9 @@ int Application::Run()
 
 		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode, ObjectInstances,2,5);
 		auto UniqueQuadObjects = Capsule0.GetUniqueQuadsObjects();
+		glm::vec3 CapsuleQuadCenter = Capsule0.GetAssociatedQuads()[0]->Center;
+		emitter0.GetTransformation().Position = { CapsuleQuadCenter.x ,Capsule0.GetTransformation().Position.y , CapsuleQuadCenter.z };
+
 		//LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
 		for (const auto& Box : UniqueQuadObjects)
 		{
@@ -787,7 +793,7 @@ int Application::Run()
 		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, shovelMaterial, AOamount);
 		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FloorMaterial, AOamount);
 
-		//if (FUSIONCORE::IsModelInsideCameraFrustum(*Stove, camera3d))
+		if (FUSIONCORE::IsModelInsideCameraFrustum(*Stove, camera3d))
 		{
 			Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, MirrorMaterial, AOamount);
 		}
@@ -805,13 +811,13 @@ int Application::Run()
 
 		//if (!Collision)
 		//{
-		   animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices, AOamount);
+	    animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices, AOamount);
 		//}
 		
 		
 		FUSIONCORE::Material redMaterial(0.3f, 0.6f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, redMaterial, AOamount);
-		//if (FUSIONCORE::IsModelInsideCameraFrustum(*sofa, camera3d))
+		if (FUSIONCORE::IsModelInsideCameraFrustum(*sofa, camera3d))
 		{
 			sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, SofaMaterial, AOamount);
 		}
@@ -870,7 +876,27 @@ int Application::Run()
 		
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, sunShadowMap,true,0.7f,0.15f, 5.0f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize,true,0.7f,0.1f, 3.0f,1.7f,2.7f);
+
+		/*static bool AllowS = true;
+		static bool Record = false;
+		if (IsKeyPressedOnce(window, GLFW_KEY_S, AllowS))
+		{
+			screenCaptureFile = FUSIONUTIL::StartScreenCapturing("test.mp4", { WindowSize.x, WindowSize.y });
+			Record = true;
+		}
+
+		if (Record)
+		{
+			FUSIONUTIL::UpdateScreenCapture(screenCaptureFile, { WindowSize.x, WindowSize.y });
+		}
+
+		static bool AllowE = true;
+		if (IsKeyPressedOnce(window, GLFW_KEY_E, AllowE))
+		{
+			FUSIONUTIL::TerminateScreenCapture(screenCaptureFile);
+			Record = false;
+		}*/
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

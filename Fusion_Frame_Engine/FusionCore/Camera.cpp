@@ -105,6 +105,7 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);
+	this->ProjectionViewMat = projMat * viewMat;
 
 	this->CameraMat = projMat * viewMat;
 }
@@ -408,6 +409,7 @@ void FUSIONCORE::scrollCallback(GLFWwindow* window, double xoffset, double yoffs
 	ScrollAmount({ xoffset, yoffset });
 }
 
+
 bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera)
 {
 	auto CameraMatrix = camera.CameraMat;
@@ -440,5 +442,6 @@ bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE
 	}
 	return false;
 };
+
 
 

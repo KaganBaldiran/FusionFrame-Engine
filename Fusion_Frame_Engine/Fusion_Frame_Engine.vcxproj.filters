@@ -218,7 +218,9 @@
     <ClCompile Include="FusionCore\MeshOperations.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
-    <ClCompile Include="FusionPhysics\ParticleSystem.cpp" />
+    <ClCompile Include="FusionPhysics\ParticleSystem.cpp">
+      <Filter>Sources\FusionPhysics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -319,6 +321,9 @@
     </ClInclude>
     <ClInclude Include="FusionPhysics\ParticleSystem.hpp">
       <Filter>Headers\FusionPhysics</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.hpp">
+      <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -88,11 +88,11 @@ float rand(inout uint state)
 void SpawnParticle(inout Particle particle, uint index)
 {
     uint RandomSeed = index;
-    particle.life = RandPcgRange(RandomSeed, 0.0f,0.1f);
+    particle.life = RandPcgRange(RandomSeed, 0.1f,0.3f);
     particle.color = RandPcgRangeVec4(RandomSeed, EmitterSettings.minColor, EmitterSettings.maxColor);
     particle.acceleration = RandPcgRangeVec3(RandomSeed, EmitterSettings.minAccel, EmitterSettings.maxAccel);
     particle.velocity = RandPcgRangeVec3(RandomSeed, EmitterSettings.minVelocity, EmitterSettings.maxVelocity);
-    particle.position = EmitterSettings.position + RandPcgRangeVec3(RandomSeed, EmitterSettings.minOffset, EmitterSettings.maxOffset);
+    particle.position = RandPcgRangeVec3(RandomSeed, EmitterSettings.minOffset, EmitterSettings.maxOffset);
 };
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

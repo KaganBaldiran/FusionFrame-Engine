@@ -25,9 +25,9 @@ struct Particle
 
 FUSIONPHYSICS::ParticleEmitter::ParticleEmitter(unsigned int MaxParticleCount, FUSIONCORE::Shader& ParticleInitializeShader, glm::vec4 minColor, glm::vec4 maxColor,
 	glm::vec3 minOffset, glm::vec3 maxOffset, glm::vec3 minVelocity, glm::vec3 maxVelocity, glm::vec3 minAccel, glm::vec3 maxAccel,
-	glm::vec3 ForceOrigin, float minLife, float maxLife ,float spawnInterval)
+	glm::vec3 ForceDirection, float minLife, float maxLife ,float spawnInterval)
 {
-	emitterSettings.ForceOrigin = ForceOrigin;
+	emitterSettings.ForceDirection = ForceDirection;
 	emitterSettings.maxAccel = maxAccel;
 	emitterSettings.maxColor = maxColor;
 	emitterSettings.maxLife = maxLife;
@@ -83,8 +83,7 @@ void FUSIONPHYSICS::ParticleEmitter::UpdateParticleEmitter(FUSIONCORE::Shader& P
 	const unsigned int WorkGroupSize = 64;
 	if (SpawnCount > 0)
 	{
-		//LOG("SpawnCount: " << SpawnCount);
-
+		emitterSettings.position = this->GetTransformation().Position;
 		ParticleSpawnShader.use();
 
 		EmitterSettingsUBO->Bind();
@@ -106,7 +105,7 @@ void FUSIONPHYSICS::ParticleEmitter::UpdateParticleEmitter(FUSIONCORE::Shader& P
 
 	ParticleUpdateShader.use();
 	ParticleUpdateShader.setFloat("dt", DeltaTime);
-	ParticleUpdateShader.setVec3("ForceOrigin", emitterSettings.ForceOrigin);
+	ParticleUpdateShader.setVec3("ForceDirection", emitterSettings.ForceDirection);
 	
 	particlesBuffer.BindSSBO(1);
 	freelistBuffer.BindSSBO(2);
@@ -124,12 +123,11 @@ void FUSIONPHYSICS::ParticleEmitter::DrawParticles(FUSIONCORE::Shader& ParticleS
 	ParticleShader.use();
 	ParticleMesh.GetMeshBuffer().BindVAO();
 
-	camera.SetProjMatrixUniformLocation(ParticleShader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(ParticleShader.GetID(), "view");
-	
-	glm::mat4 LookatMat = glm::lookAt(glm::vec3(0.0f), {-camera.Orientation.x,camera.Orientation.y,-camera.Orientation.z}, camera.GetUpVector());
-	ParticleShader.setMat4("LookAtMat", LookatMat);
-	ParticleShader.setMat4("model",ParticleTranform.GetModelMat4());
+	ParticleShader.setMat4("ProjView", camera.ProjectionViewMat);
+	ParticleShader.setVec3("Emitterposition", emitterSettings.position);
+
+	glm::mat4 InverseLookAtMat = glm::inverse(glm::lookAt(glm::vec3(0.0f), -camera.Orientation, camera.GetUpVector()));
+	ParticleShader.setMat4("model", InverseLookAtMat * ParticleTranform.GetModelMat4());
 
 	particlesBuffer.BindSSBO(1);
 
@@ -137,5 +135,4 @@ void FUSIONPHYSICS::ParticleEmitter::DrawParticles(FUSIONCORE::Shader& ParticleS
 
 	FUSIONCORE::UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
-	glActiveTexture(GL_TEXTURE0);
 }

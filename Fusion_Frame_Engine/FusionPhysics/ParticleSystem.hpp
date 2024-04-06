@@ -24,7 +24,7 @@ namespace FUSIONPHYSICS
 		float padding5;
 		glm::vec3 maxAccel;
 		float padding6;
-		glm::vec3 ForceOrigin;
+		glm::vec3 ForceDirection;
 		float padding7;
 		float minLife;
 		float maxLife;
@@ -47,7 +47,7 @@ namespace FUSIONPHYSICS
 			glm::vec3 maxVelocity = glm::vec3(0.1f), 
 			glm::vec3 minAccel = glm::vec3(0.0f),    
 			glm::vec3 maxAccel = glm::vec3(1.0f),    
-			glm::vec3 ForceOrigin = glm::vec3(1.0f), 
+			glm::vec3 ForceDirection = glm::vec3(1.0f),
 			float minLife = 1.0f,                    
 			float maxLife = 5.0f,                    
 			float spawnInterval = 0.0001f              

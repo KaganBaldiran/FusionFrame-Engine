@@ -1,4 +1,5 @@
 #include "FusionFrame.h"
+#include <memory>
 
 glm::vec2 FUSIONUTIL::GetMonitorSize()
 {
@@ -17,3 +18,5 @@ float FUSIONUTIL::GetDeltaFrame()
 
 	return deltaTime;
 }
+
+

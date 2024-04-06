@@ -819,11 +819,11 @@ std::pair<bool,glm::vec3> FUSIONPHYSICS::IsCollidingSAT(CollisionBox& Box1Direct
 	for (size_t i = 0; i < Box2LocalNormals.size(); i++)
 	{
 		auto CollisionResponse = FindMinSeparation(Box1DirectionSource, Box2, Box2LocalNormals[i]);
-		/*if (CollisionResponse.second < MinSeperation)
+		if (CollisionResponse.second < MinSeperation)
 		{
 			MinSeperation = CollisionResponse.second;
 			CollisionDirection = Box2LocalNormals[i];
-		}*/
+		}
 
 		if (!CollisionResponse.first)
 		{

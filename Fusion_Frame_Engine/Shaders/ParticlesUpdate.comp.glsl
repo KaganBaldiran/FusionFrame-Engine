@@ -21,14 +21,14 @@ layout(std430, binding = 2) coherent restrict buffer ParticleBuffer1
 };
 
 layout(location = 0) uniform float dt;
-layout(location = 1) uniform vec3 ForceOrigin;
+layout(location = 1) uniform vec3 ForceDirection;
 
 void UpdateParticle(inout Particle particle , uint index)
 {
    if(particle.life > 0.0f)
    {
       particle.velocity += particle.acceleration * dt;
-      particle.position += normalize(particle.position - ForceOrigin) * particle.velocity * dt; 
+      particle.position += normalize(ForceDirection) * particle.velocity * dt;
       particle.life -= dt;
       
 	  if(particle.life <= 0.0f)

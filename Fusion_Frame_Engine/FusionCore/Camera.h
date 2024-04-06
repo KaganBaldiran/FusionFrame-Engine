@@ -33,6 +33,7 @@ namespace FUSIONCORE
 		glm::mat4 projMat;
 		glm::mat4 CameraMat;
 		glm::mat4 RatioMat;
+		glm::mat4 ProjectionViewMat;
 	};
 
 
@@ -100,7 +101,7 @@ namespace FUSIONCORE
 	};
 
 	bool IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera);
-	
+
 	static std::pair<glm::vec3, glm::vec3> GetCameraFrustum(FUSIONCORE::Camera3D& camera)
 	{
 		glm::mat4 inverseMatrix = glm::inverse(camera.projMat * camera.viewMat);

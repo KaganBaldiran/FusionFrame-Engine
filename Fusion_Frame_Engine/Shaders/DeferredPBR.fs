@@ -167,7 +167,7 @@ const float PI = 3.14159265359;
       return shadow;
   }
   */
-float DistributionGGX(vec3 N , vec3 H, float roughness)
+  float DistributionGGX(vec3 N , vec3 H, float roughness)
   {
       float a = roughness * roughness;
       float a2 = a*a;
@@ -214,10 +214,17 @@ float DistributionGGX(vec3 N , vec3 H, float roughness)
 
 void main()
 { 
+   vec4 MetalicRoughness = texture(MetalicRoughnessPass, TexCoords);
+   float SceneAlpha = MetalicRoughness.b;
+
+   if(SceneAlpha < 1.0f)
+   {
+      discard;
+   }
+
    vec4 AlbedoSpecular = texture(AlbedoSpecularPass, TexCoords);
    vec4 NormalMetalic = texture(NormalMetalicPass, TexCoords);
    vec4 PositionDepth = texture(PositionDepthPass, TexCoords);
-   vec4 MetalicRoughness = texture(MetalicRoughnessPass, TexCoords);
 
    vec3 Albedo = AlbedoSpecular.rgb;
    vec3 Normal = NormalMetalic.rgb;
@@ -316,7 +323,7 @@ void main()
       }
       
       color = color / (color + vec3(1.0));
-      color = pow(color, vec3(1.0/2.2));  
+      //color = pow(color, vec3(1.0/2.2));  
 
       bool FogEnabled = false;
 
@@ -338,10 +345,11 @@ void main()
       //float NormalizedDeltaPlane = normalize(DeltaPlane);
       //float EnvironmentRadianceIntensity = 1.0f / NormalizedDeltaPlane * NormalizedDeltaPlane;
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
+      //FragColor = vec4(pow(FragColor.xyz, vec3(1.0/2.2)),1.0f);  
       Depth = vec4(Position,1.0f);
       //FragColor = vec4(vec3(shadow),1.0f); 
 
-      //FragColor = vec4(vec3(roughness),1.0f);
-   //vec4 OutColor = vec4(vec3(Metalic),1.0f);
+      //FragColor = vec4(vec3(MetalicRoughness.b),1.0f);
+      //vec4 OutColor = vec4(vec3(Metalic),1.0f);
    //FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w); 
 }

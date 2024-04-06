@@ -14,9 +14,7 @@
  out vec3 CurrentPos;
 
  uniform mat4 model;
- uniform mat4 proj;
- uniform mat4 view;
- uniform mat4 ratioMat;
+ uniform mat4 ProjView;
 
  const int MAX_BONES = 100;
  const int MAX_BONE_INFLUENCE = 4;
@@ -32,6 +30,11 @@
  { 
    mat3 NormalMatrix = transpose(inverse(mat3(model)));
    FinalTexCoord = textcoord;
+
+   vec3 ResultNormal = aNormal;
+   vec3 ResultTangent = tangentnormal;
+   vec3 ResultBiTangent = bitangentnormal;
+   CurrentPos = vertexdata;
 
    if(EnableAnimation)
    {
@@ -68,26 +71,20 @@
         totalBitangent += localBitangent * weight;
    }
    
-     CurrentPos = vec3(model * totalPosition);
-     gl_Position = proj * view * vec4(CurrentPos,1.0f);
+     CurrentPos = totalPosition.xyz;
 
-     vec3 T = normalize(vec3(NormalMatrix* totalTangent));
-     vec3 B = normalize(vec3(NormalMatrix* totalBitangent));
-     vec3 N = normalize(vec3(NormalMatrix* totalNormal));
-     TBN = mat3(T,B,N);
-
-     Normal = N;
+     ResultNormal = totalNormal;
+     ResultTangent = totalTangent;
+     ResultBiTangent = totalBitangent;
    }
-   else
-   {
-     CurrentPos = vec3(model * vec4(vertexdata,1.0f));
-     gl_Position = proj * view * vec4(CurrentPos,1.0f);
+   
+   CurrentPos = vec3(model * vec4(CurrentPos,1.0f));
+   gl_Position = ProjView * vec4(CurrentPos,1.0f);
 
-     vec3 T = normalize(vec3(NormalMatrix* tangentnormal));
-     vec3 B = normalize(vec3(NormalMatrix* bitangentnormal));
-     vec3 N = normalize(vec3(NormalMatrix* aNormal));
-     TBN = mat3(T,B,N);
+   vec3 T = normalize(vec3(NormalMatrix* ResultTangent));
+   vec3 B = normalize(vec3(NormalMatrix* ResultBiTangent));
+   vec3 N = normalize(vec3(NormalMatrix* ResultNormal));
+   TBN = mat3(T,B,N);
 
-     Normal = N;
-   }
+   Normal = N;
  }

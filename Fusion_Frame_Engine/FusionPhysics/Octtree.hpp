@@ -35,7 +35,6 @@ namespace FUSIONPHYSICS
 		ObjectBoundingBox();
 		void CompareVec3MinMax(glm::vec3 &v);
 
-		std::vector<glm::vec3> Vertices;
 		glm::vec3 Min;
 		glm::vec3 Max;
 		FUSIONCORE::Object* Object;

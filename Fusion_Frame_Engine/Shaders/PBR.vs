@@ -14,8 +14,9 @@
  out vec3 CurrentPos;
 
  uniform mat4 model;
- uniform mat4 proj;
- uniform mat4 view;
+ //uniform mat4 proj;
+ //uniform mat4 view;
+ uniform mat4 ProjView;
 
  const int MAX_BONES = 100;
  const int MAX_BONE_INFLUENCE = 4;
@@ -63,7 +64,7 @@
    }
    
      CurrentPos = vec3(model * totalPosition);
-     gl_Position = proj * view * vec4(CurrentPos,1.0f);
+     gl_Position = ProjView * vec4(CurrentPos,1.0f);
 
      mat3 NormalMatrix = transpose(inverse(mat3(model)));
      vec3 T = normalize(vec3(NormalMatrix* totalTangent));
@@ -77,7 +78,7 @@
    else
    {
      CurrentPos = vec3(model * vec4(vertexdata,1.0f));
-     gl_Position = proj * view * vec4(CurrentPos,1.0f);
+     gl_Position = ProjView * vec4(CurrentPos,1.0f);
 
      mat3 NormalMatrix = transpose(inverse(mat3(model)));
      vec3 T = normalize(vec3(NormalMatrix* tangentnormal));

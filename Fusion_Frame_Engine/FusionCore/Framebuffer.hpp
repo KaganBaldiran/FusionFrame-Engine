@@ -29,7 +29,8 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &fboImage);
 			glBindTexture(GL_TEXTURE_2D, fboImage);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -109,7 +110,7 @@ namespace FUSIONCORE
 		inline void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		inline void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize,CascadedDirectionalShadowMap& sunMap,bool DOFenabled = false, float DOFdistanceFar = 0.09f , float DOFdistanceClose = 0.02f, float DOFintensity = 1.0f)
+		inline void Draw(Camera3D& camera,Shader& shader,std::function<void()> ShaderPrep , Vec2<int> WindowSize,bool DOFenabled = false, float DOFdistanceFar = 0.09f , float DOFdistanceClose = 0.02f, float DOFintensity = 1.0f, float Gamma = 0.9f, float Exposure = 1.0f)
 		{
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -128,10 +129,6 @@ namespace FUSIONCORE
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
 			shader.setInt("DepthAttac", 1);
 
-			/*glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, fboID);
-			shader.setInt("ID", 2);*/
-		
 			shader.setVec3("CamPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
@@ -139,6 +136,8 @@ namespace FUSIONCORE
 			shader.setFloat("DOFdistanceClose", DOFdistanceClose);
 			shader.setBool("DOFenabled", DOFenabled);
 			shader.setFloat("DOFintensity", DOFintensity);
+			shader.setFloat("Gamma", Gamma);
+			shader.setFloat("Exposure", Exposure);
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -187,7 +186,8 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &AlbedoSpecularPass);
 			glBindTexture(GL_TEXTURE_2D, AlbedoSpecularPass);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -195,7 +195,7 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &NormalMetalicPass);
 			glBindTexture(GL_TEXTURE_2D, NormalMetalicPass);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -203,7 +203,7 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &PositionDepthPass);
 			glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -211,7 +211,7 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &MetalicRoughnessPass);
 			glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

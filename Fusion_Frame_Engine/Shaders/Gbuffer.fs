@@ -31,7 +31,6 @@ uniform int disableclaymaterial[5];
 
 void main()
 {
-    
     float AlphaMap;
     if(disableclaymaterial[4] == 1)
     {

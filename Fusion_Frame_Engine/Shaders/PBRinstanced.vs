@@ -5,8 +5,6 @@
  layout(location = 2) in vec2 textcoord;
  layout(location = 3) in vec3 tangentnormal;
  layout(location = 4) in vec3 bitangentnormal;
- layout(location = 5) in ivec4 boneIds; 
- layout(location = 6) in vec4 weights;
  layout(location = 7) in vec3 InstanceOffset;
 
  out vec3 Normal;
@@ -15,22 +13,19 @@
  out vec3 CurrentPos;
 
  uniform mat4 model;
- uniform mat4 proj;
- uniform mat4 view;
- uniform mat4 ratioMat;
-
- uniform mat4 cameramatrix;
+ uniform mat4 ProjView;
 
  void main()
  { 
      CurrentPos = vec3(model * vec4(vertexdata,1.0f)) + InstanceOffset;
-     gl_Position = proj * view * vec4(CurrentPos ,1.0f);
+     gl_Position = ProjView * vec4(CurrentPos ,1.0f);
 
-     vec3 T = normalize(vec3(model* vec4(tangentnormal,0.0f)));
-     vec3 B = normalize(vec3(model* vec4(bitangentnormal,0.0f)));
-     vec3 N = normalize(vec3(model* vec4(aNormal,0.0f)));
+     mat3 NormalMatrix = transpose(inverse(mat3(model)));
+     vec3 T = normalize(vec3(NormalMatrix* tangentnormal));
+     vec3 B = normalize(vec3(NormalMatrix* bitangentnormal));
+     vec3 N = normalize(vec3(NormalMatrix* aNormal));
      TBN = mat3(T,B,N);
 
      FinalTexCoord = textcoord;
-     Normal = vec3(model * vec4(aNormal,0.0));
+     Normal = N;
  }

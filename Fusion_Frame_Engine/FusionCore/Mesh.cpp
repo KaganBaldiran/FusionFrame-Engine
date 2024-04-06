@@ -109,8 +109,8 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
@@ -128,8 +128,8 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, Material material,
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
@@ -148,8 +148,8 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
@@ -184,8 +184,7 @@ void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, s
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
 
 	glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0,PrimCount);
 
@@ -200,8 +199,7 @@ void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::funct
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
 	material.SetMaterialShader(shader);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -217,8 +215,7 @@ void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& sh
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
 	this->ImportedMaterial.SetMaterialShader(shader);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -319,8 +316,8 @@ void FUSIONCORE::Mesh::DrawImportedMaterial(Camera3D& camera, Shader& shader, st
 	ObjectBuffer.BindVAO();
 	ShaderPreperations();
 
-	camera.SetProjMatrixUniformLocation(shader.GetID(), "proj");
-	camera.SetViewMatrixUniformLocation(shader.GetID(), "view");
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);

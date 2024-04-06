@@ -8,7 +8,6 @@ std::vector<FUSIONPHYSICS::ObjectBoundingBox> BoundingBoxes;
 
 FUSIONPHYSICS::ObjectBoundingBox::ObjectBoundingBox()
 {
-	Vertices.reserve(8);
 	Min.x = std::numeric_limits<float>::max();
 	Max.x = std::numeric_limits<float>::lowest();
 	Min.y = std::numeric_limits<float>::max();
@@ -56,7 +55,6 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 		auto ModelMatrix = objectTransformation.GetModelMat4();
 		auto& ModelPosition = *objectTransformation.OriginPoint;
 		auto HalfScales = (ModelScales * 0.5f);
-		BoundingBox.Vertices.reserve(8);
 		for (size_t x = 0; x < 2; x++)
 		{
 			for (size_t y = 0; y < 2; y++)
@@ -69,7 +67,6 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 
 					Vertex = glm::vec3(ModelMatrix * glm::vec4(Vertex, 1.0f));
 					BoundingBox.CompareVec3MinMax(Vertex);
-					BoundingBox.Vertices.push_back(Vertex);
 				}
 			}
 		}

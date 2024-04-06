@@ -233,6 +233,7 @@
     <ClInclude Include="FusionUtility\StopWatch.h" />
     <ClInclude Include="FusionUtility\Thread.h" />
     <ClInclude Include="FusionUtility\VectorMath.h" />
+    <ClInclude Include="Scene.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

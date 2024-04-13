@@ -337,6 +337,11 @@ namespace FUSIONCORE
 			}
 
 			FUSIONCORE::SendLightsShader(shader);
+			camera.SendClustersShader(0);
+
+			shader.setVec3("gridSize", camera.GetClusterGridSize());
+			shader.setVec2("screenSize", glm::vec2(1920, 1080));
+
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			ObjectBuffer.UnbindVAO();

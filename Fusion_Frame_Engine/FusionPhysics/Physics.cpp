@@ -48,7 +48,7 @@ std::vector<FUSIONCORE::Vertex> FindPointsOnDirection(const glm::vec3& direction
 	return PointsOnDirection;
 }
 
-FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform& transformation, glm::vec3 BoxSizeCoeff)
+FUSIONPHYSICS::CollisionBoxAABB::CollisionBoxAABB(FUSIONCORE::WorldTransform& transformation, glm::vec3 BoxSizeCoeff)
 {
 	this->ModelOriginPoint = transformation.Position;
 	FUSIONCORE::Vertex vertex;
@@ -214,7 +214,7 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(FUSIONCORE::WorldTransform
 }
 
 
-FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 BoxSizeCoeff)
+FUSIONPHYSICS::CollisionBoxAABB::CollisionBoxAABB(glm::vec3 Size, glm::vec3 BoxSizeCoeff)
 {
 	this->ModelOriginPoint = FF_ORIGIN;
 	FUSIONCORE::Vertex vertex;
@@ -357,6 +357,34 @@ FUSIONPHYSICS::CollisionBox3DAABB::CollisionBox3DAABB(glm::vec3 Size, glm::vec3 
 	BoxMesh = std::make_unique<FUSIONCORE::Mesh>(sharedPtrVertices, BoxIndices, MeshFaces, textures);
 }
 
+FUSIONPHYSICS::CollisionBox::CollisionBox(CollisionBox& other)
+{
+	this->BoxMesh = std::make_shared<FUSIONCORE::Mesh>(*other.BoxMesh);
+	this->BoxVertices.assign(other.BoxVertices.begin(), other.BoxVertices.end());
+	this->BoxNormals.assign(other.BoxNormals.begin(), other.BoxNormals.end());
+	this->BoxIndices.assign(other.BoxIndices.begin(), other.BoxIndices.end());
+	this->LocalBoxNormals.assign(other.LocalBoxNormals.begin(), other.LocalBoxNormals.end());
+
+	this->Max = other.Max;
+	this->Min = other.Min;
+
+	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
+	std::default_random_engine engine(seed);
+
+	MeshColor.x = RandomFloats(engine);
+	MeshColor.y = RandomFloats(engine);
+	MeshColor.z = RandomFloats(engine);
+
+	ModelOriginPoint = BoxMesh->GetMeshOriginPoint();
+	auto& transformation = other.GetTransformation();
+	this->GetTransformation().TranslationMatrix = transformation.TranslationMatrix;
+	this->GetTransformation().ScalingMatrix = transformation.ScalingMatrix;
+	this->GetTransformation().RotationMatrix = transformation.RotationMatrix;
+	this->GetTransformation().OriginPoint = &ModelOriginPoint;
+	this->GetTransformation().InitialObjectScales = BoxMesh->GetInitialMeshMax() - BoxMesh->GetInitialMeshMin();
+}
+
 FUSIONPHYSICS::CollisionBox::CollisionBox(FUSIONCORE::Mesh &InputMesh, FUSIONCORE::WorldTransform transformation)
 {
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -399,14 +427,12 @@ FUSIONPHYSICS::CollisionBox::CollisionBox(FUSIONCORE::Mesh &InputMesh, FUSIONCOR
 		LocalBoxNormals.push_back(glm::normalize(Normal));
 	}
 
-
 	/*for (size_t i = 0; i < this->BoxNormals.size(); i++)
 	{
 		glm::vec3 Normal = FUSIONCORE::TranslateVertex(glm::transpose(glm::inverse(glm::mat3(this->transformation.GetModelMat4()))), BoxNormals[i]);
 		LocalBoxNormals.push_back(glm::normalize(Normal));
 	}*/
 	
-
 	auto MinMax = FindMinMax(BoxVertices, this->GetTransformation().GetModelMat4());
 	Min = MinMax.first;
 	Max = MinMax.second;
@@ -483,7 +509,7 @@ void FUSIONPHYSICS::CollisionBox::UpdateAttributes()
 	Max = MinMax.second;
 }
 
-void FUSIONPHYSICS::CollisionBox3DAABB::UpdateAttributes()
+void FUSIONPHYSICS::CollisionBoxAABB::UpdateAttributes()
 {
 	LocalBoxNormals.clear();
 	auto rotation = glm::toQuat(GetTransformation().RotationMatrix);
@@ -515,7 +541,7 @@ void FUSIONPHYSICS::CollisionBox3DAABB::UpdateAttributes()
 	Max = MinMax.second;
 }
 
-float FUSIONPHYSICS::CollisionBox3DAABB::ProjectOntoAxis(const glm::vec3& axis)
+float FUSIONPHYSICS::CollisionBoxAABB::ProjectOntoAxis(const glm::vec3& axis)
 {
 	auto ModelMatrix = this->GetTransformation().GetModelMat4();
 	glm::vec4 transformed0 = ModelMatrix * glm::vec4(BoxVertices[0].Position, 1.0f);
@@ -533,17 +559,17 @@ float FUSIONPHYSICS::CollisionBox3DAABB::ProjectOntoAxis(const glm::vec3& axis)
 	return minProjection;
 }
 
-void FUSIONPHYSICS::CollisionBox3DAABB::Clear()
+void FUSIONPHYSICS::CollisionBoxAABB::Clear()
 {
 	this->GetBoxMesh()->Clean();
 }
 
-FUSIONPHYSICS::CollisionBox3DAABB::~CollisionBox3DAABB()
+FUSIONPHYSICS::CollisionBoxAABB::~CollisionBoxAABB()
 {
 	this->Clean();
 }
 
-void FUSIONPHYSICS::CollisionBox3DAABB::Update()
+void FUSIONPHYSICS::CollisionBoxAABB::Update()
 {
 	auto& lastScales = this->Parent->GetTransformation().LastScales;
 	auto& lastRotations = this->Parent->GetTransformation().LastRotations;
@@ -649,7 +675,7 @@ std::pair<int, glm::vec3> FUSIONPHYSICS::CheckCollisionDirection(glm::vec3 targe
 	return { Chosen,ChosenAxis };
 }
 
-std::pair<bool, int> FUSIONPHYSICS::BoxBoxIntersect(CollisionBox3DAABB& Box1, CollisionBox3DAABB& Box2)
+std::pair<bool, int> FUSIONPHYSICS::BoxBoxIntersect(CollisionBoxAABB& Box1, CollisionBoxAABB& Box2)
 {
 	auto direction = CheckCollisionDirection(Box1.GetTransformation().Position - Box2.GetTransformation().Position,
 		Box1.GetTransformation());
@@ -839,6 +865,17 @@ bool FUSIONPHYSICS::IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radi
 	float CentersDifference = glm::length(center1 - center2);
 	float RadiusSum = glm::length(radius1) + glm::length(radius2);
 	return RadiusSum >= CentersDifference;
+}
+
+std::vector<std::shared_ptr<FUSIONPHYSICS::CollisionBoxAABB>> FUSIONPHYSICS::GenerateAABBCollisionBoxesFromInstancedModel(FUSIONCORE::WorldTransform& transformation, std::vector<glm::vec3> InstancePositions)
+{
+	std::vector<std::shared_ptr<CollisionBoxAABB>> Boxes;
+	for (size_t i = 0; i < InstancePositions.size(); i++)
+	{
+		Boxes.emplace_back(std::make_shared<CollisionBoxAABB>(transformation));
+		Boxes.back()->GetTransformation().TranslateNoTraceBack(InstancePositions[i]);
+	}
+	return Boxes;
 }
 
 FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 BoxSizeCoeff)

@@ -106,6 +106,12 @@
     <None Include="Shaders\Particle.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\CameraClusterComputeShader.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\CameraLightCulling.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

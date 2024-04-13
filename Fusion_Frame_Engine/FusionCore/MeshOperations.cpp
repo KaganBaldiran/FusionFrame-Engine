@@ -741,6 +741,57 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 	return Points;
 }
 
+std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurfaceRandomized(FUSIONCORE::Mesh& Mesh, FUSIONCORE::WorldTransform& Transformation, unsigned int PointCount, unsigned int seed)
+{
+	auto& MeshFaces = Mesh.GetFaces();
+	auto& MeshVertices = Mesh.GetVertices();
+	auto ModelMatrix = Transformation.GetModelMat4();
+	size_t CastedPointCount = 0;
+	std::vector<glm::vec3> Points;
+
+	std::mt19937 gen(seed);
+	std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+	std::mt19937 FaceSeed(seed * (2356294u ^ seed));
+	std::uniform_int_distribution<unsigned int> FaceDistribution(0, MeshFaces.size());
+
+	Points.reserve(PointCount);
+	while (CastedPointCount < PointCount)
+	{
+		auto& face = MeshFaces[FaceDistribution(FaceSeed)];
+		auto& vertex1 = MeshVertices[face->Indices[0]];
+		auto& vertex2 = MeshVertices[face->Indices[1]];
+		auto& vertex3 = MeshVertices[face->Indices[2]];
+
+		double s = dis(gen);
+		double t = dis(gen);
+
+		glm::vec3 u = vertex1->Position;
+		glm::vec3 v = vertex2->Position;
+		glm::vec3 w = vertex3->Position;
+
+		if (s + t <= 1)
+		{
+			glm::vec3 Point = glm::vec3(u.x + s * (v.x - u.x) + t * (w.x - u.x),
+				u.y + s * (v.y - u.y) + t * (w.y - u.y),
+				u.z + s * (v.z - u.z) + t * (w.z - u.z));
+			Points.push_back(FUSIONCORE::TranslateVertex(ModelMatrix, Point));
+		}
+		else
+		{
+			s = 1 - s;
+			t = 1 - t;
+			glm::vec3 Point = glm::vec3(u.x + s * (w.x - u.x) + t * (v.x - u.x),
+				u.y + s * (w.y - u.y) + t * (v.y - u.y),
+				u.z + s * (w.z - u.z) + t * (v.z - u.z));
+			Points.push_back(FUSIONCORE::TranslateVertex(ModelMatrix, Point));
+		}
+
+		CastedPointCount++;
+	}
+	return Points;
+}
+
 std::vector<FUSIONPHYSICS::CollisionBox> FUSIONCORE::MESHOPERATIONS::GridSubdivideCollisionBox(FUSIONPHYSICS::CollisionBox& collisionBox, unsigned int DivisionCountX, unsigned int DivisionCountY, unsigned int DivisionCountZ)
 {
 	/*unsigned int TotalNewBoxCount = DivisionCountX * DivisionCountY * DivisionCountZ;

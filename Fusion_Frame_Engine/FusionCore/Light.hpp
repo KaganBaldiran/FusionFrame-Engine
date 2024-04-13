@@ -7,7 +7,7 @@
 #include "Mesh.h"
 #include <memory>
 #include "Model.hpp"
-#define MAX_LIGHT_COUNT 100
+#define MAX_LIGHT_COUNT 110
 
 #define FF_POINT_LIGHT 0x56400
 #define FF_DIRECTIONAL_LIGHT 0x56401
@@ -15,20 +15,39 @@
 
 namespace FUSIONCORE
 {
-	extern std::unique_ptr<Model> LightIcon;
-	extern std::vector<glm::vec3> LightPositions;
-	extern std::vector<glm::vec3> LightColors;
-	extern std::vector<int> LightTypes;
-	extern std::vector<float> LightIntensities;
-	extern int LightCount;
+	struct alignas(16) LightData
+	{
+		glm::vec4 Position;
+		glm::vec4 Color;
+		int Type;
+		float Intensity;
+		float Radius;
+	};
 
+	extern std::unique_ptr<Model> LightIcon;
+	extern std::unordered_map<int, LightData> LightDatas;
+	extern int LightCount;
+	extern std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
+
+	//Internally called
+	void InitializeLightsShaderStorageBufferObject();
+
+	//Uploads all the light datas avaliable to the light SSBO. Might turn to be kind of an expensive operation.
+	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
+	void UploadLightsShaderUniformBuffer();
+	//Sets light data SSBO in a given shader.
 	void SendLightsShader(Shader& shader);
+	//Uploads the given light data to the light SSBO.
+	//Call it only if you insert lights(not deletation).
+	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
+	void UploadSingleLightShaderUniformBuffer(LightData& Light);
+
 	class Light : public Object
 	{
 	public:
 		Light();
 		//Depending on the light type position argument can be passed as direction
-		Light(glm::vec3 Position_Direction, glm::vec3 Color, float intensity , int LightType = FF_POINT_LIGHT);
+		Light(glm::vec3 Position_Direction, glm::vec3 Color, float intensity , int LightType = FF_POINT_LIGHT, float Radius = 10.0f);
 		void SetAttrib(glm::vec3 Color, float intensity = 1.0f);
 		WorldTransformForLights* GetTransformation() { return this->transformation.get(); };
 		void Draw(Camera3D& camera, Shader& shader);
@@ -54,7 +73,7 @@ namespace FUSIONCORE
 		std::unique_ptr<WorldTransformForLights> transformation;
 		int LightID;
 		int LightType;
-		float LightIntensity;
+		float LightIntensity , LightRadius;
 		glm::vec3 LightColor , LightDirection;
 		bool LightState;
 	};

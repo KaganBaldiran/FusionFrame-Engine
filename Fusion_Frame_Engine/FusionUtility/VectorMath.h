@@ -662,5 +662,15 @@ struct ObjectHash
 };
 
 
+struct IntHash
+{
+	size_t operator()(const int& Object) const
+	{
+		return std::hash<const int*>{}(&Object);
+	}
+};
+
+
+
 
 

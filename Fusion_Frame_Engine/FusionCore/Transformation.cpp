@@ -1,4 +1,5 @@
 #include "Transformation.hpp"
+#include "Light.hpp"
 
 void FUSIONCORE::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
 {
@@ -60,6 +61,14 @@ void FUSIONCORE::WorldTransform::RotateNoTraceBack(glm::vec3 v, float angle)
 	RotationMatrix = glm::rotate(RotationMatrix, glm::radians(angle), v);
 }
 
+FUSIONCORE::WorldTransformForLights::WorldTransformForLights(LightData* Light, int LightID)
+{
+	Position = glm::vec3(0.0f, 0.0f, 0.0f);
+	ScaleFactor = glm::vec3(1.0f, 1.0f, 1.0f);
+	this->LightPosition = &Light->Position;
+	this->LightID = LightID;
+}
+
 void FUSIONCORE::WorldTransformForLights::Translate(glm::vec3 v)
 {
 	TranslationMatrix = glm::translate(TranslationMatrix, v);
@@ -71,5 +80,5 @@ void FUSIONCORE::WorldTransformForLights::Translate(glm::vec3 v)
 	Position.y = TranslationMatrix[3][1];
 	Position.z = TranslationMatrix[3][2];
 
-	LightPositions->at(LightID) = Position;
+	*LightPosition = glm::vec4(Position,1.0f);
 }

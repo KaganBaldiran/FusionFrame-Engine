@@ -9,6 +9,8 @@
 
 namespace FUSIONCORE
 {
+	struct LightData;
+
 	struct TransformAction
 	{
 		glm::vec3 Transformation;
@@ -73,17 +75,11 @@ namespace FUSIONCORE
 	{
 	public:
 
-		WorldTransformForLights(std::vector<glm::vec3>& LightPositions , int LightID)
-		{
-			Position = glm::vec3(0.0f, 0.0f, 0.0f);
-			ScaleFactor = glm::vec3(1.0f, 1.0f, 1.0f);
-			this->LightPositions = &LightPositions;
-			this->LightID = LightID;
-		}
+		WorldTransformForLights(LightData* Light, int LightID);
 		void Translate(glm::vec3 v) override;
 
 	private:
-		std::vector<glm::vec3>* LightPositions;
+		glm::vec4* LightPosition;
 		int LightID;
 	};
 }

@@ -74,6 +74,7 @@ namespace FUSIONCORE
 		GLuint Bind();
 		void BindUBO(unsigned int BindingPoint);
 		GLuint GetUBOID();
+		void BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 		~UBO();
 
 	private:

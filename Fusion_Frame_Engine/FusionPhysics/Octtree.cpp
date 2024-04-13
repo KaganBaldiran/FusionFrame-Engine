@@ -108,7 +108,7 @@ void FUSIONPHYSICS::VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode,FUSIONCO
 		auto node = nodes.back();
 		nodes.pop_back();
 		auto NodeTranform = NodeToWorldTransform(*node);
-		FUSIONPHYSICS::CollisionBox3DAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
+		FUSIONPHYSICS::CollisionBoxAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
 		HeadNodeBox.SetMeshColor(NodeColor);
 		HeadNodeBox.DrawBoxMesh(Camera, Shader);
 		if (!node->ChildrenNode.empty())

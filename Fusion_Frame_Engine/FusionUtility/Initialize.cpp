@@ -2,6 +2,7 @@
 #include "../FusionCore/Camera.h"
 #include "../FusionCore/Cubemap.h"
 #include "../FusionCore/Animator.hpp"
+#include "../FusionCore/Light.hpp"
 #include "../FusionPhysics/ParticleSystem.hpp"
 
 GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion, const char* WindowName)
@@ -80,10 +81,13 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.ParticleUpdateComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesUpdate.comp.glsl");
 	shaders.ParticleRenderShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticleRenderShader.vs", "Shaders/ParticleRenderShader.fs");
 	shaders.ParticleInitializeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesInitialize.comp.glsl");
+	shaders.CameraClusterComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CameraClusterComputeShader.comp.glsl");
+	shaders.CameraLightCullingComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CameraLightCulling.comp.glsl");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 	FUSIONCORE::InitializeAnimationUniformBuffer();
 	FUSIONPHYSICS::InitializeParticleEmitterUBO();
+	FUSIONCORE::InitializeLightsShaderStorageBufferObject();
 }
 
 void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
@@ -108,4 +112,6 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleUpdateComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleRenderShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleInitializeShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.CameraClusterComputeShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.CameraLightCullingComputeShader->GetID());
 }

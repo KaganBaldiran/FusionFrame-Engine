@@ -1,4 +1,4 @@
-#version 420 core
+#version 460 core
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 Depth;
   
@@ -21,10 +21,6 @@ uniform float DOFintensity;
 #define DIRECTIONAL_LIGHT 0x56401
 #define SPOT_LIGHT 0x56402
 
-uniform vec3 LightPositions[MAX_LIGHT_COUNT];
-uniform vec3 LightColors[MAX_LIGHT_COUNT];
-uniform float LightIntensities[MAX_LIGHT_COUNT];
-uniform int LightTypes[MAX_LIGHT_COUNT];
 uniform int LightCount;
 
 uniform float FogIntesityUniform;
@@ -53,16 +49,48 @@ uniform float CascadeShadowPlaneDistances[MAX_CASCADE_PLANE_COUNT];
 uniform mat4 ViewMatrix;
 uniform int CascadeShadowMapLightID;
 
+uniform vec2 screenSize;
+uniform vec3 gridSize;
+
 layout (std140) uniform LightSpaceMatrices
 {
     mat4 lightSpaceMatrices[16];
 };
 
+struct Light
+{
+  vec4 Position;
+  vec4 Color;
+  int Type;
+  float Intensity;
+  float Radius;
+};
+
+#define MAX_LIGHT_PER_CLUSTER 100
+
+struct Cluster
+{
+    vec4 Min;
+    vec4 Max;
+    uint Count;
+    uint LightIndices[MAX_LIGHT_PER_CLUSTER];
+};
+
+layout(std430, binding = 0) restrict buffer ClusterData
+{
+    Cluster Clusters[];
+};
+
+layout(std430 , binding = 4) restrict buffer LightsDatas
+{
+    Light Lights[];
+};
+
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
    
- float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowMapArray , vec3 N, vec3 LightDirection)
- {
+float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowMapArray , vec3 N, vec3 LightDirection)
+{
     vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
     float Depth = abs(FragPosView.z);
 
@@ -232,6 +260,15 @@ void main()
    float Metalic = MetalicRoughness.g;
    vec3 Position = PositionDepth.rgb;
 
+   vec4 FragPosView = ViewMatrix * vec4(Position,1.0f);
+
+   uint zTile = uint((log(abs(FragPosView.z) / NearPlane) * gridSize.z) / log(FarPlane / NearPlane));
+   vec2 tileSize = screenSize / gridSize.xy;
+   uvec3 tile = uvec3(gl_FragCoord.xy / tileSize, zTile);
+   uint tileIndex = uint(tile.x + (tile.y * gridSize.x) + (tile.z * gridSize.x * gridSize.y));
+
+   Cluster cluster = Clusters[tileIndex];
+
       float shadow = 0.0f;
       vec3 N = normalize(Normal);
       vec3 V = normalize(CameraPos - Position);
@@ -242,23 +279,32 @@ void main()
       vec3 Lo = vec3(0.0);
       for(int i = 0; i < LightCount;++i)
       {
+          Light CurrentLight = Lights[i];
+          //Light CurrentLight = Lights[cluster.LightIndices[i]];
           vec3 L;
           vec3 H;
           vec3 radiance;
 
-          if(LightTypes[i] == POINT_LIGHT)
+          if(CurrentLight.Type == POINT_LIGHT)
           {
-            L = normalize(LightPositions[i] - Position);
+		    vec3 CurrentLightPosition = CurrentLight.Position.xyz;
+            float distance = length(CurrentLightPosition - Position);
+            
+            if(distance > CurrentLight.Radius)
+            {
+               continue;
+            }
+
+            L = normalize(CurrentLightPosition - Position);
             H = normalize(V + L);
-            float distance = length(LightPositions[i] - Position);
             float attenuation = 1.0 / (distance * distance);
-            radiance = LightColors[i].xyz * attenuation;
+            radiance = CurrentLight.Color.xyz * attenuation;
           }
-          else if(LightTypes[i] == DIRECTIONAL_LIGHT)
+          else if(CurrentLight.Type == DIRECTIONAL_LIGHT)
           {
-            L = normalize(LightPositions[i]);
+            L = normalize(CurrentLight.Position.xyz);
             H = normalize(V + L); 
-            radiance = LightColors[i].xyz;
+            radiance = CurrentLight.Color.xyz;
           }
           float NDF = DistributionGGX(N,H,roughness);
           float G = GeometrySmith(N,V,L,roughness);
@@ -277,23 +323,23 @@ void main()
 
           if(i < OmniShadowMapCount)
           {
-             shadow = ShadowCalculationOmni(Position,OmniShadowMaps[i],LightPositions[i] , ShadowMapFarPlane[i]);
+             shadow = ShadowCalculationOmni(Position,OmniShadowMaps[i],CurrentLight.Position.xyz , ShadowMapFarPlane[i]);
           }
           if(i == LightCount - 1)
           {
-             shadow = CascadedDirectionalShadowCalculation(Position,SunShadowMap,N , LightPositions[i]);
+             shadow = CascadedDirectionalShadowCalculation(Position,SunShadowMap,N , CurrentLight.Position.xyz);
           }
     
           /*
           else
           {
-             Lo += (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
+             Lo += (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
           }
           */
 
-          Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
 
-          //Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          //Lo += (Kd * texturecolor / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
       }
 
       vec3 color;

@@ -188,6 +188,11 @@ GLuint FUSIONCORE::UBO::GetUBOID()
 	return ubo;
 }
 
+void FUSIONCORE::UBO::BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+{
+	glBufferData(target, size, data, usage);
+}
+
 FUSIONCORE::UBO::~UBO()
 {
 	glDeleteBuffers(1, &ubo);

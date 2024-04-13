@@ -21,7 +21,7 @@ void FUSIONCORE::InitializeShadowMapsUniformBuffer()
 void FUSIONCORE::OmniShadowMap::BindShadowMapLight(Light& light)
 {
 	
-	auto temp = LightColors[light.GetLightID()];
+	//auto temp = LightColors[light.GetLightID()];
 
 }
 

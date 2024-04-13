@@ -95,7 +95,8 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> ParticleUpdateComputeShader;
         std::unique_ptr<FUSIONCORE::Shader> ParticleRenderShader;
         std::unique_ptr<FUSIONCORE::Shader> ParticleInitializeShader;
-
+        std::unique_ptr<FUSIONCORE::Shader> CameraClusterComputeShader;
+        std::unique_ptr<FUSIONCORE::Shader> CameraLightCullingComputeShader;
 	};
 
 	void InitializeDefaultShaders(DefaultShaders& shaders);

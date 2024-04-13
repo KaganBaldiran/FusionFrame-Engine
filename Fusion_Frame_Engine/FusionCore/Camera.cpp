@@ -5,6 +5,8 @@
 #include "../FusionUtility/glm/gtx/rotate_vector.hpp"
 #include "../FusionUtility/glm/gtx/vector_angle.hpp"
 #include "Model.hpp"
+#include "../FusionPhysics/Octtree.hpp"
+#include "Light.hpp"
 
 Vec2<double> ScrollAmount;
 Vec2<double> MousePosCamera;
@@ -86,7 +88,15 @@ void FUSIONCORE::Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2
 	this->CameraMat = RatioMat * projMat;
 }
 
-FUSIONCORE::Camera3D::Camera3D()
+struct alignas(16) Cluster
+{
+	glm::vec4 Min;
+	glm::vec4 Max;
+	uint Count;
+	uint LightIndices[MAX_LIGHT_PER_CLUSTER];
+};
+
+FUSIONCORE::Camera3D::Camera3D(glm::vec3 ClusterGridSize)
 {
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
@@ -94,6 +104,12 @@ FUSIONCORE::Camera3D::Camera3D()
 	this->CameraMat = glm::mat4(1.0f);
 
 	targetPosition = glm::vec3(0.0f);
+
+	this->ClusterGridSize = ClusterGridSize;
+
+	ClusterSSBO.Bind();
+	ClusterSSBO.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(Cluster) * ClusterGridSize.x * ClusterGridSize.y * ClusterGridSize.z, nullptr, GL_DYNAMIC_COPY);
+	BindSSBONull();
 }
 
 void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
@@ -103,20 +119,21 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 	this->FOV = fovDegree;
 	this->Aspect = aspect;
 
+	this->w_width = windowSize.x;
+	this->w_height = windowSize.y;
+
 	this->projMat = glm::perspective(glm::radians(fovDegree), aspect, near, far);
 	this->viewMat = glm::lookAt(Position, Position + Orientation, this->Up);
-	this->ProjectionViewMat = projMat * viewMat;
 
 	this->CameraMat = projMat * viewMat;
+	this->ProjectionViewMat = CameraMat;
 }
 
 void FUSIONCORE::Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
 {
-
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, uniform), 1, GL_FALSE, glm::value_ptr(CameraMat));
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, "proj"), 1, GL_FALSE, glm::value_ptr(projMat));
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, "view"), 1, GL_FALSE, glm::value_ptr(viewMat));
-
 }
 
 
@@ -404,13 +421,51 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize
 	ScrollAmount({ 0,0 });
 }
 
+void FUSIONCORE::Camera3D::UpdateCameraClusters(Shader& CameraClusterComputeShader, Shader& CameraLightCullingComputeShader)
+{
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	CameraClusterComputeShader.use();
+
+	CameraClusterComputeShader.setMat4("InverseProjectionMatrix", glm::inverse(projMat));
+	CameraClusterComputeShader.setVec3("GridSize", ClusterGridSize);
+	CameraClusterComputeShader.setVec2("ScreenSize", glm::vec2(1920, 1080));
+	CameraClusterComputeShader.setFloat("FarPlane", this->FarPlane);
+	CameraClusterComputeShader.setFloat("ClosePlane", this->NearPlane);
+
+	this->ClusterSSBO.BindSSBO(0);
+
+    glDispatchCompute(ClusterGridSize.x, ClusterGridSize.y, ClusterGridSize.z);
+
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	CameraLightCullingComputeShader.use();
+	CameraLightCullingComputeShader.setMat4("viewMat", this->viewMat);
+	CameraLightCullingComputeShader.setVec3("GridSize", ClusterGridSize);
+	CameraLightCullingComputeShader.setVec2("ScreenSize", glm::vec2(1920,1080));
+	CameraLightCullingComputeShader.setFloat("FarPlane", this->FarPlane);
+	CameraLightCullingComputeShader.setFloat("ClosePlane", this->NearPlane);
+
+	this->ClusterSSBO.BindSSBO(0);
+	SendLightsShader(CameraLightCullingComputeShader);
+
+	const uint LOCAL_SIZE = 128;
+	glDispatchCompute((ClusterGridSize.x * ClusterGridSize.y * ClusterGridSize.z) / LOCAL_SIZE, 1, 1);
+
+	FUSIONCORE::UseShaderProgram(0);
+}
+
+void FUSIONCORE::Camera3D::SendClustersShader(uint BindingPoint)
+{
+	this->ClusterSSBO.BindSSBO(BindingPoint);
+}
+
 void FUSIONCORE::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	ScrollAmount({ xoffset, yoffset });
 }
 
-
-bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera)
+bool FUSIONCORE::IsModelInsideCameraFrustumAABB(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera)
 {
 	auto CameraMatrix = camera.CameraMat;
 	auto& ModelScales = model.GetTransformation().InitialObjectScales;
@@ -424,8 +479,8 @@ bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE
 			for (size_t z = 0; z < 2; z++)
 			{
 				glm::vec3 Vertex(ModelPosition.x + ((2.0f * x - 1.0f) * HalfScales.x),
-					ModelPosition.y + ((2.0f * y - 1.0f) * HalfScales.y),
-					ModelPosition.z + ((2.0f * z - 1.0f) * HalfScales.z));
+					             ModelPosition.y + ((2.0f * y - 1.0f) * HalfScales.y),
+					             ModelPosition.z + ((2.0f * z - 1.0f) * HalfScales.z));
 
 				Vertex = ModelMatrix * glm::vec4(Vertex, 1.0f);
 				auto TransformedVertex = CameraMatrix * glm::vec4(Vertex, 1.0f);
@@ -441,7 +496,77 @@ bool FUSIONCORE::IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE
 		}
 	}
 	return false;
-};
+}
+
+float computeProjectedRadius(float fovy, float d, float r) 
+{
+	float fov = fovy / 2.0f * std::_Pi_val / 180.0f;
+	return 1.0f / std::tan(fov) * r / std::sqrt(d * d - r * r);
+}
+
+bool FUSIONCORE::IsModelInsideCameraFrustumSphere(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera, float RadiusPadding)
+{
+	glm::vec3 ScaledModelSize = model.GetTransformation().ObjectScales;
+	auto SpherePosition = *model.GetTransformation().OriginPoint;
+
+	glm::vec3 WorldSpherePosition = model.GetTransformation().GetModelMat4() * glm::vec4(SpherePosition, 1.0f);
+	if (glm::dot(glm::normalize(WorldSpherePosition - camera.Position), glm::normalize(camera.Orientation)) >= 0.0f)
+	{
+		auto TransformedSpherePosition = camera.CameraMat * glm::vec4(WorldSpherePosition, 1.0f);
+		TransformedSpherePosition = TransformedSpherePosition / TransformedSpherePosition.w;
+
+		float SphereProjectedRadius = glm::max(ScaledModelSize.x, glm::max(ScaledModelSize.y, ScaledModelSize.z));
+		SphereProjectedRadius = computeProjectedRadius(camera.GetCameraFOV(), glm::distance(WorldSpherePosition, camera.Position), SphereProjectedRadius * 0.5f);
+
+		if (RadiusPadding > 0.0f)
+		{
+			SphereProjectedRadius += SphereProjectedRadius * RadiusPadding;
+		}
+
+		return (TransformedSpherePosition.x - SphereProjectedRadius <= 1.0f && TransformedSpherePosition.x + SphereProjectedRadius >= -1.0f) &&
+			   (TransformedSpherePosition.y - SphereProjectedRadius <= 1.0f && TransformedSpherePosition.y + SphereProjectedRadius >= -1.0f);
+	}
+	return false;
+}
+
+bool FUSIONCORE::IsObjectQuadInsideCameraFrustum(FUSIONCORE::Object& model, FUSIONCORE::Camera3D& camera)
+{
+	auto& Quads = model.GetAssociatedQuads();
+	auto CameraMatrix = camera.CameraMat;
+
+	for (auto& Quad : Quads)
+	{
+		auto& QuadScales = Quad->Size;
+		auto& QuadCenter = Quad->Center;
+		auto HalfScales = QuadScales * 0.5f;
+
+		for (size_t x = 0; x < 2; x++)
+		{
+			for (size_t y = 0; y < 2; y++)
+			{
+				for (size_t z = 0; z < 2; z++)
+				{
+					glm::vec3 Vertex(QuadCenter.x + ((2.0f * x - 1.0f) * HalfScales.x),
+						             QuadCenter.y + ((2.0f * y - 1.0f) * HalfScales.y),
+						             QuadCenter.z + ((2.0f * z - 1.0f) * HalfScales.z));
+
+					auto TransformedVertex = CameraMatrix * glm::vec4(Vertex, 1.0f);
+					TransformedVertex = TransformedVertex / TransformedVertex.w;
+					if ((TransformedVertex.x >= -1.0f && TransformedVertex.x <= 1.0f) && (TransformedVertex.y >= -1.0f && TransformedVertex.y <= 1.0f))
+					{
+						if (glm::dot(glm::normalize(Vertex - camera.Position), glm::normalize(camera.Orientation)) >= 0.0f)
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
 
 
 

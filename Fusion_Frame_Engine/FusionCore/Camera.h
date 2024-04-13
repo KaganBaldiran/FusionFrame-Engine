@@ -4,8 +4,10 @@
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Object.hpp"
+#include "Shader.h"
 #define FF_CAMERA_LAYOUT_FIRST_PERSON 0X100
 #define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD 0X101
+#define MAX_LIGHT_PER_CLUSTER 100
 
 //#define FREE_INDUSTRY_STANDARD_CAMERA  // define if you want to freely change the targetPosition using alt-lm click 
 #define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION // define if you want to freely rotate the camera without needing to press alt 
@@ -52,7 +54,7 @@ namespace FUSIONCORE
 	{
 	public:
 
-		Camera3D();
+		Camera3D(glm::vec3 ClusterGridSize = glm::vec3(16,12,12));
 
 		void UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize);
 		void SetOrientation(glm::vec3 Orien);
@@ -71,6 +73,11 @@ namespace FUSIONCORE
 		inline const float& GetCameraFOV() { return this->FOV; };
 		inline const float& GetCameraAspectRatio() { return this->Aspect; };
 
+		void UpdateCameraClusters(Shader& CameraClusterComputeShader, Shader& CameraLightCullingComputeShader);
+		void SendClustersShader(uint BindingPoint);
+		inline glm::vec3 GetClusterGridSize() { return this->ClusterGridSize; };
+		inline glm::vec2 GetWindowSize() { return { w_width,w_height }; };
+
 		glm::vec3 Orientation;
 		glm::vec3 PlanarOrientation;
 		glm::vec3 Position;
@@ -78,6 +85,9 @@ namespace FUSIONCORE
 		float NearPlane;
 
 	private:
+ 
+		SSBO ClusterSSBO;
+		glm::vec3 ClusterGridSize;
 
 		bool firstclick = true;
 		int w_width = 1000;
@@ -100,7 +110,11 @@ namespace FUSIONCORE
 		int CameraLayout;
 	};
 
-	bool IsModelInsideCameraFrustum(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera);
+	bool IsModelInsideCameraFrustumAABB(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera);
+	bool IsModelInsideCameraFrustumSphere(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera, float RadiusPadding = 0.0f);
+
+	//Requires an active quadtree world partitioning 
+	bool IsObjectQuadInsideCameraFrustum(FUSIONCORE::Object& model, FUSIONCORE::Camera3D& camera);
 
 	static std::pair<glm::vec3, glm::vec3> GetCameraFrustum(FUSIONCORE::Camera3D& camera)
 	{
@@ -168,7 +182,6 @@ namespace FUSIONCORE
 		return std::make_pair<glm::vec3, glm::vec3>({minX,minY,minZ},{maxX,maxY,maxZ});
 	}
 
-	
 }
 
 

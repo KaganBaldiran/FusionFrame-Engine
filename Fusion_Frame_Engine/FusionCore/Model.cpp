@@ -23,6 +23,11 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
     counter++;
 }
 
+FUSIONCORE::Model::Model(Model& Other)
+{
+    //this.
+}
+
 void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
@@ -181,11 +186,11 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::fun
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep,InstanceCount, EnvironmentAmbientAmount);
+        Meshes[i].DrawInstanced(camera, shader, shaderPrep, cubemap, material, EnvironmentAmbientAmount, InstanceCount);
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -207,11 +212,11 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep, InstanceCount, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep, InstanceCount);
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
 {
     auto shaderPrep = [&](Material& material) {
         return [&]() {
@@ -236,11 +241,11 @@ void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
         auto& mesh = Meshes[i];
-        mesh.DrawDeferredInstanced(camera, shader, shaderPrep(mesh.ImportedMaterial), InstanceCount, EnvironmentAmbientAmount);
+        mesh.DrawDeferredInstanced(camera, shader, shaderPrep(mesh.ImportedMaterial), InstanceCount);
     }
 }
 
-void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -260,11 +265,11 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material);
     }
 }
 
-void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -276,11 +281,11 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferred(camera, shader, shaderPrep, material);
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -292,7 +297,7 @@ void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& s
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {
-        Meshes[i].DrawDeferredImportedMaterial(camera, shader, shaderPrep, EnvironmentAmbientAmount);
+        Meshes[i].DrawDeferredImportedMaterial(camera, shader, shaderPrep);
     }
 }
 

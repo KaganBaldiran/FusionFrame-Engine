@@ -137,6 +137,8 @@
     <None Include="Shaders\Basic.vs" />
     <None Include="Shaders\brdfLUT.fs" />
     <None Include="Shaders\brdfLUT.vs" />
+    <None Include="Shaders\CameraClusterComputeShader.comp.glsl" />
+    <None Include="Shaders\CameraLightCulling.comp.glsl" />
     <None Include="Shaders\CascadedDirectionalShadowShader.fs" />
     <None Include="Shaders\CascadedDirectionalShadowShader.gs" />
     <None Include="Shaders\CascadedDirectionalShadowShader.vs" />

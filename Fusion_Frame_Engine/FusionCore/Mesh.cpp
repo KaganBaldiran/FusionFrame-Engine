@@ -178,7 +178,43 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations,size_t PrimCount, float EnvironmentAmbientAmount)
+void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount, size_t PrimCount)
+{
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+
+	shader.setVec3("CameraPos", camera.Position);
+	shader.setFloat("FarPlane", camera.FarPlane);
+	shader.setFloat("NearPlane", camera.NearPlane);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
+	shader.setInt("ConvDiffCubeMap", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
+	shader.setInt("prefilteredMap", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
+	shader.setInt("LUT", 3);
+
+	shader.setBool("EnableIBL", true);
+	shader.setFloat("ao", EnvironmentAmbientAmount);
+
+	material.SetMaterialShader(shader);
+
+	glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0, PrimCount);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations,size_t PrimCount)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();
@@ -193,7 +229,7 @@ void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, s
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();
@@ -209,7 +245,7 @@ void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::funct
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, float EnvironmentAmbientAmount)
+void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
 {
 	shader.use();
 	ObjectBuffer.BindVAO();

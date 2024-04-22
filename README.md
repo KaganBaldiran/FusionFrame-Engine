@@ -32,6 +32,7 @@ Mesh utility algorithms like quickhull to create collision boxes are also in the
 
 ![winter_scene_fusion_frame](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/d25d1d46-5a58-4e8b-a983-e5c705a62c44)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/6c7b0ef3-fdd6-40a3-952d-3c45674a5e9e)
+![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/5cfa5f24-db38-4e7f-a31e-8b170c622d8b)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/863e6313-d569-42a5-ae36-3a443a79d2e8)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/f6ab652a-cad7-4e3b-b869-52614d832b0d)
 ![image](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/b0f429e7-9e8e-4c0e-9b93-6b61ec8a4702)

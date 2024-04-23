@@ -43,6 +43,7 @@ namespace FUSIONCORE
 
 
 #define FF_COLOR_RED glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
+#define FF_COLOR_VOID glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)
 #define FF_COLOR_GREEN glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)
 #define FF_COLOR_BLUE glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
 #define FF_COLOR_WHITE glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)

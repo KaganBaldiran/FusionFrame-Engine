@@ -10,6 +10,14 @@
 #include "Light.hpp"
 #include "Buffer.h"
 #include <functional>
+#include "Color.hpp"
+
+#define FF_FRAMEBUFFER_SCENE_IMAGE_ATTACHMENT GL_COLOR_ATTACHMENT0
+#define FF_FRAMEBUFFER_DEPTH_ATTACHMENT GL_COLOR_ATTACHMENT1
+#define FF_FRAMEBUFFER_SSR_IMAGE_ATTACHMENT GL_COLOR_ATTACHMENT2
+#define FF_FRAMEBUFFER_MODEL_ID_IMAGE_ATTACHMENT GL_COLOR_ATTACHMENT3
+
+#define FF_GBUFFER_WORLD_POSITION_IMAGE_ATTACHMENT GL_COLOR_ATTACHMENT2
 
 namespace FUSIONCORE
 {
@@ -30,7 +38,6 @@ namespace FUSIONCORE
 			glGenTextures(1, &fboImage);
 			glBindTexture(GL_TEXTURE_2D, fboImage);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -38,27 +45,27 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &fboDepth);
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fboDepth, 0);
 
-			glGenTextures(1, &SSLStexture);
-			glBindTexture(GL_TEXTURE_2D, SSLStexture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glGenTextures(1, &SSRtexture);
+			glBindTexture(GL_TEXTURE_2D, SSRtexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, SSLStexture, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, SSRtexture, 0);
 
-			glGenTextures(1, &fboID);
-			glBindTexture(GL_TEXTURE_2D, fboID);
+			glGenTextures(1, &IDtexture);
+			glBindTexture(GL_TEXTURE_2D, IDtexture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, width, height, 0, GL_RED, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, fboID, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, IDtexture, 0);
 
 			unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2  , GL_COLOR_ATTACHMENT3 };
 			glDrawBuffers(4, attachments);
@@ -103,7 +110,7 @@ namespace FUSIONCORE
 		inline GLuint GetFBOimage() { return fboImage; };
 		inline GLuint GetFBO() { return fbo; };
 		inline GLuint GetFBODepth() { return fboDepth; };
-		inline GLuint GetFBOID() { return fboID; };
+		inline GLuint GetFBOID() { return IDtexture; };
 		inline void SetFBOimage(GLuint Texture) { this->fboImage = Texture; };
 		inline Vec2<int> GetFBOSize() { return FBOSize; };
 
@@ -129,6 +136,14 @@ namespace FUSIONCORE
 			glBindTexture(GL_TEXTURE_2D, fboDepth);
 			shader.setInt("DepthAttac", 1);
 
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, SSRtexture);
+			shader.setInt("SSRtexture", 2);
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, IDtexture);
+			shader.setInt("IDtexture", 3);
+
 			shader.setVec3("CamPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
 			shader.setFloat("NearPlane", camera.NearPlane);
@@ -152,8 +167,8 @@ namespace FUSIONCORE
 		{
 			glDeleteTextures(1, &fboImage);
 			glDeleteTextures(1, &fboDepth);
-			glDeleteTextures(1, &fboID);
-			glDeleteTextures(1, &SSLStexture);
+			glDeleteTextures(1, &IDtexture);
+			glDeleteTextures(1, &SSRtexture);
 			glDeleteRenderbuffers(1, &rbo);
 			glDeleteFramebuffers(1, &fbo);
 
@@ -164,7 +179,7 @@ namespace FUSIONCORE
 
 	private:
 
-		GLuint fbo, fboImage, fboDepth ,fboID, rbo , SSLStexture;
+		GLuint fbo, fboImage, fboDepth ,IDtexture, rbo , SSRtexture;
 		Buffer ObjectBuffer;
 		Vec2<int> FBOSize;
 		int ID;
@@ -198,6 +213,8 @@ namespace FUSIONCORE
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, NormalMetalicPass, 0);
 
@@ -211,7 +228,7 @@ namespace FUSIONCORE
 
 			glGenTextures(1, &MetalicRoughnessPass);
 			glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -266,11 +283,13 @@ namespace FUSIONCORE
 		void Bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); };
 		void Unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); };
 
-		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CascadedDirectionalShadowMap& sunMap,CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f)
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps,CascadedDirectionalShadowMap& sunMap,CubeMap& cubeMap,glm::vec4 BackgroundColor = glm::vec4(0.0f), float EnvironmentAmbientAmount = 0.2f)
 		{
+			unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT3 };
+			glDrawBuffers(3, attachments);
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, FBOSize.x, FBOSize.y);
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClearColor(BackgroundColor.x, BackgroundColor.y, BackgroundColor.z, BackgroundColor.w);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glDisable(GL_DEPTH_TEST);
 			shader.use();
@@ -283,7 +302,7 @@ namespace FUSIONCORE
 
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, NormalMetalicPass);
-			shader.setInt("NormalMetalicPass", 1);
+			shader.setInt("NormalPass", 1);
 
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
@@ -291,7 +310,7 @@ namespace FUSIONCORE
 
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
-			shader.setInt("MetalicRoughnessPass", 3);
+			shader.setInt("MetalicRoughnessModelIDPass", 3);
 
 			shader.setVec3("CameraPos", camera.Position);
 			shader.setFloat("FarPlane", camera.FarPlane);
@@ -351,6 +370,55 @@ namespace FUSIONCORE
 			glEnable(GL_DEPTH_TEST);
 		}
 
+		void DrawSSR(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, Vec2<int> WindowSize)
+		{
+			unsigned int attachments[1] = {GL_COLOR_ATTACHMENT2};
+			glDrawBuffers(1, attachments);
+			glViewport(0, 0, WindowSize.x, WindowSize.y);
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glDisable(GL_DEPTH_TEST);
+
+			shader.use();
+			ObjectBuffer.BindVAO();
+			ShaderPrep();
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, AlbedoSpecularPass);
+			shader.setInt("AlbedoSpecularPass", 0);
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, NormalMetalicPass);
+			shader.setInt("NormalMetalicPass", 1);
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
+			shader.setInt("PositionDepthPass", 2);
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
+			shader.setInt("MetalicRoughnessPass", 3);
+
+			shader.setVec3("CameraPos", camera.Position);
+			shader.setFloat("FarPlane", camera.FarPlane);
+			shader.setFloat("NearPlane", camera.NearPlane);
+
+			shader.setMat4("ViewMatrix", camera.viewMat);
+			shader.setMat4("InverseViewMatrix", glm::inverse(camera.viewMat));
+			shader.setMat4("InverseProjectionMatrix", glm::inverse(camera.projMat));
+			shader.setMat4("ProjectionMatrix", camera.projMat);
+
+			shader.setVec2("WindowSize", { WindowSize.x,WindowSize.y });
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			ObjectBuffer.UnbindVAO();
+			glActiveTexture(0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			UseShaderProgram(0);
+			glEnable(GL_DEPTH_TEST);
+		}
+
 		void clean()
 		{
 			glDeleteTextures(1, &AlbedoSpecularPass);
@@ -373,14 +441,8 @@ namespace FUSIONCORE
 		int ID;
 	};
 
-	inline void CopyDepthInfoFBOtoFBO(GLuint src,glm::vec2 srcSize, GLuint dest) 
-	{
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest); 
-		glBlitFramebuffer(0, 0, srcSize.x, srcSize.y, 0, 0, srcSize.x, srcSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	};
-
+	void CopyDepthInfoFBOtoFBO(GLuint src, glm::vec2 srcSize, GLuint dest);
+	Color ReadFrameBufferPixel(int Xcoord, int Ycoord, unsigned int FramebufferAttachmentMode, GLenum AttachmentFormat, glm::vec2 CurrentWindowSize);
 }
 
 

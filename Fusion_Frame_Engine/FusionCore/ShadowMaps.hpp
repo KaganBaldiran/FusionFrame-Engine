@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Model.hpp"
 #include "Light.hpp"
+#include "../FusionUtility/Initialize.h"
 #define MAX_SHADOW_MAP_COUNT glm::max(int(MAX_LIGHT_COUNT / 5.0f),1)
 #define MAX_CASCADES 16
 
@@ -241,7 +242,7 @@ namespace FUSIONCORE
 		CascadedDirectionalShadowMap(float width, float height , std::vector<float> ShadowCascadeLevels);
 		glm::mat4 GetLightSpaceMatrix(Camera3D& camera, const float nearPlane, const float farPlane, const glm::vec3 LightDirection);
 		std::vector<glm::mat4> GetLightSpaceMatrices(Camera3D& camera, const glm::vec3 LightDirection);
-		void Draw(Shader& CascadedShadowMapShader, Camera3D& camera, std::vector<Model*> &Models, Light& BoundLight);
+		void Draw(FUSIONUTIL::DefaultShaders& Shaders, Camera3D& camera, std::vector<Model*> &Models, Light& BoundLight);
 		inline ~CascadedDirectionalShadowMap()
 		{
 			glDeleteTextures(1, &ShadowMapId);

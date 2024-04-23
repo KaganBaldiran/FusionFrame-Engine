@@ -112,6 +112,9 @@
     <None Include="Shaders\CameraLightCulling.comp.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\SSR.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -227,6 +230,7 @@
     <ClCompile Include="FusionPhysics\ParticleSystem.cpp">
       <Filter>Sources\FusionPhysics</Filter>
     </ClCompile>
+    <ClCompile Include="FusionCore\Framebuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -280,9 +284,6 @@
     <ClInclude Include="FusionCore\Cubemap.h">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
-    <ClInclude Include="FusionCore\Framebuffer.hpp">
-      <Filter>Headers\FusionCore</Filter>
-    </ClInclude>
     <ClInclude Include="FusionCore\HalfEdge.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
@@ -329,6 +330,9 @@
       <Filter>Headers\FusionPhysics</Filter>
     </ClInclude>
     <ClInclude Include="Scene.hpp">
+      <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionCore\Framebuffer.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>

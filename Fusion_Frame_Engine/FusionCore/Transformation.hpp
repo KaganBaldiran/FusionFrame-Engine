@@ -35,6 +35,8 @@ namespace FUSIONCORE
 		{
 			Position = glm::vec3(0.0f, 0.0f, 0.0f);
 			ScaleFactor = glm::vec3(1.0f, 1.0f, 1.0f);
+			IsTransformedQuadTree = false;
+			IsTransformedCollisionBox = false;
 		}
 
 		glm::mat4 TranslationMatrix = glm::mat4(1.0f);
@@ -54,6 +56,11 @@ namespace FUSIONCORE
 		std::vector<ScaleAction> LastScales;
 
 		glm::vec3 ScaleFactor;
+
+		//Optimization for QuadTree world partitioning 
+		bool IsTransformedQuadTree;
+		//Optimization for collision box attribute update 
+		bool IsTransformedCollisionBox;
 
 		void SetModelMatrixUniformLocation(GLuint shader, const char* uniform);
 		virtual void Translate(glm::vec3 v);

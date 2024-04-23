@@ -1,9 +1,9 @@
 #version 420 core
 
 layout (location = 0) out vec4 AlbedoSpecularPass;
-layout (location = 1) out vec4 NormalMetalicPass;
+layout (location = 1) out vec4 NormalPass;
 layout (location = 2) out vec4 PositionDepthPass;
-layout (location = 3) out vec4 MetalicRoughnessPass;
+layout (location = 3) out vec4 MetalicRoughnessModelIDPass;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
@@ -28,6 +28,7 @@ uniform float roughness;
 uniform float TilingCoeff;
 
 uniform int disableclaymaterial[5];
+uniform float ModelID;
 
 void main()
 {
@@ -78,6 +79,8 @@ void main()
         resultnormal = texture(texture_normal0,FinalTexCoord * TilingCoeff).rgb;
         resultnormal = resultnormal * 2.0f - 1.0f;
         resultnormal = normalize(TBN * resultnormal);
+        //resultnormal = normalize(Normal);
+
     }
 
     float metalicmap;
@@ -92,7 +95,7 @@ void main()
     }
 
     AlbedoSpecularPass = vec4(texturecolor,1.0f);
-    NormalMetalicPass = vec4(resultnormal,1.0f);
+    NormalPass = vec4(resultnormal,1.0f);
     PositionDepthPass = vec4(CurrentPos,1.0f);
-    MetalicRoughnessPass = vec4(roughnessmap ,metalicmap,1.0f,1.0f);
+    MetalicRoughnessModelIDPass = vec4(roughnessmap ,metalicmap,ModelID,1.0f);
 }

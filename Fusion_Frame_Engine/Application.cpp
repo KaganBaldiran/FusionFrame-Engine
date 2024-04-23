@@ -27,7 +27,7 @@ int Application::Run()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode->width, mode->height);
@@ -80,7 +80,7 @@ int Application::Run()
 	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(1028, 1028, shadowCascadeLevels);
 
 	Vec2<int> WindowSize;
-	Vec2<double> mousePos;
+	glm::dvec2 mousePos(0.0f);
 
 	glm::vec3 Target(0.0f);
 
@@ -91,16 +91,16 @@ int Application::Run()
 	std::uniform_real_distribution<float> RandomFloats(-90.0f, 90.0f);
 	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(800.0f, 1000.0f);
+	std::uniform_real_distribution<float> RandomIntensity(400.0f, 600.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 
 	float LightIntensity;
-	for (size_t i = 0; i < 50; i++)
+	for (size_t i = 0; i < 10; i++)
 	{
 		LightIntensity = RandomIntensity(engine);
-		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity,FF_POINT_LIGHT, LightIntensity / 40.0f);
+		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity,FF_POINT_LIGHT, LightIntensity / 10.0f);
 	}
 
 	FUSIONCORE::Color SunColor(FF_COLOR_AMBER_YELLOW);
@@ -175,6 +175,7 @@ int Application::Run()
 	FUSIONCORE::VBO RockInstanceVBO;
 	auto RockDistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurfaceRandomized(grid->Meshes[0], grid->GetTransformation(), 5, 129);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(RockInstanceVBO, RockDistibutedPoints);
+	Rock->SetInstanced(RockInstanceVBO, RockDistibutedPoints.size());
 
 	auto RockBoxes = FUSIONPHYSICS::GenerateAABBCollisionBoxesFromInstancedModel(Rock->GetTransformation(), RockDistibutedPoints);
 
@@ -204,7 +205,8 @@ int Application::Run()
 	ImportedModels.erase(ImportedModels.begin() + 1);
 	Tower->GetTransformation().TranslateNoTraceBack({ 39.0f,0.0f,-9.0f });
 	FUSIONPHYSICS::CollisionBoxAABB TowerBox(Tower->GetTransformation(), glm::vec3(1.0f));
-	TowerBox.UpdateAttributes();
+	Tower->PushChild(&TowerBox);
+	Tower->UpdateChildren();
 	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
 	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
 	
@@ -366,12 +368,15 @@ int Application::Run()
 	models.push_back(&IMPORTTEST);
 	models.push_back(&subdModel);
 	models.push_back(Tower.get());
+	models.push_back(shrub.get());
+	models.push_back(Rock.get());
+
 	//models.push_back(Rock.get());
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
 
 	std::vector<FUSIONCORE::OmniShadowMap*> shadowMaps;
-	shadowMaps.push_back(&ShadowMap0);
+	//shadowMaps.push_back(&ShadowMap0);
 	//shadowMaps.push_back(&ShadowMap1);
 	//shadowMaps.push_back(&ShadowMap2);
 	//shadowMaps.push_back(&ShadowMap3);
@@ -381,8 +386,8 @@ int Application::Run()
 	animationModel.GetTransformation().TranslateNoTraceBack({ 15.0f,-1.0f,0.0f });
 	FUSIONCORE::Animation WalkingAnimation("Resources\\taunt\\MutantWalk.fbx", &animationModel);
 	FUSIONCORE::Animation IdleAnimation("Resources\\taunt\\OrcIdle.fbx", &animationModel);
-	FUSIONCORE::Animation JumpingAnimation("Resources\\taunt\\Jumping.fbx", &animationModel);
-	FUSIONCORE::Animation RunningAnimation("Resources\\taunt\\Running.fbx", &animationModel);
+	//FUSIONCORE::Animation JumpingAnimation("Resources\\taunt\\Jumping.fbx", &animationModel);
+	//FUSIONCORE::Animation RunningAnimation("Resources\\taunt\\Running.fbx", &animationModel);
 	FUSIONCORE::Animator animator(&IdleAnimation);
 
 	FUSIONCORE::Model Capsule("Resources\\Sphere.obj");
@@ -409,9 +414,9 @@ int Application::Run()
 	}
 
 	FUSIONCORE::VBO instanceVBO;
-	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 2000, 109);
+	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 1000, 118);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(instanceVBO, DistibutedPoints);
-
+	shrub->SetInstanced(instanceVBO, DistibutedPoints.size() / 4);
 	/*FUSIONCORE::VBO TowerinstanceVBO;
 	auto TowerDistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 4, 109);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(TowerinstanceVBO, TowerDistibutedPoints);*/
@@ -453,10 +458,10 @@ int Application::Run()
 	particleTransform.Scale(glm::vec3(0.003f));
 	particleTransform.Rotate(glm::vec3(1.0f,0.0f,0.0f),90);
 
-	std::shared_ptr<FILE> screenCaptureFile;
+	//std::shared_ptr<FILE> screenCaptureFile;
 
+	FUSIONCORE::Model* PixelModel = nullptr;
 
-	
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = glfwGetTime();
@@ -476,9 +481,10 @@ int Application::Run()
 		Plane.UpdateAttributes();
 
 
-		//Stove->UpdateChildren();
+		Stove->UpdateChildren();
 		//SofaBox.UpdateAttributes();
-		//sofa->UpdateChildren();
+		sofa->UpdateChildren();
+		Tower->UpdateChildren();
 
 		model1->GetTransformation().Rotate({ 0.0f,1.0f,0.0f }, std::sin(time(0)));
 		model1->UpdateChildren();
@@ -490,7 +496,7 @@ int Application::Run()
 
 		shrub->GetTransformation().RotateNoTraceBack({ 1.0f,0.0f,1.0f}, std::sin(time(0)) * 0.1f);
 
-		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode, ObjectInstances,2,4);
+		FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(headNode, ObjectInstances,2,5);
 		auto UniqueQuadObjects = Capsule0.GetUniqueQuadsObjects();
 		glm::vec3 CapsuleQuadCenter = Capsule0.GetAssociatedQuads()[0]->Center;
 		emitter0.GetTransformation().Position = { CapsuleQuadCenter.x ,Capsule0.GetTransformation().Position.y , CapsuleQuadCenter.z };
@@ -746,9 +752,7 @@ int Application::Run()
 			animationModel.GetTransformation().Translate(camera3d.GetUpVector() * 0.5f);
 		}
 		
-
 		animator.UpdateBlendedAnimation(&IdleAnimation, &WalkingAnimation, IdleWalkingBlendCoeff, deltaTime);
-
 
 		static bool AllowPressF = true;
 		if (!AllowPressF && glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE)
@@ -787,15 +791,15 @@ int Application::Run()
 		/*glm::vec4 SomePoint = glm::vec4(-0.0f, 0.0f, -20.1f, 1.0f);
 		SomePoint = glm::inverse(camera3d.viewMat) * SomePoint;
 		Isaac.GetTransformation().TranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(SomePoint));*/
-
+		
 		emitter0.UpdateParticleEmitter(*Shaders.ParticleUpdateComputeShader, *Shaders.ParticleSpawnComputeShader, deltaTime);
 
-		ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
+		//ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
 		//ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
 		//ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
 		//ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3], models, camera3d);
 
-		sunShadowMap.Draw(*Shaders.CascadedDirectionalShadowShader, camera3d, models,Sun);
+		sunShadowMap.Draw(Shaders, camera3d, models,Sun);
 
 		Gbuffer.Bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -804,8 +808,10 @@ int Application::Run()
 
 		glViewport(0, 0, WindowSize.x, WindowSize.y);
 
+		glm::vec2 PrevMousePos = glm::vec2(mousePos.x, mousePos.y);
 		glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
-
+		glm::vec2 CurrentMousePos = glm::vec2(mousePos.x, mousePos.y);
+		
 		std::function<void()> shaderPrepe = [&]() {};
 		std::function<void()> shaderPrepe1 = [&]() {};
 		std::function<void()> shaderPrepe2 = [&]() {};
@@ -866,7 +872,14 @@ int Application::Run()
 		ScreenFrameBuffer.Bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps,sunShadowMap, cubemap, 0.7f);
+		//Gbuffer.DrawSSR(camera3d, *Shaders.SSRshader, [&]() {}, WindowSize);
+		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps,sunShadowMap, cubemap,FF_COLOR_VOID, 0.3f);
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+		{
+			auto Pixel = FUSIONCORE::ReadFrameBufferPixel(mousePos.x, mousePos.y, FF_FRAMEBUFFER_MODEL_ID_IMAGE_ATTACHMENT, GL_RED, { WindowSize.x, WindowSize.y });
+			PixelModel = FUSIONCORE::GetModel(Pixel.GetRed());
+		}
 
 		glViewport(0, 0, WindowSize.x, WindowSize.y);
 
@@ -877,6 +890,20 @@ int Application::Run()
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
 
+		if (PixelModel)
+		{
+			if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+			{
+			   glm::vec4 PrevMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(PrevMousePos.x, PrevMousePos.y,0.0f, 1.0f);
+			   glm::vec4 CurrentMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(CurrentMousePos.x, CurrentMousePos.y,0.0f, 1.0f);
+			   glm::vec3 DeltaMouse = CurrentMouseWorldPos - PrevMouseWorldPos;
+			   PixelModel->GetTransformation().Translate(glm::vec3(DeltaMouse.x,-DeltaMouse.y,DeltaMouse.z) / 10.0f);
+			}
+
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			PixelModel->DrawDeferred(camera3d, *Shaders.LightShader, shaderPrepe, FUSIONCORE::Material());
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 #ifdef ENGINE_DEBUG
 
 		static bool AllowD = true;

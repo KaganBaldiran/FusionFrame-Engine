@@ -170,6 +170,7 @@
     <None Include="Shaders\PBRinstanced.vs" />
     <None Include="Shaders\PreFilterCubeMap.fs" />
     <None Include="Shaders\PreFilterCubeMap.vs" />
+    <None Include="Shaders\SSR.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -180,6 +181,7 @@
     <ClCompile Include="FusionCore\Camera.cpp" />
     <ClCompile Include="FusionCore\Color.cpp" />
     <ClCompile Include="FusionCore\Cubemap.cpp" />
+    <ClCompile Include="FusionCore\Framebuffer.cpp" />
     <ClCompile Include="FusionCore\HalfEdge.cpp" />
     <ClCompile Include="FusionCore\Light.cpp" />
     <ClCompile Include="FusionCore\Material.cpp" />

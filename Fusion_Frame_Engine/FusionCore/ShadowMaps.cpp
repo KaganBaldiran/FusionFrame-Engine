@@ -161,7 +161,7 @@ std::vector<glm::mat4> FUSIONCORE::CascadedDirectionalShadowMap::GetLightSpaceMa
 	return Matrices;
 }
 
-void FUSIONCORE::CascadedDirectionalShadowMap::Draw(Shader& CascadedShadowMapShader, Camera3D& camera, std::vector<Model*>& Models, Light& BoundLight)
+void FUSIONCORE::CascadedDirectionalShadowMap::Draw(FUSIONUTIL::DefaultShaders& Shaders, Camera3D& camera, std::vector<Model*>& Models, Light& BoundLight)
 {
 	if (BoundLight.GetLightType() != FF_DIRECTIONAL_LIGHT)
 	{
@@ -178,7 +178,7 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(Shader& CascadedShadowMapSha
 	}
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	CascadedShadowMapShader.use();
+	Shaders.CascadedDirectionalShadowShader->use();
 	glBindFramebuffer(GL_FRAMEBUFFER, this->depthMapFBO);
 	glViewport(0, 0, this->ShadowMapSize.x, this->ShadowMapSize.y);
 	glEnable(GL_DEPTH_TEST);
@@ -188,6 +188,7 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(Shader& CascadedShadowMapSha
 	for (size_t i = 0; i < Models.size(); i++)
 	{
 		auto model = Models[i];
+		VBO* InstanceDataVBO = model->GetInstanceDataVBOpointer();
 		std::function<void()> shaderPrep = [&]() {
 			if (model->IsAnimationEnabled())
 			{
@@ -199,9 +200,21 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(Shader& CascadedShadowMapSha
 				}
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 			}
-			CascadedShadowMapShader.setBool("EnableAnimation", model->IsAnimationEnabled());
+			Shaders.CascadedDirectionalShadowShader->setBool("EnableAnimation", model->IsAnimationEnabled());
+
+			bool EnableInstancing = false;
+			if (InstanceDataVBO) EnableInstancing = true;
+			Shaders.CascadedDirectionalShadowShader->setBool("EnableInstancing", EnableInstancing);
 		};
-		Models[i]->Draw(camera, CascadedShadowMapShader, shaderPrep);
+
+		if (InstanceDataVBO)
+		{
+			Models[i]->DrawDeferredInstanced(camera,*Shaders.CascadedDirectionalShadowShader, shaderPrep,*InstanceDataVBO, model->GetInstanceDataInstanceCount());
+		}
+		else
+		{
+		    Models[i]->Draw(camera, *Shaders.CascadedDirectionalShadowShader, shaderPrep);
+		}
 	}
 	glCullFace(GL_BACK);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

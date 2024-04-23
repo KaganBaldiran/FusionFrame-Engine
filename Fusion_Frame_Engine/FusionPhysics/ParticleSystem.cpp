@@ -125,7 +125,7 @@ void FUSIONPHYSICS::ParticleEmitter::DrawParticles(FUSIONCORE::Shader& ParticleS
 
 	ParticleShader.setMat4("ProjView", camera.ProjectionViewMat);
 	ParticleShader.setVec3("Emitterposition", emitterSettings.position);
-
+	
 	glm::mat4 InverseLookAtMat = glm::inverse(glm::lookAt(glm::vec3(0.0f), -camera.Orientation, camera.GetUpVector()));
 	ParticleShader.setMat4("model", InverseLookAtMat * ParticleTranform.GetModelMat4());
 

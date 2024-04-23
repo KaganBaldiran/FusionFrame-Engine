@@ -1,12 +1,13 @@
 #version 460 core
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 Depth;
-  
+layout (location = 2) out vec4 ID;
+
 in vec2 TexCoords;
 uniform sampler2D AlbedoSpecularPass;
-uniform sampler2D NormalMetalicPass;
+uniform sampler2D NormalPass;
 uniform sampler2D PositionDepthPass;
-uniform sampler2D MetalicRoughnessPass;
+uniform sampler2D MetalicRoughnessModelIDPass;
 
 uniform float FarPlane;
 uniform float NearPlane;
@@ -34,7 +35,7 @@ uniform sampler2D LUT;
 uniform bool EnableIBL;
 uniform float ao;
 
-uniform float ModelID;
+//uniform float ModelID;
 uniform float ObjectScale;
 
 uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT / 10];
@@ -242,8 +243,9 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowM
 
 void main()
 { 
-   vec4 MetalicRoughness = texture(MetalicRoughnessPass, TexCoords);
-   float SceneAlpha = MetalicRoughness.b;
+   vec4 MetalicRoughness = texture(MetalicRoughnessModelIDPass, TexCoords);
+   float SceneAlpha = MetalicRoughness.w;
+   float ModelID = MetalicRoughness.z;
 
    if(SceneAlpha < 1.0f)
    {
@@ -251,23 +253,24 @@ void main()
    }
 
    vec4 AlbedoSpecular = texture(AlbedoSpecularPass, TexCoords);
-   vec4 NormalMetalic = texture(NormalMetalicPass, TexCoords);
+   vec3 Normal = texture(NormalPass, TexCoords).rgb;
    vec4 PositionDepth = texture(PositionDepthPass, TexCoords);
 
    vec3 Albedo = AlbedoSpecular.rgb;
-   vec3 Normal = NormalMetalic.rgb;
    float roughness = MetalicRoughness.r;
    float Metalic = MetalicRoughness.g;
    vec3 Position = PositionDepth.rgb;
 
    vec4 FragPosView = ViewMatrix * vec4(Position,1.0f);
 
+   /*
    uint zTile = uint((log(abs(FragPosView.z) / NearPlane) * gridSize.z) / log(FarPlane / NearPlane));
    vec2 tileSize = screenSize / gridSize.xy;
    uvec3 tile = uvec3(gl_FragCoord.xy / tileSize, zTile);
    uint tileIndex = uint(tile.x + (tile.y * gridSize.x) + (tile.z * gridSize.x * gridSize.y));
 
    Cluster cluster = Clusters[tileIndex];
+   */
 
       float shadow = 0.0f;
       vec3 N = normalize(Normal);
@@ -388,14 +391,8 @@ void main()
          FinalFogColor = FogColor;
       }
 
-      //float NormalizedDeltaPlane = normalize(DeltaPlane);
-      //float EnvironmentRadianceIntensity = 1.0f / NormalizedDeltaPlane * NormalizedDeltaPlane;
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
-      //FragColor = vec4(pow(FragColor.xyz, vec3(1.0/2.2)),1.0f);  
+      //FragColor = vec4(vec3(SceneAlpha), 1.0); 
       Depth = vec4(Position,1.0f);
-      //FragColor = vec4(vec3(shadow),1.0f); 
-
-      //FragColor = vec4(vec3(MetalicRoughness.b),1.0f);
-      //vec4 OutColor = vec4(vec3(Metalic),1.0f);
-   //FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w); 
+      ID = vec4(vec3(ModelID),1.0f);
 }

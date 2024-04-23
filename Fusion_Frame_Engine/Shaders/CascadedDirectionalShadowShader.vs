@@ -7,6 +7,7 @@
  layout(location = 4) in vec3 bitangentnormal;
  layout(location = 5) in ivec4 boneIds; 
  layout(location = 6) in vec4 weights;
+ layout(location = 7) in vec3 InstanceOffset;
 
  out vec3 Normal;
  out vec2 FinalTexCoord;
@@ -26,6 +27,7 @@
  };
  uniform mat4 cameramatrix;
  uniform bool EnableAnimation;
+ uniform bool EnableInstancing;
 
  void main()
  { 
@@ -45,15 +47,16 @@
         totalPosition += localPosition * weights[i];
    }
    
-     CurrentPos = vec3(model * totalPosition);
-     gl_Position = vec4(CurrentPos,1.0f);
-     FinalTexCoord = textcoord;
-     
+     CurrentPos = vec3(model * totalPosition);     
+   }
+   else if(EnableInstancing)
+   {
+     CurrentPos = vec3(model * vec4(vertexdata,1.0f)) + InstanceOffset;     
    }
    else
    {
      CurrentPos = vec3(model * vec4(vertexdata,1.0f));
-     gl_Position = vec4(CurrentPos,1.0f);
-     FinalTexCoord = textcoord;
    }
+   gl_Position = vec4(CurrentPos,1.0f);
+   FinalTexCoord = textcoord;
  }

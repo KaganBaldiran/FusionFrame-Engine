@@ -15,6 +15,7 @@
 
  uniform mat4 model;
  uniform mat4 ProjView;
+ uniform mat4 ViewMat;
 
  const int MAX_BONES = 100;
  const int MAX_BONE_INFLUENCE = 4;
@@ -83,7 +84,8 @@
 
    vec3 T = normalize(vec3(NormalMatrix* ResultTangent));
    vec3 B = normalize(vec3(NormalMatrix* ResultBiTangent));
-   vec3 N = normalize(vec3(NormalMatrix* ResultNormal));
+   //vec3 N = normalize(vec3(NormalMatrix * ResultNormal));
+   vec3 N = normalize(NormalMatrix * vec3(ResultNormal));
    TBN = mat3(T,B,N);
 
    Normal = N;

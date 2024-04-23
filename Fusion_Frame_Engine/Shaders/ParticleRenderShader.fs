@@ -6,6 +6,8 @@ layout (location = 1) out vec4 Depth;
 in vec3 CurrentPos;
 in vec4 ParticleColor;
 
+uniform bool EnableTexture;
+
 void main()
 {
    FragColor = ParticleColor;

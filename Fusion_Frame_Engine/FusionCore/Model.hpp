@@ -66,6 +66,7 @@ namespace FUSIONCORE
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
         void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO &InstanceDataVBO, size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps = std::vector<OmniShadowMap*>(), float EnvironmentAmbientAmount = 0.2f);
         void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount);
+        void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
         void DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
         void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices);
         void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
@@ -77,6 +78,11 @@ namespace FUSIONCORE
         void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();
+
+        //Binding an internal pointer of the given instance data VBO to render instanced shadows etc.
+        //It's crucial to keep the original VBO intact;
+        //Not needed to be called unless effects like shadows are desired. 
+        void SetInstanced(VBO &InstanceDataVBO,size_t InstanceCount);
         
         std::vector<Mesh> Meshes;
         std::vector<Texture2D> textures_loaded;
@@ -117,9 +123,10 @@ namespace FUSIONCORE
         inline bool IsAnimationEnabled() { return this->AnimationEnabled; };
         inline std::string& GetModelName() { return this->ModelName; };
         inline const std::string& GetModelFilePath() { return this->path; };
+        inline VBO* GetInstanceDataVBOpointer() { return this->InstanceDataVBO; };
+        inline const size_t GetInstanceDataInstanceCount() { return this->InstanceCount; };
        
     private:
-
             std::string path;
             std::vector<Texture2D> Textures;
             unsigned int ModelID;
@@ -136,10 +143,12 @@ namespace FUSIONCORE
             std::string ModelName;
 
             int ModelImportStateCode = FF_INITIAL_CODE;
+            VBO* InstanceDataVBO;
+            size_t InstanceCount;
     };
 
     std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);
-
+    Model* GetModel(unsigned int ModelID);
 }
 
 

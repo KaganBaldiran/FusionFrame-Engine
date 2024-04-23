@@ -4,15 +4,21 @@
 #include "Animator.hpp"
 #include <filesystem>
 
-unsigned int counter = 0;
+unsigned int counter = 1;
+std::unordered_map<unsigned int, FUSIONCORE::Model*> IDmodelMap;
 
 FUSIONCORE::Model::Model()
 {
     this->AnimationEnabled = false;
     FinalAnimationMatrices = nullptr;
     this->ModelID = counter;
+    IDmodelMap[ModelID] = this;
     counter++;
+
+    this->InstanceDataVBO = nullptr;
+    this->InstanceCount = 0;
 }
+
 FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool AnimationModel)
 {
     this->AnimationEnabled = AnimationModel;
@@ -20,7 +26,11 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
     this->loadModel(filePath, Async, AnimationModel);
     FindGlobalMeshScales();
     this->ModelID = counter;
+    IDmodelMap[ModelID] = this;
     counter++;
+
+    this->InstanceDataVBO = nullptr;
+    this->InstanceCount = 0;
 }
 
 FUSIONCORE::Model::Model(Model& Other)
@@ -63,7 +73,6 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, Material material
 		Meshes[i].Draw(camera, shader,material, shaderPrep);
 	}
 }
-
 
 void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material, float EnvironmentAmbientAmount)
 {
@@ -197,6 +206,31 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
         shader.setFloat("ModelID", this->GetModelID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         material.SetMaterialShader(shader);
+
+        if (InstanceDataVBO.IsVBOchanged())
+        {
+            InstanceDataVBO.Bind();
+            glEnableVertexAttribArray(7);
+            glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glVertexAttribDivisor(7, 1);
+            InstanceDataVBO.SetVBOstate(false);
+        }
+        ShaderPreperations();
+    };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawDeferredInstanced(camera, shader, shaderPrep, InstanceCount);
+    }
+}
+
+void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
 
         if (InstanceDataVBO.IsVBOchanged())
         {
@@ -460,6 +494,13 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
     transformation.OriginPoint = &this->originpoint;
     transformation.Position = glm::vec3(originpoint.x, originpoint.y, originpoint.z);
     dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
+}
+
+void FUSIONCORE::Model::SetInstanced(VBO& InstanceDataVBO, size_t InstanceCount)
+{
+    this->InstanceCount = InstanceCount;
+    this->InstanceDataVBO = &InstanceDataVBO;
+    this->InstanceDataVBO->SetVBOstate(true);
 }
 
 void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool AnimationModel)
@@ -808,4 +849,13 @@ std::vector<std::shared_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModels
         }
     }
     return Models;
+}
+
+FUSIONCORE::Model* FUSIONCORE::GetModel(unsigned int ModelID)
+{
+    if (IDmodelMap.find(ModelID) != IDmodelMap.end())
+    {
+        return IDmodelMap[ModelID];
+    }
+    return nullptr;
 }

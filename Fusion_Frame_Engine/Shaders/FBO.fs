@@ -4,6 +4,8 @@ out vec4 FragColor;
 in vec2 TexCoords;
 uniform sampler2D Viewport;
 uniform sampler2D DepthAttac;
+uniform sampler2D SSRtexture;
+uniform sampler2D IDtexture;
 
 uniform float FarPlane;
 uniform float NearPlane;
@@ -51,6 +53,15 @@ void main()
 	{
       OutColor = texture(Viewport, TexCoords);
     }
+	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
+    //OutColor /= 2.0f;
+    //vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
+	
+	//OutColor.xyz *= texture(Viewport, ReflectionUVcoords.xy).xyz;
+    
 	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);
     FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
+	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
+   // FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
+    //FragColor = vec4(vec3(texture(IDtexture, TexCoords).x / 10.0f),1.0f);
 }

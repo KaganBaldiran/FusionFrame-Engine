@@ -32,7 +32,6 @@ namespace FUSIONPHYSICS
 		float padding10;
 	};
 
-
 	//Particle system calculated on GPU using compute shaders
 	class ParticleEmitter : public FUSIONCORE::Object
 	{
@@ -54,6 +53,8 @@ namespace FUSIONPHYSICS
 		);
 		void UpdateParticleEmitter(FUSIONCORE::Shader& ParticleUpdateShader, FUSIONCORE::Shader& ParticleInitializerShader, const float DeltaTime);
 		void DrawParticles(FUSIONCORE::Shader& ParticleShader, FUSIONCORE::Mesh& ParticleMesh,FUSIONCORE::WorldTransform& ParticleTranform, FUSIONCORE::Camera3D& camera);
+		EmitterSettings& GetEmitterSettings() { return this->emitterSettings; };
+	
 	private:
 		EmitterSettings emitterSettings;
 		unsigned int InitialSpawnCount;

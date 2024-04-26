@@ -46,8 +46,6 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 	float minZ = std::numeric_limits<float>::max();
 	float maxZ = std::numeric_limits<float>::lowest();
 
-	int Recalculated = 0;
-
 	for (size_t i = 0; i < ObjectInstances.size(); i++)
 	{
 		bool ReCalculateBoundingBox = false;
@@ -55,16 +53,10 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 		BoundingBox.Object = ObjectInstances[i];
 		FUSIONCORE::WorldTransform& objectTransformation = ObjectInstances[i]->GetTransformation();
 
-		if (BoundingBoxes.size() < i + 1 || 
-			!BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) || 
-			objectTransformation.IsTransformedQuadTree)
+		if (BoundingBoxes.size() < i + 1 ||
+			!BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) ||
+			objectTransformation.IsTransformedQuadTree) 
 		{
-			ReCalculateBoundingBox = true;
-		}
-		
-		if(ReCalculateBoundingBox)
-		{
-			Recalculated++;
 			auto& ModelScales = objectTransformation.InitialObjectScales;
 			auto ModelMatrix = objectTransformation.GetModelMat4();
 			auto& ModelPosition = *objectTransformation.OriginPoint;
@@ -95,8 +87,6 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 			objectTransformation.IsTransformedQuadTree = false;
 		}
 	}
-
-	//LOG("Recalculated: " << Recalculated << " ObjectInstances.size(): " << ObjectInstances.size());
 
 	for (const auto& BoundingBoxTemp : BoundingBoxes)
 	{

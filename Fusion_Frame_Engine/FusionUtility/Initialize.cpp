@@ -84,6 +84,8 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.CameraClusterComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CameraClusterComputeShader.comp.glsl");
 	shaders.CameraLightCullingComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CameraLightCulling.comp.glsl");
 	shaders.SSRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs","Shaders/SSR.fs");
+	shaders.ShapeBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeBasic.fs");
+	shaders.ShapeTexturedShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeTextured.fs");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 	FUSIONCORE::InitializeAnimationUniformBuffer();
@@ -116,4 +118,6 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.CameraClusterComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CameraLightCullingComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.SSRshader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ShapeBasicShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.ShapeTexturedShader->GetID());
 }

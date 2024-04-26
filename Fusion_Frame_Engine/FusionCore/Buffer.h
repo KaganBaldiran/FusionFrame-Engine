@@ -40,16 +40,13 @@ namespace FUSIONCORE
 	class VBO
 	{
 	public:
-
 		VBO();
 		GLuint Bind();
 		GLuint GetBufferID();
 		inline void SetVBOstate(bool IsChanged) { this->IsChanged = IsChanged; };
 		inline const bool IsVBOchanged() { return this->IsChanged; };
 		~VBO();
-
 	private:
-
 		GLuint vbo;
 		bool IsChanged;
 	};
@@ -63,7 +60,6 @@ namespace FUSIONCORE
 		GLuint GetVertexArrID();
 		~VAO();
 	private:
-
 		GLuint vao;
 	};
 
@@ -111,9 +107,36 @@ namespace FUSIONCORE
 		GLuint ssbo;
 	};
 
+	struct DrawArraysIndirectCommand {
+		GLuint Count;
+		GLuint InstanceCount;
+		GLuint First;
+		GLuint BaseInstance;
+	};
+
+	struct DrawElementsIndirectCommand {
+		GLuint Count;       // Number of elements to render
+		GLuint InstanceCount;  // Number of instances
+		GLuint FirstIndex;  // The base index within the index buffer to start drawing from
+		GLuint BaseVertex;  // Offset to add to each index before fetching the vertex data
+		GLuint BaseInstance; // Instance ID of the first instance to draw
+	};
+
+	class IndirectCommandBuffer
+	{
+	public:
+		IndirectCommandBuffer();
+		GLuint Bind();
+		GLuint GetBufferID();
+		~IndirectCommandBuffer();
+	private:
+		GLuint icb;
+	};
+
 	void BindVBONull();
 	void BindVAONull();
 	void BindEBONull();
 	void BindUBONull();
 	void BindSSBONull();
+	void BindIndirectCommandBufferNull();
 }

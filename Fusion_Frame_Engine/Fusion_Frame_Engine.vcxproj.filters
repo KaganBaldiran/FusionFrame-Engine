@@ -115,6 +115,15 @@
     <None Include="Shaders\SSR.fs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\ShapeBasic.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ShapeBasic.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ShapeTextured.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -230,7 +239,10 @@
     <ClCompile Include="FusionPhysics\ParticleSystem.cpp">
       <Filter>Sources\FusionPhysics</Filter>
     </ClCompile>
-    <ClCompile Include="FusionCore\Framebuffer.cpp" />
+    <ClCompile Include="FusionCore\Shapes.cpp" />
+    <ClCompile Include="FusionCore\Framebuffer.cpp">
+      <Filter>Sources\FusionCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -333,6 +345,9 @@
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
     <ClInclude Include="FusionCore\Framebuffer.hpp">
+      <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionCore\Shapes.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>

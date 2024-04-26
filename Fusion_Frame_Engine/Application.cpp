@@ -22,9 +22,11 @@ int Application::Run()
 	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height,4,6, "FusionFrame Engine");
 
 	//FUSIONCORE::InitializeAnimationUniformBuffer();
-	
+
 	FUSIONUTIL::DefaultShaders Shaders;
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
+
+	FUSIONCORE::SHAPES::InitializeShapeBuffers();
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
 	FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
@@ -38,6 +40,7 @@ int Application::Run()
 	FUSIONCORE::LightIcon = std::make_unique<FUSIONCORE::Model>("Resources/LightIcon.fbx");
 
 	FUSIONCORE::Camera3D camera3d;
+	FUSIONCORE::Camera2D camera2d;
 
 	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
 	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png", GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, true);
@@ -97,10 +100,10 @@ int Application::Run()
 	std::vector<FUSIONCORE::Light> Lights;
 
 	float LightIntensity;
-	for (size_t i = 0; i < 10; i++)
+	for (size_t i = 0; i < 100; i++)
 	{
 		LightIntensity = RandomIntensity(engine);
-		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity,FF_POINT_LIGHT, LightIntensity / 10.0f);
+		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity,FF_POINT_LIGHT, LightIntensity / 30.0f);
 	}
 
 	FUSIONCORE::Color SunColor(FF_COLOR_AMBER_YELLOW);
@@ -162,6 +165,8 @@ int Application::Run()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> Rock = std::make_unique<FUSIONCORE::Model>("Resources\\models\\RockFormation\\RockFormation.obj");
+
+	//Stove->SetIndirectCommandBuffer(1, 0, 0, 0);
 
 	FUSIONCORE::Model Isaac("C:\\Users\\kbald\\Desktop\\Isaac\\Isaac_low.obj");
 
@@ -414,7 +419,7 @@ int Application::Run()
 	}
 
 	FUSIONCORE::VBO instanceVBO;
-	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 1000, 118);
+	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurfaceRandomized(grid->Meshes[0], grid->GetTransformation(), 1000, 118);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(instanceVBO, DistibutedPoints);
 	shrub->SetInstanced(instanceVBO, DistibutedPoints.size() / 4);
 	/*FUSIONCORE::VBO TowerinstanceVBO;
@@ -787,6 +792,8 @@ int Application::Run()
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
+		camera2d.UpdateCameraMatrix({ 0.0f,0.0f,0.0f }, 1.0f, WindowSize);
+		
 		//camera3d.UpdateCameraClusters(*Shaders.CameraClusterComputeShader, *Shaders.CameraLightCullingComputeShader);
 		/*glm::vec4 SomePoint = glm::vec4(-0.0f, 0.0f, -20.1f, 1.0f);
 		SomePoint = glm::inverse(camera3d.viewMat) * SomePoint;
@@ -834,6 +841,8 @@ int Application::Run()
 		if (FUSIONCORE::IsModelInsideCameraFrustumSphere(*Stove, camera3d, 0.3f))
 		{
 			Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, MirrorMaterial);
+			//Stove->DrawDeferredIndirect(camera3d, *Shaders.GbufferShader, shaderPrepe, MirrorMaterial);
+
 		}
 	
 		for (size_t i = 0; i < ImportedModels.size(); i++)
@@ -868,6 +877,8 @@ int Application::Run()
 		}
 		Capsule.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material());
 		
+
+
 		Gbuffer.Unbind();
 		ScreenFrameBuffer.Bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -889,6 +900,8 @@ int Application::Run()
 
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
+
+
 
 		if (PixelModel)
 		{
@@ -942,12 +955,20 @@ int Application::Run()
 			FUSIONPHYSICS::VisualizeQuadTree(headNode, camera3d, *Shaders.LightShader, FF_COLOR_RED);
 		}
 #endif
-		
+
+		//FUSIONCORE::SHAPES::DrawRectangleTextured(bearNormal, {0.0f,1.0f}, {1.0f,0.1f}, 0.0f, camera2d, *Shaders.ShapeTexturedShader);
+		//FUSIONCORE::SHAPES::DrawRectangle(glm::vec4(glm::vec3(FF_COLOR_CHARCOAL),0.5f), {0.0f,1.0f}, {1.0f,0.1f}, 0.0f, camera2d, *Shaders.ShapeBasicShader);
+		//FUSIONCORE::SHAPES::DrawRectangle(FF_COLOR_BLUSH_PINK, { 0.5f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d, *Shaders.ShapeBasicShader);
+		//FUSIONCORE::SHAPES::DrawTriangle(FF_COLOR_AQUAMARINE, { 0.0f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d, *Shaders.ShapeBasicShader);
+		//FUSIONCORE::SHAPES::DrawTriangleTextured(bearNormal, { 0.0f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d, *Shaders.ShapeTexturedShader);
+		//FUSIONCORE::SHAPES::DrawHexagon(FF_COLOR_BLUSH_PINK, { 0.0f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d, *Shaders.ShapeBasicShader);
+		FUSIONCORE::SHAPES::DrawHexagonTextured(bearNormal, { 0.0f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d,Shaders);
+
 		ScreenFrameBuffer.Unbind();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize,true,0.7f,0.1f, 5.0f,1.7f,1.6f);
 
-	
+		
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 

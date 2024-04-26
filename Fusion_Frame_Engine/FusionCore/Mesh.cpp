@@ -48,6 +48,8 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 	ObjectBuffer.AttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, m_Weights));
 
 	ObjectBuffer.Unbind();
+
+	IndirectBufferFilled = false;
 }
 
 FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<Texture2D>& textures_i)
@@ -101,6 +103,8 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 	ObjectBuffer.AttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, m_Weights));
 
 	ObjectBuffer.Unbind();
+
+	IndirectBufferFilled = false;
 }
 
 void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
@@ -265,6 +269,28 @@ void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& sh
 	glActiveTexture(GL_TEXTURE0);
 }
 
+void FUSIONCORE::Mesh::DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
+{
+	if (!IndirectBufferFilled)
+	{
+		throw FFexception("There isn't a corresponding indirect command buffer!");
+	}
+
+	shader.use();
+	ObjectBuffer.BindVAO();
+	ShaderPreperations();
+
+	shader.setMat4("ProjView", camera.ProjectionViewMat);
+	shader.setMat4("ViewMat", camera.viewMat);
+	material.SetMaterialShader(shader);
+
+	glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (const void*)0);
+
+	UseShaderProgram(0);
+	ObjectBuffer.UnbindVAO();
+	glActiveTexture(GL_TEXTURE0);
+}
+
 void FUSIONCORE::Mesh::BookKeepDuplicateVertices(Vertex* vertex)
 {
 	if (DuplicateVertexMap.find(vertex->Position) == DuplicateVertexMap.end())
@@ -277,6 +303,25 @@ void FUSIONCORE::Mesh::BookKeepDuplicateVertices(Vertex* vertex)
 	{
 		DuplicateVertexMap[vertex->Position].push_back(vertex);
 	}
+}
+
+void FUSIONCORE::Mesh::SetIndirectCommandBuffer(unsigned int InstanceCount, unsigned int BaseVertex, unsigned int BaseIndex, unsigned int BaseInstance)
+{
+	DrawElementsIndirectCommand CommandData;
+	CommandData.Count = this->indices.size();
+	CommandData.BaseVertex = BaseVertex;
+	CommandData.BaseInstance = BaseInstance;
+	CommandData.FirstIndex = BaseIndex;
+	CommandData.InstanceCount = InstanceCount;
+
+	this->ObjectBuffer.BindVAO();
+	this->IndirectCommandDataBuffer.Bind();
+
+	glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(CommandData), &CommandData, GL_STATIC_DRAW);
+
+	BindIndirectCommandBufferNull();
+	BindVAONull();
+	this->IndirectBufferFilled = true;
 }
 
 void FUSIONCORE::Mesh::ConstructHalfEdges()

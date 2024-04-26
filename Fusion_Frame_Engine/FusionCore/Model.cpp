@@ -319,6 +319,22 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
     }
 }
 
+void FUSIONCORE::Model::DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
+{
+    std::function<void()> shaderPrep = [&]() {
+        this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
+        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
+        shader.setBool("EnableAnimation", false);
+        ShaderPreperations();
+        };
+
+    for (size_t i = 0; i < Meshes.size(); i++)
+    {
+        Meshes[i].DrawDeferredIndirect(camera, shader, shaderPrep, material);
+    }
+}
+
 void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
@@ -494,6 +510,14 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
     transformation.OriginPoint = &this->originpoint;
     transformation.Position = glm::vec3(originpoint.x, originpoint.y, originpoint.z);
     dynamic_origin = glm::vec3(overallCenterX, overallCenterY, overallCenterZ);
+}
+
+void FUSIONCORE::Model::SetIndirectCommandBuffer(unsigned int InstanceCount, unsigned int BaseVertex, unsigned int BaseIndex, unsigned int BaseInstance)
+{
+    for (auto& mesh : this->Meshes)
+    {
+        mesh.SetIndirectCommandBuffer(InstanceCount,BaseVertex,BaseIndex,BaseInstance);
+    }
 }
 
 void FUSIONCORE::Model::SetInstanced(VBO& InstanceDataVBO, size_t InstanceCount)

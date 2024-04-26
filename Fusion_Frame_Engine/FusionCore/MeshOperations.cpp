@@ -753,7 +753,7 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 	std::uniform_real_distribution<double> dis(0.0, 1.0);
 
 	std::mt19937 FaceSeed(seed * (2356294u ^ seed));
-	std::uniform_int_distribution<unsigned int> FaceDistribution(0, MeshFaces.size());
+	std::uniform_int_distribution<unsigned int> FaceDistribution(0, MeshFaces.size() - 1);
 
 	Points.reserve(PointCount);
 	while (CastedPointCount < PointCount)

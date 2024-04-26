@@ -170,6 +170,9 @@
     <None Include="Shaders\PBRinstanced.vs" />
     <None Include="Shaders\PreFilterCubeMap.fs" />
     <None Include="Shaders\PreFilterCubeMap.vs" />
+    <None Include="Shaders\ShapeBasic.fs" />
+    <None Include="Shaders\ShapeBasic.vs" />
+    <None Include="Shaders\ShapeTextured.fs" />
     <None Include="Shaders\SSR.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +194,7 @@
     <ClCompile Include="FusionCore\Object.cpp" />
     <ClCompile Include="FusionCore\Shader.cpp" />
     <ClCompile Include="FusionCore\ShadowMaps.cpp" />
+    <ClCompile Include="FusionCore\Shapes.cpp" />
     <ClCompile Include="FusionCore\Texture.cpp" />
     <ClCompile Include="FusionCore\Transformation.cpp" />
     <ClCompile Include="FusionFrame.cpp" />
@@ -205,6 +209,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
+    <ClInclude Include="FusionCore\Shapes.hpp" />
     <ClInclude Include="FusionCore\Animation.hpp" />
     <ClInclude Include="FusionCore\Animator.hpp" />
     <ClInclude Include="FusionCore\Bone.hpp" />

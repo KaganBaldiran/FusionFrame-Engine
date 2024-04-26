@@ -61,6 +61,9 @@ namespace FUSIONCORE
 	class Mesh
 	{
 	private:
+		IndirectCommandBuffer IndirectCommandDataBuffer;
+		bool IndirectBufferFilled;
+
 		Buffer3D ObjectBuffer;
 		std::vector<Texture2D> textures;
 		std::vector<unsigned int> indices;
@@ -89,6 +92,9 @@ namespace FUSIONCORE
 		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
 		void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 
+		void DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
+
+		void SetIndirectCommandBuffer(unsigned int InstanceCount , unsigned int BaseVertex, unsigned int BaseIndex,unsigned int BaseInstance);
 		void ConstructHalfEdges();
 
 		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);

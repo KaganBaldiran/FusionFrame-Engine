@@ -123,17 +123,17 @@ FUSIONCORE::VAO::~VAO()
 
 void FUSIONCORE::BindVBONull()
 {
-	glBindBuffer(GL_ARRAY_BUFFER, NULL);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void FUSIONCORE::BindVAONull()
 {
-	glBindVertexArray(NULL);
+	glBindVertexArray(0);
 }
 
 void FUSIONCORE::BindEBONull()
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void FUSIONCORE::BindUBONull()
@@ -144,6 +144,11 @@ void FUSIONCORE::BindUBONull()
 void FUSIONCORE::BindSSBONull()
 {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void FUSIONCORE::BindIndirectCommandBufferNull()
+{
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 }
 
 FUSIONCORE::EBO::EBO()
@@ -231,4 +236,25 @@ void FUSIONCORE::SSBO::Unbind()
 void FUSIONCORE::SSBO::BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
 	glBufferData(target, size, data, usage);
+}
+
+FUSIONCORE::IndirectCommandBuffer::IndirectCommandBuffer()
+{
+	glGenBuffers(1, &this->icb);
+}
+
+GLuint FUSIONCORE::IndirectCommandBuffer::Bind()
+{
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, icb);
+	return icb;
+}
+
+GLuint FUSIONCORE::IndirectCommandBuffer::GetBufferID()
+{
+	return icb;
+}
+
+FUSIONCORE::IndirectCommandBuffer::~IndirectCommandBuffer()
+{
+	glDeleteBuffers(1, &icb);
 }

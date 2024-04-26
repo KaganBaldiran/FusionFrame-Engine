@@ -121,7 +121,6 @@ void FUSIONCORE::Texture2D::Bind(GLuint slot , GLuint shader , const char* unifo
 	glUniform1i(glGetUniformLocation(shader, uniform), slot);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void FUSIONCORE::Texture2D::Unbind()

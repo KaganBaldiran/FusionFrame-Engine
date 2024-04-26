@@ -70,6 +70,7 @@ namespace FUSIONCORE
         void DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
         void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices);
         void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
+        void DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
         void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 
         void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
@@ -78,6 +79,9 @@ namespace FUSIONCORE
         void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();
+
+        //Sets an indirect command buffer for the model which allows to use indirect rendering for mostly static models in terms of vertices and instance count.
+        void SetIndirectCommandBuffer(unsigned int InstanceCount, unsigned int BaseVertex, unsigned int BaseIndex, unsigned int BaseInstance);
 
         //Binding an internal pointer of the given instance data VBO to render instanced shadows etc.
         //It's crucial to keep the original VBO intact;

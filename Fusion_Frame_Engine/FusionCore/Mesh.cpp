@@ -1,4 +1,9 @@
 #include "Mesh.h"
+#include <glew.h>
+#include <glfw3.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<Texture2D>& textures_i)
 {
@@ -454,6 +459,18 @@ void FUSIONCORE::Mesh::ConstructMesh()
 	ObjectBuffer.AttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, Bitangent));
 
 	ObjectBuffer.Unbind();
+}
+
+void FUSIONCORE::Mesh::Clean()
+{
+	ObjectBuffer.clean();
+	for (auto it = ImportedMaterial.GetTextureMaps().begin(); it != ImportedMaterial.GetTextureMaps().end(); ++it)
+	{
+		if (it->second->GetTextureState() == FF_TEXTURE_SUCCESS)
+		{
+			it->second->Clear();
+		}
+	}
 }
 
 void FUSIONCORE::Mesh::CopyMesh(Mesh& other)

@@ -1,18 +1,17 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionCore/Object.hpp"
 #include "../FusionCore/Model.hpp"
 #include "Physics.hpp"
 #include "unordered_map"
+#include "../FusionUtility/FusionDLLExport.h"
 
 namespace FUSIONPHYSICS
 {
 	inline int NodeIDiterator = 0;
 
-	struct Ivec3Hash
+	struct FUSIONFRAME_EXPORT Ivec3Hash
 	{
 		size_t operator()(const glm::ivec3& v) const
 		{
@@ -29,7 +28,7 @@ namespace FUSIONPHYSICS
 		}
 	};
 
-	class ObjectBoundingBox
+	class FUSIONFRAME_EXPORT ObjectBoundingBox
 	{
 	public:
 		ObjectBoundingBox();
@@ -40,7 +39,7 @@ namespace FUSIONPHYSICS
 		FUSIONCORE::Object* Object;
 	};
 
-	class QuadNode
+	class FUSIONFRAME_EXPORT QuadNode
 	{
 	public:
 		std::vector<ObjectBoundingBox*> Objects;
@@ -50,26 +49,20 @@ namespace FUSIONPHYSICS
 		int NodeID;
 		unsigned int SubdivisionCount;
 
-		QuadNode()
-		{
-			NodeID = NodeIDiterator;
-			NodeIDiterator++;
-			SubdivisionCount = 0;
-		}
-
+		QuadNode();
 		QuadNode(int ID) : NodeID(ID)
 		{};
 	};
 
-	void UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode , std::vector<FUSIONCORE::Object*> &ObjectInstances, unsigned int SingleQuadObjectCountLimit = 2 , unsigned int SubdivisionLimit = 5);
+	FUSIONFRAME_EXPORT_FUNCTION void UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode , std::vector<FUSIONCORE::Object*> &ObjectInstances, unsigned int SingleQuadObjectCountLimit = 2 , unsigned int SubdivisionLimit = 5);
 	//Internal use
-	void DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode);
+	FUSIONFRAME_EXPORT_FUNCTION void DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode);
 	//Internal use
-	void SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node, std::deque<QuadNode*>& NodesToProcess);
-	std::pair<glm::vec3, glm::vec3> GetGridSize();
+	FUSIONFRAME_EXPORT_FUNCTION void SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node, std::deque<QuadNode*>& NodesToProcess);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<glm::vec3, glm::vec3> GetGridSize();
 	//Internal use
-	void CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox> &BoundingBoxes , std::vector<FUSIONCORE::Object*> &ObjectInstances);
-	FUSIONCORE::WorldTransform NodeToWorldTransform(FUSIONPHYSICS::QuadNode& Node);
+	FUSIONFRAME_EXPORT_FUNCTION void CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox> &BoundingBoxes , std::vector<FUSIONCORE::Object*> &ObjectInstances);
+	FUSIONFRAME_EXPORT_FUNCTION FUSIONCORE::WorldTransform NodeToWorldTransform(FUSIONPHYSICS::QuadNode& Node);
 	//Be aware that visualizing quad trees can be quite costly and demanding since the tree is dynamically changing.
-	void VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode, FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
+	FUSIONFRAME_EXPORT_FUNCTION void VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode, FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
 }

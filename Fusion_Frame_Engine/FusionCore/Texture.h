@@ -1,15 +1,14 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionUtility/Log.h"
 #include <string>
+#include "../FusionUtility/FusionDLLExport.h"
 #define FF_TEXTURE_SUCCESS 1
 #define FF_TEXTURE_ERROR -1
 
 namespace FUSIONCORE
 {
-	class Texture2D
+	class FUSIONFRAME_EXPORT Texture2D
 	{
 	public:
 		Texture2D() = default;

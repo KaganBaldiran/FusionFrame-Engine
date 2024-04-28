@@ -239,8 +239,13 @@
     <ClCompile Include="FusionPhysics\ParticleSystem.cpp">
       <Filter>Sources\FusionPhysics</Filter>
     </ClCompile>
-    <ClCompile Include="FusionCore\Shapes.cpp" />
     <ClCompile Include="FusionCore\Framebuffer.cpp">
+      <Filter>Sources\FusionCore</Filter>
+    </ClCompile>
+    <ClCompile Include="FusionUtility\FusionGL.cpp">
+      <Filter>Sources\FusionUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="FusionCore\Shapes.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
   </ItemGroup>
@@ -349,6 +354,15 @@
     </ClInclude>
     <ClInclude Include="FusionCore\Shapes.hpp">
       <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionUtility\FusionDLLExport.h">
+      <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionUtility\Definitions.hpp">
+      <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionUtility\FusionGL.hpp">
+      <Filter>Headers\FusionUtility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

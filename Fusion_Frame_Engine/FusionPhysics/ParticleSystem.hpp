@@ -3,13 +3,14 @@
 #include "../FusionCore/Buffer.h"
 #include "../FusionCore/Shader.h"
 #include "../FusionCore/Model.hpp"
+#include "../FusionUtility/FusionDLLExport.h"
 
 namespace FUSIONPHYSICS
 {
-	extern std::unique_ptr<FUSIONCORE::UBO> EmitterSettingsUBO;
-	void InitializeParticleEmitterUBO();
+	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<FUSIONCORE::UBO> EmitterSettingsUBO;
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeParticleEmitterUBO();
 
-	struct alignas(16) EmitterSettings {
+	 struct FUSIONFRAME_EXPORT alignas(16) EmitterSettings {
 		glm::vec4 minColor;
 		glm::vec4 maxColor;
 		glm::vec3 minOffset;
@@ -33,7 +34,7 @@ namespace FUSIONPHYSICS
 	};
 
 	//Particle system calculated on GPU using compute shaders
-	class ParticleEmitter : public FUSIONCORE::Object
+	class FUSIONFRAME_EXPORT ParticleEmitter : public FUSIONCORE::Object
 	{
 	public:
 		ParticleEmitter(unsigned int MaxParticleCount,

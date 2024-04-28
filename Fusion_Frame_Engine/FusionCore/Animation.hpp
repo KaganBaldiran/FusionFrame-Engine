@@ -1,18 +1,17 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include "Bone.hpp"
 #include "Model.hpp"
+#include "../FusionUtility/FusionDLLExport.h"
+
+struct aiAnimation;
+struct aiNode;
 
 namespace FUSIONCORE
 {
-	struct BoneNodeData
+	struct FUSIONFRAME_EXPORT BoneNodeData
 	{
 		glm::mat4 transformation;
 		std::string name;
@@ -20,7 +19,7 @@ namespace FUSIONCORE
 		std::vector<BoneNodeData> children;
 	};
 
-	class Animation
+	class FUSIONFRAME_EXPORT Animation
 	{
 	public:
 		Animation(const char* AnimationPath, Model* model);

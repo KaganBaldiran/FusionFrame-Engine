@@ -1,3 +1,5 @@
+#include <glew.h>
+#include <glfw3.h>
 #include "Cubemap.h"
 #include "stb_image.h"
 #include "Texture.h"

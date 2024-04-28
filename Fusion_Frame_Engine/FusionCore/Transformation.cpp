@@ -1,5 +1,7 @@
 #include "Transformation.hpp"
 #include "Light.hpp"
+#include <glew.h>
+#include <glfw3.h>
 
 void FUSIONCORE::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
 {

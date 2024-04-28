@@ -1,59 +1,49 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Buffer.h"
 #include "Camera.h"
 #include "Texture.h"
 #include <functional>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include <string>
 #include "Mesh.h"
-#include <functional>
 #include <map>
 #include "Object.hpp"
 #include "Cubemap.h"
 #include <filesystem>
+#include "../FusionUtility/FusionDLLExport.h"
+
+struct aiScene;
+struct aiMesh;
+struct aiNode;
+struct aiMaterial;
+enum aiTextureType;
+
+template <typename T>
+class aiMatrix4x4t;
+typedef float ai_real;
+typedef aiMatrix4x4t<ai_real> aiMatrix4x4;
 
 namespace FUSIONCORE
 {
     //forward declaration of the omnishadow map class
     class OmniShadowMap;
 
-    class PreMeshData
+    class FUSIONFRAME_EXPORT PreMeshData
     {
     public:
         std::vector<FUSIONCORE::Texture2D> textures;
         std::vector<unsigned int> indices;
         std::vector<std::shared_ptr<Vertex>> vertices;
 
-        PreMeshData(std::vector<FUSIONCORE::Texture2D> &textures, std::vector<unsigned int> &indices, std::vector<std::shared_ptr<Vertex>> &vertices)
-        {
-            this->textures = textures;
-            this->indices = indices;
-            this->vertices = vertices;
-        }
-
+        PreMeshData(std::vector<FUSIONCORE::Texture2D>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices);
     };
 
-    static glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
-    {
-        glm::mat4 to;
-
-        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
-        return to;
-    }
-
-    class Model : public Object
+    FUSIONFRAME_EXPORT_FUNCTION glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
+   
+    class FUSIONFRAME_EXPORT Model : public Object
     {
     public:
-
         Model();
         Model(std::string const& filePath, bool Async = false, bool AnimationModel = false);
         Model(Model& Other);
@@ -64,7 +54,7 @@ namespace FUSIONCORE
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
-        void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO &InstanceDataVBO, size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps = std::vector<OmniShadowMap*>(), float EnvironmentAmbientAmount = 0.2f);
+        void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO& InstanceDataVBO, size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps = std::vector<OmniShadowMap*>(), float EnvironmentAmbientAmount = 0.2f);
         void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount);
         void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
         void DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
@@ -75,7 +65,7 @@ namespace FUSIONCORE
 
         void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
         void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap , std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4> &AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
         void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();
@@ -86,36 +76,21 @@ namespace FUSIONCORE
         //Binding an internal pointer of the given instance data VBO to render instanced shadows etc.
         //It's crucial to keep the original VBO intact;
         //Not needed to be called unless effects like shadows are desired. 
-        void SetInstanced(VBO &InstanceDataVBO,size_t InstanceCount);
-        
+        void SetInstanced(VBO& InstanceDataVBO,size_t InstanceCount);
+
         std::vector<Mesh> Meshes;
         std::vector<Texture2D> textures_loaded;
         std::vector<PreMeshData> PreMeshDatas;
 
-        ~Model()
-        {
-            for (size_t i = 0; i < this->Meshes.size(); i++)
-            {
-                Meshes[i].Clean();
-                LOG_INF("Model" << this->ModelID << " buffers cleaned!");
-            }
-        }
+        ~Model();
+        void SetVertexBoneDataDefault(Vertex& vertex);
 
-        inline void SetVertexBoneDataDefault(Vertex& vertex)
-        {
-            for (size_t i = 0; i < MAX_BONE_INFLUENCE; i++)
-            {
-                vertex.m_BoneIDs[i] = -1;
-                vertex.m_Weights[i] = 0.0f;
-            }
-        }
-        
         void loadModel(std::string const& path , bool Async = false, bool AnimationModel = false);
         void processNode(aiNode* node, const aiScene* scene);
         Mesh processMesh(aiMesh* mesh, const aiScene* scene);
         void ExtractBones(std::vector<std::shared_ptr<Vertex>>& vertices, aiMesh* mesh, const aiScene* scene);
         void loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, std::vector<FUSIONCORE::Texture2D>& Destination);
-        
+
         PreMeshData processMeshAsync(aiMesh* mesh, const aiScene* scene);
         void processNodeAsync(aiNode* node, const aiScene* scene);
         void ConstructMeshes(std::vector<PreMeshData> PreMeshDatas);
@@ -129,7 +104,7 @@ namespace FUSIONCORE
         inline const std::string& GetModelFilePath() { return this->path; };
         inline VBO* GetInstanceDataVBOpointer() { return this->InstanceDataVBO; };
         inline const size_t GetInstanceDataInstanceCount() { return this->InstanceCount; };
-       
+        
     private:
             std::string path;
             std::vector<Texture2D> Textures;
@@ -151,8 +126,8 @@ namespace FUSIONCORE
             size_t InstanceCount;
     };
 
-    std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);
-    Model* GetModel(unsigned int ModelID);
+    FUSIONFRAME_EXPORT_FUNCTION std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);
+    FUSIONFRAME_EXPORT_FUNCTION Model* GetModel(unsigned int ModelID);
 }
 
 

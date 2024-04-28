@@ -1,13 +1,14 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "Log.h"
 #include <memory>
 #include "../FusionCore/Shader.h"
+#include "FusionDLLExport.h"
+
+struct GLFWwindow;
 
 namespace FUSIONUTIL
 {
-	class DefaultShaders
+	class FUSIONFRAME_EXPORT DefaultShaders
 	{
 	public:
 		/**
@@ -102,7 +103,11 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> ShapeTexturedShader;
 	};
 
-	void InitializeDefaultShaders(DefaultShaders& shaders);
-	void DisposeDefaultShaders(DefaultShaders& shaders);
-	GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
+    FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
+    FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
+    FUSIONFRAME_EXPORT_FUNCTION void TerminateWindow();
+
+    FUSIONFRAME_EXPORT_FUNCTION void SwapBuffers(GLFWwindow* window);
+    FUSIONFRAME_EXPORT_FUNCTION void PollEvents();
 }

@@ -1,10 +1,11 @@
 #pragma once
 #include <chrono>
 #include <bitset>
+#include "FusionDLLExport.h"
 
 namespace FUSIONUTIL
 {
-	class Timer
+	class FUSIONFRAME_EXPORT Timer
 	{
 	public:
 

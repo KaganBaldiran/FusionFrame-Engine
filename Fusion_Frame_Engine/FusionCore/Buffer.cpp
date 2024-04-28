@@ -1,4 +1,6 @@
 #include "Buffer.h"
+#include <glew.h>
+#include <glfw3.h>
 
 FUSIONCORE::Buffer::Buffer()
 {

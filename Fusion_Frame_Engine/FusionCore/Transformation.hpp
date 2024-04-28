@@ -1,33 +1,32 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Buffer.h"
 #include <map>
+#include "../FusionUtility/FusionDLLExport.h"
 #define FF_ORIGIN glm::vec3(0.0f,0.0f,0.0f)
 
 namespace FUSIONCORE
 {
 	struct LightData;
 
-	struct TransformAction
+	struct FUSIONFRAME_EXPORT TransformAction
 	{
 		glm::vec3 Transformation;
 	};
 
-	struct RotateAction
+	struct FUSIONFRAME_EXPORT RotateAction
 	{
 		float Degree;
 		glm::vec3 Vector;
 	};
 
-	struct ScaleAction
+	struct FUSIONFRAME_EXPORT ScaleAction
 	{
 		glm::vec3 Scale;
 	};
 
-	class WorldTransform
+	class FUSIONFRAME_EXPORT WorldTransform
 	{
 	public:
 
@@ -78,7 +77,7 @@ namespace FUSIONCORE
 		};
 	};
 
-	class WorldTransformForLights : public WorldTransform
+	class FUSIONFRAME_EXPORT WorldTransformForLights : public WorldTransform
 	{
 	public:
 

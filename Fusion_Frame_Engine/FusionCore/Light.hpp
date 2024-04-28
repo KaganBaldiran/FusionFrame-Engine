@@ -1,12 +1,11 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Buffer.h"
 #include "Mesh.h"
 #include <memory>
 #include "Model.hpp"
+#include "../FusionUtility/FusionDLLExport.h"
 #define MAX_LIGHT_COUNT 110
 
 #define FF_POINT_LIGHT 0x56400
@@ -15,7 +14,7 @@
 
 namespace FUSIONCORE
 {
-	struct alignas(16) LightData
+	struct FUSIONFRAME_EXPORT alignas(16) LightData
 	{
 		glm::vec4 Position;
 		glm::vec4 Color;
@@ -24,25 +23,25 @@ namespace FUSIONCORE
 		float Radius;
 	};
 
-	extern std::unique_ptr<Model> LightIcon;
-	extern std::unordered_map<int, LightData> LightDatas;
-	extern int LightCount;
-	extern std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
+	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<Model> LightIcon;
+	FUSIONFRAME_EXPORT_FUNCTION std::unordered_map<int, LightData> LightDatas;
+	FUSIONFRAME_EXPORT_FUNCTION int LightCount;
+	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
 
 	//Internally called
-	void InitializeLightsShaderStorageBufferObject();
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeLightsShaderStorageBufferObject();
 
 	//Uploads all the light datas avaliable to the light SSBO. Might turn to be kind of an expensive operation.
 	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
-	void UploadLightsShaderUniformBuffer();
+	FUSIONFRAME_EXPORT_FUNCTION void UploadLightsShaderUniformBuffer();
 	//Sets light data SSBO in a given shader.
-	void SendLightsShader(Shader& shader);
+	FUSIONFRAME_EXPORT_FUNCTION void SendLightsShader(Shader& shader);
 	//Uploads the given light data to the light SSBO.
 	//Call it only if you insert lights(not deletation).
 	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
-	void UploadSingleLightShaderUniformBuffer(LightData& Light);
+	FUSIONFRAME_EXPORT_FUNCTION void UploadSingleLightShaderUniformBuffer(LightData& Light);
 
-	class Light : public Object
+	class FUSIONFRAME_EXPORT Light : public Object
 	{
 	public:
 		Light();

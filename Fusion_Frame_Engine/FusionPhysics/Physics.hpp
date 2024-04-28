@@ -1,12 +1,11 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionCore/Object.hpp"
 #include "../FusionCore/Mesh.h"
 #include "../FusionCore/Buffer.h"
 #include <memory>
+#include "../FusionUtility/FusionDLLExport.h"
 #define FF_TOP_SIDE 0
 #define FF_BOTTOM_SIDE 1
 #define FF_RIGHT_SIDE 2
@@ -16,7 +15,7 @@
 
 namespace FUSIONPHYSICS
 {
-	class CollisionState
+	class FUSIONFRAME_EXPORT CollisionState
 	{
 	public:
 		bool state;
@@ -34,7 +33,7 @@ namespace FUSIONPHYSICS
 	//If the box will transform in any way then the normals must be updated via either 'Update()'(Update is usually called internally from parent object so do not call it seperately) or 'UpdateAttributes()'
 	//Important side note , Original Mesh buffers ,must be kept to visualize the box since BoxMesh is just a pointer to the original mesh.
 	//Constructor that takes CollisionBox also creates a pointer to the original mesh
-	class CollisionBox : public FUSIONCORE::Object
+	class FUSIONFRAME_EXPORT CollisionBox : public FUSIONCORE::Object
 	{
 	public:
 		CollisionBox(CollisionBox& other);
@@ -68,7 +67,7 @@ namespace FUSIONPHYSICS
 		glm::vec3 MeshColor;
 	};
 
-	class CollisionBoxPlane : public CollisionBox
+	class FUSIONFRAME_EXPORT CollisionBoxPlane : public CollisionBox
 	{
 	public:
 		CollisionBoxPlane(glm::vec3 Size, glm::vec3 BoxSizeCoeff);
@@ -83,7 +82,7 @@ namespace FUSIONPHYSICS
 		std::vector<FUSIONCORE::Face> Faces;
 	};
 
-	class CollisionBoxAABB : public CollisionBox
+	class FUSIONFRAME_EXPORT CollisionBoxAABB : public CollisionBox
 	{
 	public:
 		CollisionBoxAABB(FUSIONCORE::WorldTransform& transformation, glm::vec3 BoxSizeCoeff = glm::vec3(1.0f));
@@ -101,15 +100,15 @@ namespace FUSIONPHYSICS
 		std::vector<FUSIONCORE::Face> Faces;
 	};
 
-	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, FUSIONCORE::WorldTransform& Entity1Transformation);
-	std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals);
-	std::pair<bool, int> BoxBoxIntersect(CollisionBoxAABB& Box1, CollisionBoxAABB& Box2);
-	std::pair<bool, float> FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
-	bool IsCollidingSAT(CollisionBoxAABB& Box1, CollisionBoxAABB& Box2);
-	bool IsCollidingSAT(CollisionBox& Plane, CollisionBoxAABB& Box);
-	std::pair<bool, glm::vec3> IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, FUSIONCORE::WorldTransform& Entity1Transformation);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<int, glm::vec3> CheckCollisionDirection(glm::vec3 targetVector, std::vector<glm::vec3> Normals);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<bool, int> BoxBoxIntersect(CollisionBoxAABB& Box1, CollisionBoxAABB& Box2);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<bool, float> FindMinSeparation(CollisionBox& Box1, CollisionBox& Box2, glm::vec3 Axis);
+	FUSIONFRAME_EXPORT_FUNCTION bool IsCollidingSAT(CollisionBoxAABB& Box1, CollisionBoxAABB& Box2);
+	FUSIONFRAME_EXPORT_FUNCTION bool IsCollidingSAT(CollisionBox& Plane, CollisionBoxAABB& Box);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<bool, glm::vec3> IsCollidingSAT(CollisionBox& Box1, CollisionBox& Box2);
 
 	//Sphere-Sphere collision
-	bool IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radius1, glm::vec3 center2, glm::vec3 radius2);
-	std::vector<std::shared_ptr<CollisionBoxAABB>> GenerateAABBCollisionBoxesFromInstancedModel(FUSIONCORE::WorldTransform& transformation, std::vector<glm::vec3> InstancePositions);
+	FUSIONFRAME_EXPORT_FUNCTION bool IsCollidingSphereCollision(glm::vec3 center1, glm::vec3 radius1, glm::vec3 center2, glm::vec3 radius2);
+	FUSIONFRAME_EXPORT_FUNCTION std::vector<std::shared_ptr<CollisionBoxAABB>> GenerateAABBCollisionBoxesFromInstancedModel(FUSIONCORE::WorldTransform& transformation, std::vector<glm::vec3> InstancePositions);
 }

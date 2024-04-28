@@ -1,4 +1,6 @@
 #include "HalfEdge.hpp"
+#include <glew.h>
+#include <glfw3.h>
 
 glm::vec3 FUSIONCORE::HalfEdge::GetMiddlePoint()
 {
@@ -13,6 +15,38 @@ glm::vec3 FUSIONCORE::HalfEdge::GetEdgeVector()
 float FUSIONCORE::HalfEdge::GetEdgeLength()
 {
     return glm::length(GetEdgeVector());
+}
+
+glm::vec3 FUSIONCORE::TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos)
+{
+    glm::vec4 transformed = Matrix * glm::vec4(VertexPos, 1.0f);
+    return glm::vec3(transformed);
+}
+
+glm::vec3 FUSIONCORE::FindNormal(std::vector<Vertex> Vertices)
+{
+    glm::vec3 Normal = glm::cross((Vertices[1].Position - Vertices[0].Position), (Vertices[2].Position - Vertices[0].Position));
+    if (glm::length(Normal) < glm::epsilon<float>())
+    {
+        LOG_ERR("Error: Attempting to normalize a zero-length vector.");
+    }
+    else {
+        Normal = glm::normalize(glm::abs(Normal));
+    }
+    return Normal;
+}
+
+glm::vec3 FUSIONCORE::FindNormal(glm::mat4 ModelMatrix, std::vector<Vertex> Vertices)
+{
+    glm::vec3 Normal = glm::cross((TranslateVertex(ModelMatrix, Vertices[1].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)), (TranslateVertex(ModelMatrix, Vertices[2].Position) - TranslateVertex(ModelMatrix, Vertices[0].Position)));
+    if (glm::length(Normal) < glm::epsilon<float>())
+    {
+        LOG_ERR("Error: Attempting to normalize a zero-length vector.");
+    }
+    else {
+        Normal = glm::normalize(glm::abs(Normal));
+    }
+    return Normal;
 }
 
 glm::vec3 FUSIONCORE::CalculateAverage(const glm::vec3& v1, const glm::vec3& v2)

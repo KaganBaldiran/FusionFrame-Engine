@@ -1,4 +1,6 @@
 #include "Initialize.h"
+#include <glew.h>
+#include <glfw3.h>
 #include "../FusionCore/Camera.h"
 #include "../FusionCore/Cubemap.h"
 #include "../FusionCore/Animator.hpp"
@@ -57,6 +59,22 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 	glfwSetScrollCallback(window, FUSIONCORE::scrollCallback);
 
     return window;
+}
+
+void FUSIONUTIL::TerminateWindow()
+{
+	glfwTerminate();
+	LOG_INF("Window terminated!");
+}
+
+void FUSIONUTIL::SwapBuffers(GLFWwindow* window)
+{
+	glfwSwapBuffers(window);
+}
+
+void FUSIONUTIL::PollEvents()
+{
+	glfwPollEvents();
 }
 
 void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)

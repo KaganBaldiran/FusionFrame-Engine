@@ -7,6 +7,8 @@
 #include "Model.hpp"
 #include "../FusionPhysics/Octtree.hpp"
 #include "Light.hpp"
+#include <glew.h>
+#include <glfw3.h>
 
 Vec2<double> ScrollAmount;
 Vec2<double> MousePosCamera;
@@ -564,6 +566,72 @@ bool FUSIONCORE::IsObjectQuadInsideCameraFrustum(FUSIONCORE::Object& model, FUSI
 		}
 	}
 	return false;
+}
+
+ std::pair<glm::vec3, glm::vec3> FUSIONCORE::GetCameraFrustum(FUSIONCORE::Camera3D& camera)
+{
+	glm::mat4 inverseMatrix = glm::inverse(camera.projMat * camera.viewMat);
+	std::vector<glm::vec4> FrustumCorners;
+	for (size_t x = 0; x < 2; x++)
+	{
+		for (size_t y = 0; y < 2; y++)
+		{
+			for (size_t z = 0; z < 2; z++)
+			{
+				glm::vec4 Point = inverseMatrix * glm::vec4(2.0f * x - 1.0f,
+					2.0f * y - 1.0f,
+					2.0f * z - 1.0f,
+					1.0f);
+				FrustumCorners.push_back(Point / Point.w);
+			}
+		}
+	}
+
+	glm::vec3 center = glm::vec3(0.0f);
+	for (size_t i = 0; i < FrustumCorners.size(); i++)
+	{
+		center += glm::vec3(FrustumCorners[i]);
+	}
+	center /= FrustumCorners.size();
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float minY = std::numeric_limits<float>::max();
+	float maxY = std::numeric_limits<float>::lowest();
+	float minZ = std::numeric_limits<float>::max();
+	float maxZ = std::numeric_limits<float>::lowest();
+
+	for (size_t i = 0; i < FrustumCorners.size(); i++)
+	{
+		const auto Corner = FrustumCorners[i];
+		minX = std::min(minX, Corner.x);
+		maxX = std::max(maxX, Corner.x);
+		minY = std::min(minY, Corner.y);
+		maxY = std::max(maxY, Corner.y);
+		minZ = std::min(minZ, Corner.z);
+		maxZ = std::max(maxZ, Corner.z);
+	}
+
+	/*const float Zmultiplier = std::abs(camera.FarPlane - camera.NearPlane) * 0.05f;
+	if (minZ < 0.0f)
+	{
+		minZ *= Zmultiplier;
+	}
+	else
+	{
+		minZ /= Zmultiplier;
+	}
+
+	if (maxZ < 0.0f)
+	{
+		maxZ /= Zmultiplier;
+	}
+	else
+	{
+		maxZ *= Zmultiplier;
+	}*/
+
+	return std::make_pair<glm::vec3, glm::vec3>({ minX,minY,minZ }, { maxX,maxY,maxZ });
 }
 
 

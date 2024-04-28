@@ -1,5 +1,8 @@
 #include "Shapes.hpp"
 #include <memory>
+#include <glew.h>
+#include <glfw3.h>
+#include "../FusionUtility/Initialize.h"
 
 std::unique_ptr<FUSIONCORE::VBO> ShapesVBO;
 std::unique_ptr<FUSIONCORE::EBO> ShapesEBO;
@@ -92,7 +95,7 @@ void FUSIONCORE::SHAPES::DrawRectangle(glm::vec4 Color,glm::vec2 Position, glm::
 {
 	auto &shader = *shaders.ShapeBasicShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -105,20 +108,20 @@ void FUSIONCORE::SHAPES::DrawRectangle(glm::vec4 Color,glm::vec2 Position, glm::
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(RectangleIndicesCount), GL_UNSIGNED_INT, 0);
 
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 void FUSIONCORE::SHAPES::DrawRectangleTextured(Texture2D& Texture, glm::vec2 Position, glm::vec2 Scale, float RotationInAngles, Camera2D& camera, FUSIONUTIL::DefaultShaders& shaders)
 {
 	auto& shader = *shaders.ShapeTexturedShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -131,20 +134,26 @@ void FUSIONCORE::SHAPES::DrawRectangleTextured(Texture2D& Texture, glm::vec2 Pos
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(RectangleIndicesCount), GL_UNSIGNED_INT, 0);
 
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
+}
+
+void FUSIONCORE::SHAPES::DrawRectangleInstanced(glm::vec4 Color, glm::vec2 Position, glm::vec2 Scale, float RotationInAngles, Camera2D& camera, FUSIONUTIL::DefaultShaders& shaders)
+{
+
+
 }
 
 void FUSIONCORE::SHAPES::DrawTriangle(glm::vec4 Color, glm::vec2 Position, glm::vec2 Scale, float RotationInAngles, Camera2D& camera, FUSIONUTIL::DefaultShaders& shaders)
 {
 	auto& shader = *shaders.ShapeBasicShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -157,11 +166,11 @@ void FUSIONCORE::SHAPES::DrawTriangle(glm::vec4 Color, glm::vec2 Position, glm::
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(TriangleIndicesCount), GL_UNSIGNED_INT, (const void*)(sizeof(unsigned int) * RectangleIndicesCount));
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
 }
@@ -170,7 +179,7 @@ void FUSIONCORE::SHAPES::DrawTriangleTextured(Texture2D& Texture, glm::vec2 Posi
 {
 	auto& shader = *shaders.ShapeTexturedShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -183,11 +192,11 @@ void FUSIONCORE::SHAPES::DrawTriangleTextured(Texture2D& Texture, glm::vec2 Posi
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(TriangleIndicesCount), GL_UNSIGNED_INT, (const void*)(sizeof(unsigned int) * RectangleIndicesCount));
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
 }
@@ -196,7 +205,7 @@ void FUSIONCORE::SHAPES::DrawHexagon(glm::vec4 Color, glm::vec2 Position, glm::v
 {
 	auto& shader = *shaders.ShapeBasicShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -209,11 +218,11 @@ void FUSIONCORE::SHAPES::DrawHexagon(glm::vec4 Color, glm::vec2 Position, glm::v
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(HexagonIndicesCount), GL_UNSIGNED_INT, (const void*)(sizeof(unsigned int) * (RectangleIndicesCount + TriangleIndicesCount)));
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
 }
@@ -222,7 +231,7 @@ void FUSIONCORE::SHAPES::DrawHexagonTextured(Texture2D& Texture, glm::vec2 Posit
 {
 	auto& shader = *shaders.ShapeTexturedShader;
 	shader.use();
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 	ShapesVAO->Bind();
 
 	camera.SetProjMatrixUniformLocation(shader.GetID(), "ProjMat");
@@ -235,11 +244,13 @@ void FUSIONCORE::SHAPES::DrawHexagonTextured(Texture2D& Texture, glm::vec2 Posit
 	{
 		RotationMatrix = glm::rotate(RotationMatrix, glm::radians(RotationInAngles), { 0.0f,0.0,1.0f });
 	}
-	shader.setMat4("ModelMatrix", RotationMatrix);
+	shader.setMat4("ModelMatrix", RotationMatrix * camera.RatioMat);
 
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(HexagonIndicesCount), GL_UNSIGNED_INT, (const void*)(sizeof(unsigned int) * (RectangleIndicesCount + TriangleIndicesCount)));
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	UseShaderProgram(0);
 	FUSIONCORE::BindVAONull();
 }
+
+

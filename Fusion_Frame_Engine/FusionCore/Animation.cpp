@@ -1,4 +1,9 @@
 #include "Animation.hpp"
+#include <glew.h>
+#include <glfw3.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 FUSIONCORE::Animation::Animation(const char* AnimationPath, Model* model)
 {

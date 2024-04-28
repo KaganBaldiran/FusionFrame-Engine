@@ -3,6 +3,11 @@
 #include "ShadowMaps.hpp"
 #include "Animator.hpp"
 #include <filesystem>
+#include <glew.h>
+#include <glfw3.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 unsigned int counter = 1;
 std::unordered_map<unsigned int, FUSIONCORE::Model*> IDmodelMap;
@@ -527,6 +532,24 @@ void FUSIONCORE::Model::SetInstanced(VBO& InstanceDataVBO, size_t InstanceCount)
     this->InstanceDataVBO->SetVBOstate(true);
 }
 
+FUSIONCORE::Model::~Model()
+{
+    for (size_t i = 0; i < this->Meshes.size(); i++)
+    {
+        Meshes[i].Clean();
+        LOG_INF("Model" << this->ModelID << " buffers cleaned!");
+    }
+}
+
+void FUSIONCORE::Model::SetVertexBoneDataDefault(Vertex& vertex)
+{
+    for (size_t i = 0; i < MAX_BONE_INFLUENCE; i++)
+    {
+        vertex.m_BoneIDs[i] = -1;
+        vertex.m_Weights[i] = 0.0f;
+    }
+}
+
 void FUSIONCORE::Model::loadModel(std::string const& path, bool Async , bool AnimationModel)
 {
     Assimp::Importer importer;
@@ -855,6 +878,17 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     }
 }
 
+glm::mat4 FUSIONCORE::ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
+{
+    glm::mat4 to;
+
+    to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+    to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+    to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+    to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+    return to;
+}
+
 //Import multiple models into a vector from a directory. It's not safe for files other than mtl(except object supported formats).
 std::vector<std::shared_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel)
 {
@@ -882,4 +916,11 @@ FUSIONCORE::Model* FUSIONCORE::GetModel(unsigned int ModelID)
         return IDmodelMap[ModelID];
     }
     return nullptr;
+}
+
+FUSIONCORE::PreMeshData::PreMeshData(std::vector<FUSIONCORE::Texture2D>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices)
+{
+    this->textures = textures;
+    this->indices = indices;
+    this->vertices = vertices;
 }

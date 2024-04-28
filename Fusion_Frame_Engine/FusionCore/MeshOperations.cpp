@@ -1,6 +1,8 @@
 #include "MeshOperations.h"
 #include "fstream"
 #include <chrono>
+#include <glew.h>
+#include <glfw3.h>
 
 FUSIONCORE::HalfEdge* CreateNewEdge(FUSIONCORE::Vertex* vertex1 , FUSIONCORE::Vertex* vertex2 , 
 	                                std::vector<std::shared_ptr<FUSIONCORE::HalfEdge>> &HalfEdges , 
@@ -804,6 +806,7 @@ std::vector<FUSIONPHYSICS::CollisionBox> FUSIONCORE::MESHOPERATIONS::GridSubdivi
 
 
 	return DividedBoxes;*/
+	return std::vector<FUSIONPHYSICS::CollisionBox>();
 }
 
 void FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO, std::vector<glm::vec3> &InstanceData)

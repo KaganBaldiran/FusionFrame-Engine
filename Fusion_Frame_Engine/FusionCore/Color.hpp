@@ -1,9 +1,8 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionUtility/Log.h"
 #include <map>
+#include "../FusionUtility/FusionDLLExport.h"
 
 namespace FUSIONCORE
 {
@@ -12,7 +11,7 @@ namespace FUSIONCORE
 
 #ifdef COLORS_IMP
 
-	class Color
+    class FUSIONFRAME_EXPORT Color
 	{
 	public:
 

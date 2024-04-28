@@ -1,6 +1,8 @@
 #include "Octtree.hpp"
 #include <map>
 #include <deque>
+#include <glew.h>
+#include <glfw3.h>
 
 glm::vec3 WorldSizeMin;
 glm::vec3 WorldSizeMax;
@@ -236,4 +238,9 @@ void FUSIONPHYSICS::DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode)
 	HeadNode.Objects.clear();
 }
 
-
+FUSIONPHYSICS::QuadNode::QuadNode()
+{
+	NodeID = NodeIDiterator;
+	NodeIDiterator++;
+	SubdivisionCount = 0;
+}

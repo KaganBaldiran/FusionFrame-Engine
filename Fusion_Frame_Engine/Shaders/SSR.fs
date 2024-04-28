@@ -128,7 +128,7 @@ void main()
 
    vec4 AlbedoSpecular = texture(AlbedoSpecularPass, TexCoords);
    vec4 NormalMetalic = texture(NormalMetalicPass, TexCoords);
-   vec4 PositionDepth = textureLod(PositionDepthPass, TexCoords,2);
+   vec4 PositionDepth = texture(PositionDepthPass, TexCoords);
 
    vec3 Albedo = AlbedoSpecular.rgb;
    vec3 Normal = NormalMetalic.rgb;
@@ -141,8 +141,8 @@ void main()
 
    vec4 PosView = ViewMatrix * vec4(Position,1.0f);
    //Normal = Normal * 0.5f + 0.5f;
-   //vec3 NormalView = transpose(mat3(InverseViewMatrix)) * Normal;
-   vec3 NormalView =  Normal;
+   vec3 NormalView = mat3(ViewMatrix) * Normal;
+   //vec3 NormalView =  Normal;
 
    //vec4 NormalView = ViewMatrix * vec4(Normal,1.0f);
    //vec4 NormalView = transpose(InverseViewMatrix) * vec4(Normal,1.0f);

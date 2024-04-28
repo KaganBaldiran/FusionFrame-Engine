@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include "FusionDLLExport.h"
 
 extern std::vector<std::string> logTraceBack;
 
@@ -62,7 +63,7 @@ extern std::vector<std::string> logTraceBack;
        logFile.close(); \
 }
 
-class FFexception : public std::exception
+class FUSIONFRAME_EXPORT FFexception : public std::exception
 {
 public:
 

@@ -1,4 +1,6 @@
 #include "ParticleSystem.hpp"
+#include <glew.h>
+#include <glfw3.h>
 
 namespace FUSIONPHYSICS
 {

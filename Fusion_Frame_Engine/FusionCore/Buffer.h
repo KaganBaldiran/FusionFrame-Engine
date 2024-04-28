@@ -1,10 +1,10 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
+#include "../FusionUtility/FusionDLLExport.h"
+#include "../FusionUtility/VectorMath.h"
 
 namespace FUSIONCORE
 {
-	class Buffer
+	class FUSIONFRAME_EXPORT Buffer
 	{
 	public:
 		Buffer();
@@ -20,8 +20,7 @@ namespace FUSIONCORE
 		GLuint vao, vbo;
 	};
 
-
-	class Buffer3D : public Buffer
+	class FUSIONFRAME_EXPORT Buffer3D : public Buffer
 	{
 	public:
 
@@ -36,8 +35,7 @@ namespace FUSIONCORE
 
 	};
 
-
-	class VBO
+	class FUSIONFRAME_EXPORT VBO
 	{
 	public:
 		VBO();
@@ -51,7 +49,7 @@ namespace FUSIONCORE
 		bool IsChanged;
 	};
 
-	class VAO
+	class FUSIONFRAME_EXPORT VAO
 	{
 	public:
 
@@ -63,7 +61,7 @@ namespace FUSIONCORE
 		GLuint vao;
 	};
 
-	class UBO
+	class FUSIONFRAME_EXPORT UBO
 	{
 	public:
 		UBO();
@@ -77,7 +75,7 @@ namespace FUSIONCORE
 		GLuint ubo;
 	};
 
-	class EBO
+	class FUSIONFRAME_EXPORT EBO
 	{
 	public:
 
@@ -92,7 +90,7 @@ namespace FUSIONCORE
 
 	};
 
-	class SSBO
+	class FUSIONFRAME_EXPORT SSBO
 	{
 	public:
 		void BindSSBO(unsigned int BindingPoint);
@@ -107,22 +105,22 @@ namespace FUSIONCORE
 		GLuint ssbo;
 	};
 
-	struct DrawArraysIndirectCommand {
+	struct FUSIONFRAME_EXPORT DrawArraysIndirectCommand {
 		GLuint Count;
 		GLuint InstanceCount;
 		GLuint First;
 		GLuint BaseInstance;
 	};
 
-	struct DrawElementsIndirectCommand {
-		GLuint Count;       // Number of elements to render
-		GLuint InstanceCount;  // Number of instances
-		GLuint FirstIndex;  // The base index within the index buffer to start drawing from
-		GLuint BaseVertex;  // Offset to add to each index before fetching the vertex data
-		GLuint BaseInstance; // Instance ID of the first instance to draw
+	struct FUSIONFRAME_EXPORT DrawElementsIndirectCommand {
+		GLuint Count;
+		GLuint InstanceCount;
+		GLuint FirstIndex;
+		GLuint BaseVertex;
+		GLuint BaseInstance;
 	};
 
-	class IndirectCommandBuffer
+	class FUSIONFRAME_EXPORT IndirectCommandBuffer
 	{
 	public:
 		IndirectCommandBuffer();
@@ -133,10 +131,10 @@ namespace FUSIONCORE
 		GLuint icb;
 	};
 
-	void BindVBONull();
-	void BindVAONull();
-	void BindEBONull();
-	void BindUBONull();
-	void BindSSBONull();
-	void BindIndirectCommandBufferNull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindVBONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindVAONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindEBONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindUBONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindSSBONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindIndirectCommandBufferNull();
 }

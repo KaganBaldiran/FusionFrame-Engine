@@ -1,4 +1,5 @@
 #pragma once
+#include "FusionCore/Material.hpp"
 #include "FusionUtility/Log.h"
 #include "FusionCore/Shader.h"
 #include "FusionCore/Buffer.h"
@@ -21,29 +22,48 @@
 #include "FusionCore/MeshOperations.h"
 #include "FusionCore/Shapes.hpp"
 #include "FusionPhysics/ParticleSystem.hpp"
+#include "FusionUtility/Definitions.hpp"
+#include "FusionUtility/FusionGL.hpp"
 #include <stdio.h>
+
+struct GLFWmonitor;
 
 namespace FUSIONUTIL
 {
-	glm::vec2 GetMonitorSize();
-	float GetDeltaFrame();
-    static std::shared_ptr<FILE> StartScreenCapturing(const char* FilePath, glm::vec2 ScreenSize) {
-        std::string Command = "ffmpeg -y -f rawvideo -pixel_format rgb24 -video_size " + std::to_string(ScreenSize.x) + "x" + std::to_string(ScreenSize.y) + " -framerate 25 -i - -vf vflip -c:v libx264 -preset ultrafast -crf 0 " + FilePath;        FILE* avconv = _popen(Command.c_str(), "w");
-        return std::shared_ptr<FILE>(avconv, [](FILE* file) { if (file) _pclose(file); });
-    }
+	FUSIONFRAME_EXPORT_FUNCTION glm::vec2 GetMonitorSize();
+	FUSIONFRAME_EXPORT_FUNCTION float GetDeltaFrame();
 
-    static void UpdateScreenCapture(std::shared_ptr<FILE>& RecordingFile, glm::vec2 ScreenSize) {
-        std::vector<unsigned char> pixels(ScreenSize.x * ScreenSize.y * 3);
-        glReadPixels(0, 0, static_cast<GLsizei>(ScreenSize.x), static_cast<GLsizei>(ScreenSize.y), GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
-        if (RecordingFile) {
-            fwrite(pixels.data(), pixels.size(), 1, RecordingFile.get());
-        }
-    }
+	FUSIONFRAME_EXPORT_FUNCTION std::shared_ptr<FILE> StartScreenCapturing(const char* FilePath, glm::vec2 ScreenSize);
+	FUSIONFRAME_EXPORT_FUNCTION void UpdateScreenCapture(std::shared_ptr<FILE>& RecordingFile, glm::vec2 ScreenSize);
+	FUSIONFRAME_EXPORT_FUNCTION void TerminateScreenCapture(std::shared_ptr<FILE>& RecordingFile);
 
-    static void TerminateScreenCapture(std::shared_ptr<FILE>& RecordingFile)
-    {
-        if (RecordingFile) {
-            RecordingFile.reset();
-        }
-    }
+	FUSIONFRAME_EXPORT_FUNCTION glm::dvec2 GetCursorPosition(GLFWwindow* window);
+	FUSIONFRAME_EXPORT_FUNCTION void GetCursorPosition(GLFWwindow* window, double& x, double& y);
+
+	FUSIONFRAME_EXPORT_FUNCTION glm::ivec2 GetWindowSize(GLFWwindow* window);
+	FUSIONFRAME_EXPORT_FUNCTION void GetWindowSize(GLFWwindow* window, int& x, int& y);
+	FUSIONFRAME_EXPORT_FUNCTION glm::ivec2 GetWindowPosition(GLFWwindow* window);
+	FUSIONFRAME_EXPORT_FUNCTION void GetWindowPosition(GLFWwindow* window, int& x, int& y);
+
+	FUSIONFRAME_EXPORT_FUNCTION bool IsKeyPressedOnce(GLFWwindow* window, int Key, bool& Signal);
+	FUSIONFRAME_EXPORT_FUNCTION int GetKey(GLFWwindow* window,int key);
+	FUSIONFRAME_EXPORT_FUNCTION int GetMouseKey(GLFWwindow* window, int key);
+
+	FUSIONFRAME_EXPORT_FUNCTION int WindowShouldClose(GLFWwindow* window);
+
+	FUSIONFRAME_EXPORT struct VideoMode
+	{
+		unsigned int width;
+		unsigned int height;
+		int refreshRate;
+		int redBits;
+		int greenBits;
+		int blueBits;
+	};
+
+	FUSIONFRAME_EXPORT_FUNCTION GLFWmonitor* GetPrimaryMonitor();
+	FUSIONFRAME_EXPORT_FUNCTION VideoMode GetVideoMode(GLFWmonitor* monitor);
+
+	FUSIONFRAME_EXPORT_FUNCTION double GetTime();
 }
+

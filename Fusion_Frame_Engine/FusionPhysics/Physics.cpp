@@ -1,8 +1,15 @@
 #include "Physics.hpp"
+#include <glew.h>
+#include <glfw3.h>
 #include <time.h>
 #include <random>
 #include <chrono>
 #include <unordered_set>
+#include "../FusionUtility/glm/glm.hpp"
+#include "../FusionUtility/glm/gtc/matrix_transform.hpp"
+#include "../FusionUtility/glm/gtc/type_ptr.hpp"
+#include "../FusionUtility/glm/gtx/rotate_vector.hpp"
+#include "../FusionUtility/glm/gtx/vector_angle.hpp"
 
 std::pair<glm::vec3, glm::vec3> FindMinMax(std::vector<FUSIONCORE::Vertex> BoxVertices, glm::mat4 ModelMat4)
 {

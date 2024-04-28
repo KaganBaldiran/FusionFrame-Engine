@@ -1,12 +1,10 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
-#include "Buffer.h"
 #include <map>
 #include "Transformation.hpp"
 #include <unordered_set>
+#include "../FusionUtility/FusionDLLExport.h"
 
 namespace FUSIONPHYSICS
 {
@@ -15,7 +13,7 @@ namespace FUSIONPHYSICS
 
 namespace FUSIONCORE
 {
-    class Object
+    class FUSIONFRAME_EXPORT Object
     {
     protected:
         std::vector<Object*> Children;
@@ -24,18 +22,13 @@ namespace FUSIONCORE
         std::vector<FUSIONPHYSICS::QuadNode*> AssociatedQuads;
     public:
         //Mostly internal use
-        inline void SetAssociatedQuads(const std::vector<FUSIONPHYSICS::QuadNode*> &CurrentQuads) 
-        { 
-            this->AssociatedQuads.assign(CurrentQuads.begin(), CurrentQuads.end());
-        };
-
+        void SetAssociatedQuads(const std::vector<FUSIONPHYSICS::QuadNode*>& CurrentQuads);
+        
         //Returns the objects in the common quad node in a unique manner.
         std::unordered_set<Object*, PointerHash<Object*>> GetUniqueQuadsObjects();
         //Mostly internal use
-        inline void PushBackIntoAssociatedQuads(FUSIONPHYSICS::QuadNode* AssociatedQuad)
-        {
-            this->AssociatedQuads.push_back(AssociatedQuad);
-        };
+        void PushBackIntoAssociatedQuads(FUSIONPHYSICS::QuadNode* AssociatedQuad);
+        
         inline const std::vector<FUSIONPHYSICS::QuadNode*>& GetAssociatedQuads() { return this->AssociatedQuads; };
         void PushChild(Object* child);
         void PopChild();

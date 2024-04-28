@@ -1,4 +1,7 @@
 #include "Light.hpp"
+#include <glew.h>
+#include <glfw3.h>
+
 namespace FUSIONCORE
 {
 	std::unique_ptr<FUSIONCORE::Model> LightIcon;

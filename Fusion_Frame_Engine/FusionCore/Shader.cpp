@@ -3,6 +3,11 @@
 #include <glfw3.h>
 #include <string>
 #include <fstream>
+#include "../FusionUtility/glm/glm.hpp"
+#include "../FusionUtility/glm/gtc/matrix_transform.hpp"
+#include "../FusionUtility/glm/gtc/type_ptr.hpp"
+#include "../FusionUtility/glm/gtx/rotate_vector.hpp"
+#include "../FusionUtility/glm/gtx/vector_angle.hpp"
 
 std::string FUSIONCORE::ReadTextFile(const char* filepath)
 {
@@ -208,4 +213,69 @@ FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* geosourcepath
 GLuint FUSIONCORE::Shader::GetID()
 {
     return shaderID;
+}
+
+void FUSIONCORE::Shader::use()
+{
+    glUseProgram(shaderID);
+}
+
+void FUSIONCORE::Shader::setBool(const std::string& name, bool value) const
+{
+    glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value);
+}
+
+void FUSIONCORE::Shader::setInt(const std::string& name, int value) const
+{
+    glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
+}
+
+void FUSIONCORE::Shader::setFloat(const std::string& name, float value) const
+{
+    glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
+}
+
+void FUSIONCORE::Shader::setVec2(const std::string& name, const glm::vec2& value) const
+{
+    glUniform2fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
+}
+
+void FUSIONCORE::Shader::setVec2(const std::string& name, float x, float y) const
+{
+    glUniform2f(glGetUniformLocation(shaderID, name.c_str()), x, y);
+}
+
+void FUSIONCORE::Shader::setVec3(const std::string& name, const glm::vec3& value) const
+{
+    glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
+}
+
+void FUSIONCORE::Shader::setVec3(const std::string& name, float x, float y, float z) const
+{
+    glUniform3f(glGetUniformLocation(shaderID, name.c_str()), x, y, z);
+}
+
+void FUSIONCORE::Shader::setVec4(const std::string& name, const glm::vec4& value) const
+{
+    glUniform4fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
+}
+
+void FUSIONCORE::Shader::setVec4(const std::string& name, float x, float y, float z, float w)
+{
+    glUniform4f(glGetUniformLocation(shaderID, name.c_str()), x, y, z, w);
+}
+
+void FUSIONCORE::Shader::setMat2(const std::string& name, const glm::mat2& mat) const
+{
+    glUniformMatrix2fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void FUSIONCORE::Shader::setMat3(const std::string& name, const glm::mat3& mat) const
+{
+    glUniformMatrix3fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void FUSIONCORE::Shader::setMat4(const std::string& name, const glm::mat4& mat) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }

@@ -2,13 +2,12 @@
 #ifndef CUBEMAP
 #define CUBEMAP
 
-#include <glew.h>
-#include <glfw3.h>
 #include "Buffer.h"
 #include <vector>
 #include <string>
 #include "Shader.h"
 #include "Camera.h"
+#include "../FusionUtility/FusionDLLExport.h"
 
 #define FF_HDRI_COMPLETE 0x345
 #define FF_HDRI_ERROR 0x346
@@ -16,14 +15,14 @@
 
 namespace FUSIONCORE
 {
-	extern GLuint brdfLUT;
+	FUSIONFRAME_EXPORT_FUNCTION GLuint brdfLUT;
 	
-	std::pair<GLuint, int> HDRItoCubeMap(const char* HDRI, unsigned int CubeMapSize, GLuint HDRItoCubeMapShader);
-	std::pair<GLuint, int> ConvolutateCubeMap(GLuint CubeMap, GLuint ConvolutateCubeMapShader);
-	std::pair<GLuint, int> PreFilterCubeMap(GLuint CubeMap, GLuint PreFilterCubeMapShader);
-	std::pair<GLuint, int> ComputeLUT(Shader& LUTshader);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> HDRItoCubeMap(const char* HDRI, unsigned int CubeMapSize, GLuint HDRItoCubeMapShader);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> ConvolutateCubeMap(GLuint CubeMap, GLuint ConvolutateCubeMapShader);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> PreFilterCubeMap(GLuint CubeMap, GLuint PreFilterCubeMapShader);
+	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> ComputeLUT(Shader& LUTshader);
 
-	class CubeMap
+	 class FUSIONFRAME_EXPORT CubeMap
 	{
 	public:
 
@@ -49,7 +48,7 @@ namespace FUSIONCORE
 		GLuint ConvDiffCubeMap;
 	};
 
-	int ImportCubeMap(const char* HDRIfilePath, unsigned int CubeMapSize, CubeMap& cubemap, GLuint HDRItoCubeMapShader, GLuint ConvolutateCubeMapShader, GLuint PrefilterHDRIShader);
+	FUSIONFRAME_EXPORT_FUNCTION int ImportCubeMap(const char* HDRIfilePath, unsigned int CubeMapSize, CubeMap& cubemap, GLuint HDRItoCubeMapShader, GLuint ConvolutateCubeMapShader, GLuint PrefilterHDRIShader);
 }
 
 #endif 

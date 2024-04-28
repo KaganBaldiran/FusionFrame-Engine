@@ -1,5 +1,13 @@
 #include "Object.hpp"
 #include "../FusionPhysics/Octtree.hpp"
+#include <glew.h>
+#include <glfw3.h>
+#include "Buffer.h"
+
+void FUSIONCORE::Object::SetAssociatedQuads(const std::vector<FUSIONPHYSICS::QuadNode*>& CurrentQuads)
+{
+	this->AssociatedQuads.assign(CurrentQuads.begin(), CurrentQuads.end());
+};
 
 std::unordered_set<FUSIONCORE::Object*, PointerHash<FUSIONCORE::Object*>> FUSIONCORE::Object::GetUniqueQuadsObjects()
 {
@@ -26,6 +34,11 @@ std::unordered_set<FUSIONCORE::Object*, PointerHash<FUSIONCORE::Object*>> FUSION
 	}
 	return UniqueBoxes;
 }
+
+void FUSIONCORE::Object::PushBackIntoAssociatedQuads(FUSIONPHYSICS::QuadNode* AssociatedQuad)
+{
+	this->AssociatedQuads.push_back(AssociatedQuad);
+};
 
 void FUSIONCORE::Object::PushChild(Object* child)
 {

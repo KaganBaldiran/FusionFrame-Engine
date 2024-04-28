@@ -1,6 +1,8 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <glew.h>
+#include <glfw3.h>
 
 FUSIONCORE::Texture2D::Texture2D(const char* filePath , GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter , GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip)
 {

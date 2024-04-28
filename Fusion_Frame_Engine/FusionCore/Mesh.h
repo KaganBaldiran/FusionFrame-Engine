@@ -1,15 +1,10 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include "Buffer.h"
 #include "Camera.h"
 #include "Texture.h"
 #include <functional>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include "Shader.h"
 #include "Material.hpp"
 #include <queue>
@@ -19,16 +14,17 @@
 #include "Transformation.hpp"
 #include "HalfEdge.hpp"
 #include "unordered_map"
+#include "../FusionUtility/FusionDLLExport.h"
 
 namespace FUSIONCORE
 {
-	struct BoneInfo
+	struct FUSIONFRAME_EXPORT BoneInfo
 	{
 		int id;
 		glm::mat4 OffsetMat;
 	};
 
-	struct Vec3Hash {
+	struct FUSIONFRAME_EXPORT Vec3Hash {
 		size_t operator()(const glm::vec3& v) const
 		{
 			size_t h1 = std::hash<float>()(v.x);
@@ -44,7 +40,7 @@ namespace FUSIONCORE
 		}
 	};
 
-	struct PairVec3Hash {
+	struct FUSIONFRAME_EXPORT PairVec3Hash {
 		size_t operator()(const std::pair<glm::vec3, glm::vec3>& p) const
 		{
 			size_t h1 = Vec3Hash()(p.first);
@@ -58,7 +54,7 @@ namespace FUSIONCORE
 		}
 	};
 
-	class Mesh
+	class FUSIONFRAME_EXPORT Mesh
 	{
 	private:
 		IndirectCommandBuffer IndirectCommandDataBuffer;
@@ -82,38 +78,28 @@ namespace FUSIONCORE
 
 	public:
 
-		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<Texture2D>& textures_i);
-		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i , std::vector<std::shared_ptr<Face>>& Faces, std::vector<Texture2D>& textures_i);
+		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<Texture2D>& textures_i);
+		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<Texture2D>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
-		void Draw(Camera3D& camera, Shader& shader , Material material, std::function<void()>& ShaderPreperations);
-		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations , CubeMap& cubeMap,Material material, float EnvironmentAmbientAmount = 0.2f);
-		void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount , size_t PrimCount);
+		void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
+		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);
+		void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount, size_t PrimCount);
 		void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations, size_t PrimCount);
 		void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
 		void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 
 		void DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
 
-		void SetIndirectCommandBuffer(unsigned int InstanceCount , unsigned int BaseVertex, unsigned int BaseIndex,unsigned int BaseInstance);
+		void SetIndirectCommandBuffer(unsigned int InstanceCount, unsigned int BaseVertex, unsigned int BaseIndex, unsigned int BaseInstance);
 		void ConstructHalfEdges();
 
-		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap,float EnvironmentAmbientAmount = 0.2f);
+		void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, float EnvironmentAmbientAmount = 0.2f);
 		void ConstructMesh();
 
 		Material ImportedMaterial;
 		std::string MeshName;
 
-		void Clean()
-		{
-			ObjectBuffer.clean();
-			for (auto it = ImportedMaterial.GetTextureMaps().begin(); it != ImportedMaterial.GetTextureMaps().end(); ++it)
-			{
-				if (it->second->GetTextureState() == FF_TEXTURE_SUCCESS)
-				{
-				   it->second->Clear();
-				}
-			}			
-		}
+		void Clean();
 
 		inline std::vector<std::shared_ptr<HalfEdge>>& GetHalfEdges() { return this->HalfEdges; };
 		inline std::vector<std::shared_ptr<Face>>& GetFaces() { return this->Faces; };

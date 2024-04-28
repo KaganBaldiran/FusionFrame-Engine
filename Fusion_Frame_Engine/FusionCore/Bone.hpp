@@ -1,34 +1,33 @@
 #pragma once
-#include <glew.h>
-#include <glfw3.h>
 #include "../FusionUtility/Log.h"
 #include "../FusionUtility/VectorMath.h"
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "../FusionUtility/FusionDLLExport.h"
+
+//Forward declaration
+struct aiNodeAnim;
 
 namespace FUSIONCORE
 {
-	struct KeyPosition
+	struct FUSIONFRAME_EXPORT KeyPosition
 	{
 		glm::vec3 Position;
 		float timeStamp;
 	};
 
-	struct KeyRotation
+	struct FUSIONFRAME_EXPORT KeyRotation
 	{
 		glm::quat Orientation;
 		float timeStamp;
 	};
 
-	struct KeyScale
+	struct FUSIONFRAME_EXPORT KeyScale
 	{
 		glm::vec3 Scale;
 		float timeStamp;
 	};
 
-	class Bone
+	class FUSIONFRAME_EXPORT Bone
 	{
 	private:
 		std::vector<KeyPosition> Positions;
@@ -48,56 +47,9 @@ namespace FUSIONCORE
 		glm::mat4 InterpolateRotation(float AnimationTime);
 		glm::mat4 InterpolateScaling(float AnimationTime);
 
-
 	public:
 
-		Bone(const std::string& name, int ID, aiNodeAnim* channel) : Name(name), ID(ID), LocalTransform(1.0f)
-		{
-			NumberOfPositions = channel->mNumPositionKeys;
-
-			for (size_t i = 0; i < NumberOfPositions; i++)
-			{
-				aiVector3D aiPosition = channel->mPositionKeys[i].mValue;
-				float timeStamp = channel->mPositionKeys[i].mTime;
-				KeyPosition data;
-				data.Position.x = aiPosition.x;
-				data.Position.y = aiPosition.y;
-				data.Position.z = aiPosition.z;
-
-				data.timeStamp = timeStamp;
-				Positions.push_back(data);
-			}
-
-			NumberOfRotations = channel->mNumRotationKeys;
-
-			for (size_t i = 0; i < NumberOfRotations; i++)
-			{
-				aiQuaternion Orientation = channel->mRotationKeys[i].mValue;
-				float timeStamp = channel->mRotationKeys[i].mTime;
-
-				KeyRotation data;
-				data.Orientation = glm::quat(Orientation.w, Orientation.x, Orientation.y, Orientation.z);
-				data.timeStamp = timeStamp;
-				Rotations.push_back(data);
-			}
-
-			NumberOfScalings = channel->mNumScalingKeys;
-
-			for (size_t i = 0; i < NumberOfScalings; i++)
-			{
-				aiVector3D scale = channel->mScalingKeys[i].mValue;
-				float timeStamp = channel->mScalingKeys[i].mTime;
-
-				KeyScale data;
-				data.Scale.x = scale.x;
-				data.Scale.y = scale.y;
-				data.Scale.z = scale.z;
-
-				data.timeStamp = timeStamp;
-				Scales.push_back(data);
-			}
-		}
-
+		Bone(const std::string& name, int ID, aiNodeAnim* channel);
 		void Update(float AnimationTime);
 
 		glm::mat4 GetLocalTransformation() { return this->LocalTransform; };

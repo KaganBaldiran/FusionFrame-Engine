@@ -1,15 +1,16 @@
 #pragma once
 #include "Animation.hpp"
+#include "../FusionUtility/FusionDLLExport.h"
 
 #define MAX_BONE_COUNT 100
 
 namespace FUSIONCORE
 {
-	extern std::unique_ptr<UBO> AnimationUniformBufferObject;
+	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<UBO> AnimationUniformBufferObject;
 
-	void InitializeAnimationUniformBuffer();
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeAnimationUniformBuffer();
 
-	class Animator
+	class FUSIONFRAME_EXPORT Animator
 	{
 	public: 
 		Animator(Animation* Animation);

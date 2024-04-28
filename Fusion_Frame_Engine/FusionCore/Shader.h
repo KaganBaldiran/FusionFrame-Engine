@@ -1,17 +1,9 @@
 #pragma once
-#include <glew.h>
 #include <vector>
 #include <iostream>
 #include <string>
-#include "../FusionUtility/glm/glm.hpp"
-#include "../FusionUtility/glm/gtc/matrix_transform.hpp"
-#include "../FusionUtility/glm/gtc/type_ptr.hpp"
-#include "../FusionUtility/glm/gtx/rotate_vector.hpp"
-#include "../FusionUtility/glm/gtx/vector_angle.hpp"
-
-typedef float GLfloat;
-typedef int GLint;
-typedef unsigned int GLuint;
+#include "../FusionUtility/VectorMath.h"
+#include "../FusionUtility/FusionDLLExport.h"
 
 #ifndef SHADER
 #define SHADER 1
@@ -20,18 +12,18 @@ typedef unsigned int GLuint;
 
 namespace FUSIONCORE
 {
-    std::string ReadTextFile(const char* filepath);
-    GLuint CompileVertShader(const char* vertexsource);
-    GLuint CompileFragShader(const char* fragmentsource);
-    GLuint CompileGeoShader(const char* Geosource);
-    GLuint CompileComputeShader(const char* Computesource);
-    GLuint CompileShaderProgram(GLuint ComputeShader);
-    GLuint CompileShaderProgram(GLuint vertexshader, GLuint fragmentshader);
-    GLuint CompileShaderProgram(GLuint vertexshader, GLuint geoshader, GLuint fragmentshader);
-    void UseShaderProgram(GLuint program);
-    void DeleteShaderProgram(GLuint program);
+    FUSIONFRAME_EXPORT_FUNCTION std::string ReadTextFile(const char* filepath);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileVertShader(const char* vertexsource);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileFragShader(const char* fragmentsource);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileGeoShader(const char* Geosource);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileComputeShader(const char* Computesource);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileShaderProgram(GLuint ComputeShader);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileShaderProgram(GLuint vertexshader, GLuint fragmentshader);
+    FUSIONFRAME_EXPORT_FUNCTION GLuint CompileShaderProgram(GLuint vertexshader, GLuint geoshader, GLuint fragmentshader);
+    FUSIONFRAME_EXPORT_FUNCTION void UseShaderProgram(GLuint program);
+    FUSIONFRAME_EXPORT_FUNCTION void DeleteShaderProgram(GLuint program);
 
-    class Shader
+    class FUSIONFRAME_EXPORT Shader
     {
     public:
 
@@ -41,69 +33,30 @@ namespace FUSIONCORE
 
         GLuint GetID();
 
-        inline void use()
-        {
-            glUseProgram(shaderID);
-        }
+        void use();
+        
         // utility uniform functions
         // ------------------------------------------------------------------------
-        inline void setBool(const std::string& name, bool value) const
-        {
-            glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value);
-        }
+        void setBool(const std::string& name, bool value) const;
         // ------------------------------------------------------------------------
-        inline void setInt(const std::string& name, int value) const
-        {
-            glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
-        }
+        void setInt(const std::string& name, int value) const;
         // ------------------------------------------------------------------------
-        inline void setFloat(const std::string& name, float value) const
-        {
-            glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
-        }
+        void setFloat(const std::string& name, float value) const;
         // ------------------------------------------------------------------------
-        inline void setVec2(const std::string& name, const glm::vec2& value) const
-        {
-            glUniform2fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
-        }
-        inline void setVec2(const std::string& name, float x, float y) const
-        {
-            glUniform2f(glGetUniformLocation(shaderID, name.c_str()), x, y);
-        }
+        void setVec2(const std::string& name, const glm::vec2& value) const;
+        void setVec2(const std::string& name, float x, float y) const;
         // ------------------------------------------------------------------------
-        inline void setVec3(const std::string& name, const glm::vec3& value) const
-        {
-            glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
-        }
-        inline void setVec3(const std::string& name, float x, float y, float z) const
-        {
-            glUniform3f(glGetUniformLocation(shaderID, name.c_str()), x, y, z);
-        }
+        void setVec3(const std::string& name, const glm::vec3& value) const;
+        void setVec3(const std::string& name, float x, float y, float z) const;
         // ------------------------------------------------------------------------
-        inline void setVec4(const std::string& name, const glm::vec4& value) const
-        {
-            glUniform4fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
-        }
-        inline void setVec4(const std::string& name, float x, float y, float z, float w)
-        {
-            glUniform4f(glGetUniformLocation(shaderID, name.c_str()), x, y, z, w);
-        }
+        void setVec4(const std::string& name, const glm::vec4& value) const;
+        void setVec4(const std::string& name, float x, float y, float z, float w);
         // ------------------------------------------------------------------------
-        inline void setMat2(const std::string& name, const glm::mat2& mat) const
-        {
-            glUniformMatrix2fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-        }
+        void setMat2(const std::string& name, const glm::mat2& mat) const;
         // ------------------------------------------------------------------------
-        inline void setMat3(const std::string& name, const glm::mat3& mat) const
-        {
-            glUniformMatrix3fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-        }
+        void setMat3(const std::string& name, const glm::mat3& mat) const;
         // ------------------------------------------------------------------------
-        inline void setMat4(const std::string& name, const glm::mat4& mat) const
-        {
-            glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-        }
-
+        void setMat4(const std::string& name, const glm::mat4& mat) const;
     private:
 
         GLuint shaderID;

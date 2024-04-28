@@ -5,6 +5,16 @@
 #include <string>
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "FusionDLLExport.h"
+
+// Forward declarations for OpenGL types
+typedef unsigned int GLuint;
+typedef int GLint;
+typedef unsigned int GLenum;
+typedef unsigned int GLbitfield;
+typedef int GLsizei;
+typedef unsigned char GLboolean;
+typedef long long GLsizeiptr;
 
 //Utility functions and definitions//>
 #define MAX(a, b) ((a)>(b)? (a) : (b))
@@ -14,17 +24,17 @@ typedef unsigned int uint;
 typedef short int int16;
 typedef long long int int64;
 
-float Q_rsqrt(float number);
-int GiveRandomNumf(int min, int max, int sizeofarray, bool exclude_on_off, int numtoexclude);
+FUSIONFRAME_EXPORT_FUNCTION float Q_rsqrt(float number);
+FUSIONFRAME_EXPORT_FUNCTION int GiveRandomNumf(int min, int max, int sizeofarray, bool exclude_on_off, int numtoexclude);
 
-glm::vec3 ProjectVectorOntoPlane(glm::vec3 PlaneNormal, glm::vec3 Vector);
+FUSIONFRAME_EXPORT_FUNCTION glm::vec3 ProjectVectorOntoPlane(glm::vec3 PlaneNormal, glm::vec3 Vector);
 // // // // // // // // // // // // //<
 
 /// <summary>
 /// Math class that describes a 2D vector with complete set of parameters and functions
 /// </summary>
 template<typename T>
-struct Vec2
+struct FUSIONFRAME_EXPORT Vec2
 {
 	T x;
 	T y;
@@ -209,7 +219,7 @@ struct Vec2
 /// Math class that describes a 3D vector with complete set of parameters and functions
 /// </summary>
 template<typename T>
-struct Vec3
+struct FUSIONFRAME_EXPORT Vec3
 {
 	T x;
 	T y;
@@ -401,7 +411,7 @@ struct Vec3
 /// Math class that describes a 4D vector with complete set of parameters and functions
 /// </summary>
 template<typename T>
-struct Vec4
+struct FUSIONFRAME_EXPORT Vec4
 {
 	T x;
 	T y;
@@ -622,7 +632,7 @@ struct Vec4
 };
 
 template<long int size, typename T>
-struct Vec_n
+struct FUSIONFRAME_EXPORT Vec_n
 {
 	T members[size];
 
@@ -644,7 +654,7 @@ struct Vec_n
 };
 
 template<typename T>
-struct PointerHash
+struct FUSIONFRAME_EXPORT PointerHash
 {
 	size_t operator()(const T& Object) const
 	{
@@ -653,7 +663,7 @@ struct PointerHash
 };
 
 template<typename T>
-struct ObjectHash
+struct FUSIONFRAME_EXPORT ObjectHash
 {
 	size_t operator()(const T& Object) const
 	{
@@ -662,7 +672,7 @@ struct ObjectHash
 };
 
 
-struct IntHash
+struct FUSIONFRAME_EXPORT IntHash
 {
 	size_t operator()(const int& Object) const
 	{

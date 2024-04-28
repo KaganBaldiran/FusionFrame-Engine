@@ -1,4 +1,14 @@
 #include "Material.hpp"
+#include <glew.h>
+#include <glfw3.h>
+
+FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo)
+{
+	this->roughness = roughness;
+	this->metalic = metalic;
+	this->Albedo = Albedo;
+	std::fill_n(this->DisableClayMaterial, 5, 1);
+}
 
 void FUSIONCORE::Material::PushTextureMap(const char* Key, Texture2D& TextureMap)
 {
@@ -86,4 +96,19 @@ void FUSIONCORE::Material::Clean()
 	{
 		it->second->Clear();
 	}
+}
+
+void FUSIONCORE::SetEnvironment(Shader& shader, float FogIntesity, glm::vec3 FogColor, glm::vec3 EnvironmentRadiance)
+{
+	shader.setFloat("FogIntesityUniform", FogIntesity);
+	shader.setVec3("FogColor", FogColor);
+	shader.setBool("IBLfog", false);
+	shader.setVec3("EnvironmentRadiance", EnvironmentRadiance);
+}
+
+void FUSIONCORE::SetEnvironmentIBL(Shader& shader, float FogIntesity, glm::vec3 EnvironmentRadiance)
+{
+	shader.setFloat("FogIntesityUniform", FogIntesity);
+	shader.setBool("IBLfog", true);
+	shader.setVec3("EnvironmentRadiance", EnvironmentRadiance);
 }

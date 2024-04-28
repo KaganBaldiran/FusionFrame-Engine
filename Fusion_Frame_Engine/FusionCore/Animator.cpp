@@ -1,4 +1,6 @@
 #include "Animator.hpp"
+#include <glew.h>
+#include <glfw3.h>
 
 namespace FUSIONCORE
 {

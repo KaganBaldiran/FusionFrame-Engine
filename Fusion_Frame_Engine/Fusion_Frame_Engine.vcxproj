@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -203,6 +203,7 @@
     <ClCompile Include="FusionPhysics\Physics.cpp" />
     <ClCompile Include="FusionUtility\Initialize.cpp" />
     <ClCompile Include="FusionUtility\Log.cpp" />
+    <ClCompile Include="FusionUtility\FusionGL.cpp" />
     <ClCompile Include="FusionUtility\StopWatch.cpp" />
     <ClCompile Include="FusionUtility\VectorMath.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -236,9 +237,12 @@
     <ClInclude Include="FusionPhysics\ParticleSystem.hpp" />
     <ClInclude Include="FusionPhysics\Physics.hpp" />
     <ClInclude Include="FusionPhysics\QuickHull.hpp" />
+    <ClInclude Include="FusionUtility\Definitions.hpp" />
+    <ClInclude Include="FusionUtility\FusionDLLExport.h" />
     <ClInclude Include="FusionUtility\Hashing.hpp" />
     <ClInclude Include="FusionUtility\Initialize.h" />
     <ClInclude Include="FusionUtility\Log.h" />
+    <ClInclude Include="FusionUtility\FusionGL.hpp" />
     <ClInclude Include="FusionUtility\StopWatch.h" />
     <ClInclude Include="FusionUtility\Thread.h" />
     <ClInclude Include="FusionUtility\VectorMath.h" />

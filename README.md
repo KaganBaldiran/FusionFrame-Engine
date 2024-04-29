@@ -32,8 +32,7 @@ Mesh utility algorithms like quickhull to create collision boxes are also in the
 The overall API is pretty simple and user friendly.
 I'll try to demonstrate some of the functionality to get you started
 
-To initialize the window and the resources
-
+- Initializing the window and the resources
 ```cpp
 const int width = 1000;
 const int height = 1000;
@@ -44,6 +43,18 @@ FUSIONUTIL::InitializeDefaultShaders(Shaders);
 FUSIONCORE::SHAPES::InitializeShapeBuffers();
 ```
 
+- Importing a HDRI
+```cpp
+FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
+FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+```
+
+- Engine supports both deferred and forward rendering so you can use a gbuffer to use deferred rendering.
+```cpp
+const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
+FUSIONCORE::Gbuffer Gbuffer(mode.width, mode.height);
+FUSIONCORE::FrameBuffer ScreenFrameBuffer(mode.width, mode.height);
+```
 
 ## Current Look
 

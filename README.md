@@ -42,7 +42,8 @@ GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, 4, 6, "FusionFr
 FUSIONUTIL::DefaultShaders Shaders;
 FUSIONUTIL::InitializeDefaultShaders(Shaders);
 FUSIONCORE::SHAPES::InitializeShapeBuffers();
-```cpp
+```
+
 
 ## Current Look
 

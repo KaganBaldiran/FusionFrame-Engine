@@ -28,6 +28,22 @@ Also planning to implement a voxel based GI soon.
 Also using half-edge data structure , wrote couple of premature mesh algorithms like subdivision for triangular meshes. 
 Mesh utility algorithms like quickhull to create collision boxes are also in the TO-DO list
 
+## Documentation
+The overall API is pretty simple and user friendly.
+I'll try to demonstrate some of the functionality to get you started
+
+To initialize the window and the resources
+
+```cpp
+const int width = 1000;
+const int height = 1000;
+
+GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, 4, 6, "FusionFrame Engine");
+FUSIONUTIL::DefaultShaders Shaders;
+FUSIONUTIL::InitializeDefaultShaders(Shaders);
+FUSIONCORE::SHAPES::InitializeShapeBuffers();
+```cpp
+
 ## Current Look
 
 ![winter_scene_fusion_frame](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/d25d1d46-5a58-4e8b-a983-e5c705a62c44)

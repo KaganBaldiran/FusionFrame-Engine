@@ -7,6 +7,8 @@ uniform sampler2D DepthAttac;
 uniform sampler2D SSRtexture;
 uniform sampler2D IDtexture;
 
+uniform sampler2DArray CascadeShadowMaps1024;
+
 uniform float FarPlane;
 uniform float NearPlane;
 uniform vec3 CamPos;
@@ -61,6 +63,10 @@ void main()
     
 	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);
     FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
+	//vec2 Coords = TexCoords * 0.5f + vec2(0.5f,0.0f);
+
+    //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
+
 	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
    // FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
     //FragColor = vec4(vec3(texture(IDtexture, TexCoords).x / 10.0f),1.0f);

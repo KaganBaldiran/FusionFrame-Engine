@@ -6,7 +6,7 @@ namespace FUSIONCORE
 {
 	std::unique_ptr<FUSIONCORE::Model> LightIcon;
 
-	std::unordered_map<int, LightData> LightDatas;
+	std::map<int, LightData> LightDatas;
 	int LightCount;
 	std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
 }
@@ -33,6 +33,7 @@ void InsertLightData(glm::vec3 Position_Direction,float Radius, glm::vec3 Color,
 	newLightData.Position = glm::vec4(Position_Direction, 1.0f);
 	newLightData.Intensity = intensity;
 	newLightData.Radius = Radius;
+	newLightData.ShadowMapIndex = -1;
 
 	FUSIONCORE::LightDatas[LightID] = newLightData;
 }

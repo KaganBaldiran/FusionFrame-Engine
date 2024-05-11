@@ -82,9 +82,6 @@
     <None Include="Shaders\CascadedDirectionalShadowShader.vs">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\CascadedDirectionalShadowShader.gs">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\CascadedDirectionalShadowShader.fs">
       <Filter>Shaders</Filter>
     </None>
@@ -122,6 +119,15 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\ShapeTextured.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\CascadedDirectionalShadowShader.gs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\CascadedDirectionalShadowShaderBasic.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\CascadedShadowMapsLightSpaceMatrix.comp.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

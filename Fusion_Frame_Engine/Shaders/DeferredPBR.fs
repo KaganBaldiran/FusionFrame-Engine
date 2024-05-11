@@ -18,6 +18,7 @@ uniform bool DOFenabled;
 uniform float DOFintensity;
 
 #define MAX_LIGHT_COUNT 100
+#define MAX_SHADOWMAP_COUNT 10
 #define POINT_LIGHT 0x56400
 #define DIRECTIONAL_LIGHT 0x56401
 #define SPOT_LIGHT 0x56402
@@ -38,25 +39,31 @@ uniform float ao;
 //uniform float ModelID;
 uniform float ObjectScale;
 
-uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT / 10];
-uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT / 10];
-uniform int OmniShadowMapsLightIDS[MAX_LIGHT_COUNT];
+uniform float ShadowMapFarPlane[MAX_SHADOWMAP_COUNT];
+uniform samplerCube OmniShadowMaps[MAX_SHADOWMAP_COUNT];
 
-#define MAX_CASCADE_PLANE_COUNT 16
-uniform int CascadeCount;
+#define MAX_CASCADE_PLANE_COUNT 5
 
-uniform sampler2DArray SunShadowMap;
-uniform float CascadeShadowPlaneDistances[MAX_CASCADE_PLANE_COUNT];
+uniform sampler2DArray CascadeShadowMaps;
 uniform mat4 ViewMatrix;
-uniform int CascadeShadowMapLightID;
+
+struct CascadedMapMetaData
+{
+	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT];
+	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT];
+	vec4 LightDirection;
+	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT];
+	float Layer[MAX_CASCADE_PLANE_COUNT];
+	float CascadeCount;
+};
+
+layout(std430, binding = 2) readonly buffer CascadedMapMetaDatas
+{
+    CascadedMapMetaData ShadowMapMetaDatas[];
+};
 
 uniform vec2 screenSize;
-uniform vec3 gridSize;
-
-layout (std140) uniform LightSpaceMatrices
-{
-    mat4 lightSpaceMatrices[16];
-};
+//uniform vec3 gridSize;
 
 struct Light
 {
@@ -65,22 +72,10 @@ struct Light
   int Type;
   float Intensity;
   float Radius;
+  int ShadowMapIndex;
 };
 
 #define MAX_LIGHT_PER_CLUSTER 100
-
-struct Cluster
-{
-    vec4 Min;
-    vec4 Max;
-    uint Count;
-    uint LightIndices[MAX_LIGHT_PER_CLUSTER];
-};
-
-layout(std430, binding = 0) restrict buffer ClusterData
-{
-    Cluster Clusters[];
-};
 
 layout(std430 , binding = 4) restrict buffer LightsDatas
 {
@@ -90,15 +85,17 @@ layout(std430 , binding = 4) restrict buffer LightsDatas
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
    
-float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowMapArray , vec3 N, vec3 LightDirection)
+float CascadedDirectionalShadowCalculation(vec3 fragPos, CascadedMapMetaData MetaData,vec3 N, vec3 LightDirection)
 {
-    vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
-    float Depth = abs(FragPosView.z);
+     vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
+     float Depth = abs(FragPosView.z);
 
-    int Layer = -1;
+     int CascadeCount = int(MetaData.CascadeCount);
+
+     int Layer = -1;
      for (int i = 0; i < CascadeCount; ++i)
      {
-        if(Depth < CascadeShadowPlaneDistances[i])
+        if(Depth < MetaData.ShadowCascadeLevels[i])
         {
           Layer = i;
           break;
@@ -106,12 +103,16 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowM
      }
      if(Layer == -1)
      {
-      Layer = CascadeCount;
+       Layer = CascadeCount;
      }
 
-     vec4 FragPosLightSpace = lightSpaceMatrices[Layer] * vec4(fragPos,1.0f);
+     vec4 FragPosLightSpace = MetaData.LightMatrices[Layer] * vec4(fragPos,1.0f);
      vec3 ProjectedCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
      ProjectedCoords = ProjectedCoords * 0.5f + 0.5f;
+
+     vec4 PositionAndSize = MetaData.PositionAndSize[Layer];
+     //ProjectedCoords.xy = ProjectedCoords.xy * (float(PositionAndSize.z) / CascadeShadowMapTextureSizeLimit) + (PositionAndSize.xy / CascadeShadowMapTextureSizeLimit);
+     ProjectedCoords.xy = (ProjectedCoords.xy * PositionAndSize.z) + PositionAndSize.xy;
 
      float CurrentDepth = ProjectedCoords.z;
      if(CurrentDepth > 1.0f)
@@ -121,7 +122,8 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowM
 
      vec3 normal = N;
      float bias = max(0.05 * (1.0f - dot(normal , LightDirection)) , 0.005);
-     const float BiasMultiplier = 0.5f;
+     //const float BiasMultiplier = 0.5f;
+     const float BiasMultiplier = PositionAndSize.z;
 
      if(Layer == CascadeCount)
      {
@@ -129,16 +131,19 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos , sampler2DArray ShadowM
      }
      else
      {
-        bias *= 1 / (CascadeShadowPlaneDistances[Layer] * BiasMultiplier);
+        bias *= 1 / (MetaData.ShadowCascadeLevels[Layer] * BiasMultiplier);
      }
 
+     Layer = int(MetaData.Layer[Layer]);
+
      float shadow = 0.0f;
-     vec2 TexelSize = 1.0f / vec2(textureSize(ShadowMapArray,0));
+     vec2 TexelSize = 1.0f / vec2(textureSize(CascadeShadowMaps,0));
+     //vec2 TexelSize = 1.0f / PositionAndSize.zw;
      for(int x = -1; x <= 1; ++x)
      {
         for(int y = -1; y <= 1; ++y)
         {
-           float FilteredDepth = texture(ShadowMapArray,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layer)).r;
+           float FilteredDepth = texture(CascadeShadowMaps,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layer)).r;
            shadow += (CurrentDepth - bias) > FilteredDepth ? 1.0f : 0.0f;
         }
      }
@@ -302,12 +307,24 @@ void main()
             H = normalize(V + L);
             float attenuation = 1.0 / (distance * distance);
             radiance = CurrentLight.Color.xyz * attenuation;
+
+            int OmniShadowMapIndex = CurrentLight.ShadowMapIndex;
+            if(OmniShadowMapIndex >= 0)
+            {
+               shadow = ShadowCalculationOmni(Position,OmniShadowMaps[OmniShadowMapIndex],CurrentLight.Position.xyz , ShadowMapFarPlane[OmniShadowMapIndex]);
+            }
           }
           else if(CurrentLight.Type == DIRECTIONAL_LIGHT)
           {
             L = normalize(CurrentLight.Position.xyz);
             H = normalize(V + L); 
             radiance = CurrentLight.Color.xyz;
+
+            int DirectionalShadowMapIndex = CurrentLight.ShadowMapIndex;
+            if(DirectionalShadowMapIndex >= 0)
+            {
+               shadow = CascadedDirectionalShadowCalculation(Position,ShadowMapMetaDatas[DirectionalShadowMapIndex],N , CurrentLight.Position.xyz);
+            }
           }
           float NDF = DistributionGGX(N,H,roughness);
           float G = GeometrySmith(N,V,L,roughness);
@@ -323,22 +340,6 @@ void main()
           vec3 specular = numerator / denominator;
 
           float NdotL = max(dot(N,L),0.0);
-
-          if(i < OmniShadowMapCount)
-          {
-             shadow = ShadowCalculationOmni(Position,OmniShadowMaps[i],CurrentLight.Position.xyz , ShadowMapFarPlane[i]);
-          }
-          if(i == LightCount - 1)
-          {
-             shadow = CascadedDirectionalShadowCalculation(Position,SunShadowMap,N , CurrentLight.Position.xyz);
-          }
-    
-          /*
-          else
-          {
-             Lo += (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
-          }
-          */
 
           Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
 
@@ -392,7 +393,7 @@ void main()
       }
 
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
-      //FragColor = vec4(vec3(SceneAlpha), 1.0); 
+     // FragColor = texture(CascadeShadowMaps[0],-N,2); 
       Depth = vec4(Position,1.0f);
       ID = vec4(vec3(ModelID),1.0f);
 }

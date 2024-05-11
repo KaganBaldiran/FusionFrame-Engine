@@ -6,7 +6,10 @@
 #include <memory>
 #include "Model.hpp"
 #include "../FusionUtility/FusionDLLExport.h"
+
+#ifndef MAX_LIGHT_COUNT
 #define MAX_LIGHT_COUNT 110
+#endif // !MAX_LIGHT_COUNT
 
 #define FF_POINT_LIGHT 0x56400
 #define FF_DIRECTIONAL_LIGHT 0x56401
@@ -21,10 +24,11 @@ namespace FUSIONCORE
 		int Type;
 		float Intensity;
 		float Radius;
+		int ShadowMapIndex;
 	};
 
 	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<Model> LightIcon;
-	FUSIONFRAME_EXPORT_FUNCTION std::unordered_map<int, LightData> LightDatas;
+	FUSIONFRAME_EXPORT_FUNCTION std::map<int, LightData> LightDatas;
 	FUSIONFRAME_EXPORT_FUNCTION int LightCount;
 	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
 

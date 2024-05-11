@@ -98,7 +98,7 @@ struct alignas(16) Cluster
 	uint LightIndices[MAX_LIGHT_PER_CLUSTER];
 };
 
-FUSIONCORE::Camera3D::Camera3D(glm::vec3 ClusterGridSize)
+FUSIONCORE::Camera3D::Camera3D()
 {
 	this->RatioMat = glm::mat4(1.0f);
 	this->projMat = glm::mat4(1.0f);
@@ -106,12 +106,6 @@ FUSIONCORE::Camera3D::Camera3D(glm::vec3 ClusterGridSize)
 	this->CameraMat = glm::mat4(1.0f);
 
 	targetPosition = glm::vec3(0.0f);
-
-	this->ClusterGridSize = ClusterGridSize;
-
-	ClusterSSBO.Bind();
-	ClusterSSBO.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(Cluster) * ClusterGridSize.x * ClusterGridSize.y * ClusterGridSize.z, nullptr, GL_DYNAMIC_COPY);
-	BindSSBONull();
 }
 
 void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
@@ -280,7 +274,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize
 		float CameraSensitivity = 10.0f;
 		Vec2<double> CurrentMousePos;
 		glfwGetCursorPos(window, &CurrentMousePos.x, &CurrentMousePos.y);
-
+		
 		Vec2<double> deltaMouse(CurrentMousePos - MousePosCamera);
 
 		if (ClampZoom)
@@ -423,6 +417,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize
 	ScrollAmount({ 0,0 });
 }
 
+/*
 void FUSIONCORE::Camera3D::UpdateCameraClusters(Shader& CameraClusterComputeShader, Shader& CameraLightCullingComputeShader)
 {
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -461,6 +456,7 @@ void FUSIONCORE::Camera3D::SendClustersShader(uint BindingPoint)
 {
 	this->ClusterSSBO.BindSSBO(BindingPoint);
 }
+*/
 
 void FUSIONCORE::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {

@@ -5,6 +5,7 @@
 #include "../FusionCore/Cubemap.h"
 #include "../FusionCore/Animator.hpp"
 #include "../FusionCore/Light.hpp"
+#include "../FusionCore/ShadowMaps.hpp"
 #include "../FusionPhysics/ParticleSystem.hpp"
 
 GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion, const char* WindowName)
@@ -91,10 +92,18 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.CubeMapShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CubeMap.vert", "Shaders/CubeMap.frag");
 	shaders.OmniShadowMapShader = std::make_unique<FUSIONCORE::Shader>("Shaders/OmniShadowMap.vs", "Shaders/OmniShadowMap.gs", "Shaders/OmniShadowMap.fs");
 	shaders.GbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/Gbuffer.vs", "Shaders/Gbuffer.fs");
-	shaders.DeferredPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs", "Shaders/DeferredPBR.fs");
+
+	shaders.DeferredPBRshader = std::make_unique<FUSIONCORE::Shader>();
+	shaders.DeferredPBRshader->PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE,"Shaders/DeferredPBR.vs");
+	shaders.DeferredPBRshader->PushShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE,"Shaders/DeferredPBR.fs");
+	shaders.DeferredPBRshader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE, "MAX_LIGHT_COUNT",std::to_string(MAX_LIGHT_COUNT));
+	//LOG(shaders.DeferredPBRshader->GetShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE));
+	shaders.DeferredPBRshader->Compile();
+
 	shaders.InstancedPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/PBR.fs");
 	shaders.InstancedGbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/Gbuffer.fs");
 	shaders.CascadedDirectionalShadowShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShader.vs", "Shaders/CascadedDirectionalShadowShader.gs", "Shaders/CascadedDirectionalShadowShader.fs");
+	shaders.CascadedDirectionalShadowShaderBasic = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShaderBasic.vs", "Shaders/CascadedDirectionalShadowShader.fs");
 	shaders.ParticleSpawnComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesSpawn.comp.glsl");
 	shaders.ParticleUpdateComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesUpdate.comp.glsl");
 	shaders.ParticleRenderShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticleRenderShader.vs", "Shaders/ParticleRenderShader.fs");
@@ -104,6 +113,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.SSRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs","Shaders/SSR.fs");
 	shaders.ShapeBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeBasic.fs");
 	shaders.ShapeTexturedShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeTextured.fs");
+	shaders.CascadedLightSpaceMatrixComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedShadowMapsLightSpaceMatrix.comp.glsl");
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 	FUSIONCORE::InitializeAnimationUniformBuffer();
@@ -129,6 +139,7 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedGbufferShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.InstancedPBRshader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CascadedDirectionalShadowShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.CascadedDirectionalShadowShaderBasic->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleSpawnComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleUpdateComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ParticleRenderShader->GetID());
@@ -138,4 +149,5 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.SSRshader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeBasicShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeTexturedShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.CascadedLightSpaceMatrixComputeShader->GetID());
 }

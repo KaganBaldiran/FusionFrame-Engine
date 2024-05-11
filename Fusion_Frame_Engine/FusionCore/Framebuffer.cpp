@@ -112,7 +112,7 @@ void FUSIONCORE::FrameBuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
+void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,GLuint ShadowMap,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
 {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -138,6 +138,10 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader, std::functi
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, IDtexture);
 	shader.setInt("IDtexture", 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, ShadowMap);
+	shader.setInt("CascadeShadowMaps1024", 4);
 
 	shader.setVec3("CamPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
@@ -266,7 +270,7 @@ void FUSIONCORE::Gbuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> ShadowMaps, CascadedDirectionalShadowMap& sunMap, CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
+void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps, std::vector<CascadedDirectionalShadowMap*> &CascadedDirectionalShadowMaps, CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
 {
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(3, attachments);
@@ -312,18 +316,77 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 	shader.setInt("LUT", 6);
 
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, sunMap.GetShadowMap());
-	shader.setInt("SunShadowMap", 7);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, FUSIONCORE::GetCascadedShadowMapTextureArray());
+	shader.setInt("CascadeShadowMaps", 7);
+
+
+	/*int CascadedDirectionalShadowMapsCount = CascadedDirectionalShadowMaps.size();
+
+	std::vector<CascadedMapMetaData> MetaDataArray;
+	MetaDataArray.reserve(CascadedDirectionalShadowMapsCount);
+	for (size_t i = 0; i < CascadedDirectionalShadowMapsCount; i++)
+	{
+		CascadedMapMetaData CascadedMetaData = CascadedDirectionalShadowMaps[i]->GetMetaData();
+		MetaDataArray.push_back(CascadedMetaData);
+	}*/
+
+	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataUBO();
+	//CascadedShadowMapsMetaData->Bind();
+
+	/*
+	static int CascadedShowMapCountPrevious = 0;
+	if (CascadedShowMapCountPrevious != CascadedDirectionalShadowMapsCount)
+	{
+		void* mappedData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+	    if (mappedData) {
+		   memcpy(mappedData, MetaDataArray.data(), sizeof(CascadedMapMetaData) * MetaDataArray.size());
+		   glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	    }
+		const GLsizei dataSize = sizeof(CascadedMapMetaData) * MetaDataArray.size();
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, dataSize, MetaDataArray.data());
+
+		//const GLsizei dataSize = sizeof(CascadedMapMetaData) * MetaDataArray.size();
+		//glBufferData(GL_SHADER_STORAGE_BUFFER, dataSize, MetaDataArray.data(), GL_STATIC_DRAW);
+
+
+	}
+	else
+	{
+		//if (camera.IsCameraMovedf())
+		//{
+			size_t lightMatricesOffset = offsetof(CascadedMapMetaData, LightMatrices);
+			size_t matrixSize = sizeof(glm::mat4);
+
+			for (size_t i = 0; i < MetaDataArray.size(); i++) {
+				size_t updateOffset = lightMatricesOffset + i * sizeof(CascadedMapMetaData);
+				size_t updateSize = matrixSize * (MetaDataArray[i].CascadeCount + 1);
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, updateOffset, updateSize, &MetaDataArray[i].LightMatrices[0]);
+			}
+
+			void* mappedData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+			if (mappedData) {
+				size_t lightMatricesOffset = offsetof(CascadedMapMetaData, LightMatrices);
+				size_t matrixSize = sizeof(glm::mat4);
+
+				for (size_t i = 0; i < MetaDataArray.size(); i++) {
+					size_t updateOffset = lightMatricesOffset + i * sizeof(CascadedMapMetaData);
+					size_t updateSize = matrixSize * (MetaDataArray[i].CascadeCount + 1);
+					void* updatePtr = static_cast<char*>(mappedData) + updateOffset;
+					memcpy(updatePtr, &MetaDataArray[i].LightMatrices[0], updateSize);
+				}
+				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			}
+		//}
+	}
+	*/
+
+
+	//CascadedShowMapCountPrevious = CascadedDirectionalShadowMapsCount;
+	CascadedShadowMapsMetaData->BindSSBO(2);
+	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//CascadedShadowMapsMetaData->Unbind();
 
 	shader.setMat4("ViewMatrix", camera.viewMat);
-
-	auto& CascadeLevels = sunMap.GetCascadeLevels();
-	shader.setInt("CascadeCount", CascadeLevels.size());
-	shader.setInt("CascadeShadowMapLightID", sunMap.GetBoundLightID());
-	for (size_t i = 0; i < CascadeLevels.size(); i++)
-	{
-		shader.setFloat("CascadeShadowPlaneDistances[" + std::to_string(i) + "]", CascadeLevels[i]);
-	}
 
 	shader.setBool("EnableIBL", true);
 	shader.setFloat("ao", EnvironmentAmbientAmount);
@@ -331,17 +394,15 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 
 	for (size_t i = 0; i < ShadowMaps.size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + 8 + i);
+		glActiveTexture(GL_TEXTURE0 + 7 + CascadedDirectionalShadowMaps.size() + i);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
-		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
+		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 7 + CascadedDirectionalShadowMaps.size() + i);
 		glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
 		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMapsLightIDS[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetBoundLightID());
 	}
 
 	FUSIONCORE::SendLightsShader(shader);
-	camera.SendClustersShader(0);
 
-	shader.setVec3("gridSize", camera.GetClusterGridSize());
 	shader.setVec2("screenSize", glm::vec2(1920, 1080));
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);

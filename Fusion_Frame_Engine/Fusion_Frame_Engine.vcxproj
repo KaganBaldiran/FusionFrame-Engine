@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -142,6 +142,8 @@
     <None Include="Shaders\CascadedDirectionalShadowShader.fs" />
     <None Include="Shaders\CascadedDirectionalShadowShader.gs" />
     <None Include="Shaders\CascadedDirectionalShadowShader.vs" />
+    <None Include="Shaders\CascadedDirectionalShadowShaderBasic.vs" />
+    <None Include="Shaders\CascadedShadowMapsLightSpaceMatrix.comp.glsl" />
     <None Include="Shaders\ConvolutationCubeMap.fs" />
     <None Include="Shaders\ConvolutationCubeMap.vs" />
     <None Include="Shaders\CubeMap.frag" />

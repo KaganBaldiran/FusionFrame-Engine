@@ -2,12 +2,13 @@
 #include "Animation.hpp"
 #include "../FusionUtility/FusionDLLExport.h"
 
+#ifndef MAX_BONE_COUNT
 #define MAX_BONE_COUNT 100
+#endif // !MAX_BONE_COUNT
 
 namespace FUSIONCORE
 {
 	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<UBO> AnimationUniformBufferObject;
-
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeAnimationUniformBuffer();
 
 	class FUSIONFRAME_EXPORT Animator
@@ -29,5 +30,4 @@ namespace FUSIONCORE
 		float CurrentTime;
 		float DeltaTime;
 	};
-
 }

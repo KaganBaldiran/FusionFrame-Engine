@@ -57,7 +57,7 @@ namespace FUSIONCORE
 	{
 	public:
 
-		Camera3D(glm::vec3 ClusterGridSize = glm::vec3(16, 12, 12));
+		Camera3D();
 
 		void UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize);
 		void SetOrientation(glm::vec3 Orien);
@@ -76,10 +76,11 @@ namespace FUSIONCORE
 		inline const float& GetCameraFOV() { return this->FOV; };
 		inline const float& GetCameraAspectRatio() { return this->Aspect; };
 
-		void UpdateCameraClusters(Shader& CameraClusterComputeShader, Shader& CameraLightCullingComputeShader);
+		/*void UpdateCameraClusters(Shader& CameraClusterComputeShader, Shader& CameraLightCullingComputeShader);
 		void SendClustersShader(uint BindingPoint);
-		inline glm::vec3 GetClusterGridSize() { return this->ClusterGridSize; };
+		inline glm::vec3 GetClusterGridSize() { return this->ClusterGridSize; };*/
 		inline glm::vec2 GetWindowSize() { return { w_width,w_height }; };
+		inline bool IsCameraMovedf() { return this->IsCameraMoved; };
 
 		glm::vec3 Orientation;
 		glm::vec3 PlanarOrientation;
@@ -89,8 +90,8 @@ namespace FUSIONCORE
 
 	private:
 
-		SSBO ClusterSSBO;
-		glm::vec3 ClusterGridSize;
+		/*SSBO ClusterSSBO;
+		glm::vec3 ClusterGridSize;*/
 
 		bool firstclick = true;
 		int w_width = 1000;
@@ -106,6 +107,7 @@ namespace FUSIONCORE
 		bool ClampZoom = false;
 
 		float FOV = 45.0f;
+		bool IsCameraMoved = true;
 
 		glm::vec3 targetPosition;
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);

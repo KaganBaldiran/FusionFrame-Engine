@@ -1,7 +1,7 @@
 #include "Application.hpp"
 #include "FusionFrame.h"
-//#include <glew.h>
-//#include <glfw3.h>
+#include <glew.h>
+#include <glfw3.h>
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -25,6 +25,13 @@ int Application::Run()
 
 	FUSIONUTIL::DefaultShaders Shaders;
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
+	FUSIONCORE::InitializeCascadedShadowMapTextureArray(2048,1,2,400);
+
+	//FUSIONCORE::Shader shader;
+	//shader.PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "Shaders/Gbuffer.fs");
+	//shader.AlterShaderUniformArrayValue(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "disableclaymaterial", 2000);
+	//shader.AlterShaderMacroDefinitionValue(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "MAX_LIGHT_COUNT", "556");
+	//LOG(shader.GetShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE));
 
 	FUSIONCORE::SHAPES::InitializeShapeBuffers();
 
@@ -73,13 +80,17 @@ int Application::Run()
 
 	int shadowMapSize = 512;
 
-	FUSIONCORE::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
+	//FUSIONCORE::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
 	//FUSIONCORE::OmniShadowMap ShadowMap1(shadowMapSize, shadowMapSize, 75.0f);
 	//FUSIONCORE::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
 	//FUSIONCORE::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
 
 	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 10.0f, CAMERA_FAR_PLANE / 2.0f };
-	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(2048, 2048, shadowCascadeLevels);
+	std::vector<glm::vec2> shadowCascadeTextureSizes{{128,128},{256,256},{512,512},{1024,1024},{1024,1024}};
+
+	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(shadowCascadeTextureSizes, shadowCascadeLevels);
+	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap2(1024, 1024, shadowCascadeLevels);
+	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap3(1024, 1024, shadowCascadeLevels);
 
 	Vec2<int> WindowSize;
 	glm::dvec2 mousePos(0.0f);
@@ -109,9 +120,8 @@ int Application::Run()
 	SunColor.Brighter();
 	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.777182),SunColor.GetRGB(), 5.0f, FF_DIRECTIONAL_LIGHT);
 
-	Shaders.DeferredPBRshader->use();
-	FUSIONCORE::UploadLightsShaderUniformBuffer();
-	FUSIONCORE::UseShaderProgram(0);
+	FUSIONCORE::Light Sun2(glm::vec3(-0.593494, 0.648119, -0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
+	FUSIONCORE::Light Sun3(glm::vec3(-0.593494, -0.648119, 0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
 	//FUSIONUTIL::ThreadPool threads(5, 20);
 //#define ASYNC
 #define NOTASYNC
@@ -378,12 +388,29 @@ int Application::Run()
 	//models.push_back(Rock.get());
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
+	//ShadowMap0.BindShadowMapLight(Lights[0]);
+	//ShadowMap1.BindShadowMapLight(Lights[1]);
+	//ShadowMap2.BindShadowMapLight(Lights[2]);
+
 
 	std::vector<FUSIONCORE::OmniShadowMap*> shadowMaps;
 	//shadowMaps.push_back(&ShadowMap0);
 	//shadowMaps.push_back(&ShadowMap1);
 	//shadowMaps.push_back(&ShadowMap2);
 	//shadowMaps.push_back(&ShadowMap3);
+
+	sunShadowMap.BindShadowMapLight(Sun);
+	//sunShadowMap2.BindShadowMapLight(Sun2);
+	//sunShadowMap3.BindShadowMapLight(Sun3);
+
+	std::vector<FUSIONCORE::CascadedDirectionalShadowMap*> cascadedShadowMaps;
+	cascadedShadowMaps.push_back(&sunShadowMap);
+	//cascadedShadowMaps.push_back(&sunShadowMap2);
+	//cascadedShadowMaps.push_back(&sunShadowMap3);
+
+	Shaders.DeferredPBRshader->use();
+	FUSIONCORE::UploadLightsShaderUniformBuffer();
+	FUSIONCORE::UseShaderProgram(0);
 
 	FUSIONCORE::Model animationModel("Resources\\taunt\\Jumping.fbx", false, true);
 	animationModel.GetTransformation().ScaleNoTraceBack({ 0.1f,0.1f,0.1f });
@@ -758,7 +785,7 @@ int Application::Run()
 		
 		animator.UpdateBlendedAnimation(&IdleAnimation, &WalkingAnimation, IdleWalkingBlendCoeff, deltaTime);
 
-		/*static bool AllowPressF = true;
+		static bool AllowPressF = true;
 		if (!AllowPressF && FUSIONUTIL::GetKey(window, FF_KEY_F) == FF_GLFW_RELEASE)
 		{
 			AllowPressF = true;
@@ -779,8 +806,7 @@ int Application::Run()
 				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 				glfwSetWindowMonitor(window, NULL, PrevWindowPos.x, PrevWindowPos.y, PrevWindowSize.x, PrevWindowSize.y, mode->refreshRate);
 			}
-
-		}*/
+		}
 
 		//glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
 		FUSIONUTIL::GetWindowSize(window, WindowSize.x, WindowSize.y);
@@ -788,7 +814,7 @@ int Application::Run()
 		{
 		  camera3d.Orientation = direction;
 		}*/
-		camera3d.UpdateCameraMatrix(90.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
@@ -803,10 +829,19 @@ int Application::Run()
 
 		//ShadowMap0.Draw(*Shaders.OmniShadowMapShader, Lights[0], models, camera3d);
 		//ShadowMap1.Draw(*Shaders.OmniShadowMapShader, Lights[1], models, camera3d);
-		//ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
+	    //ShadowMap2.Draw(*Shaders.OmniShadowMapShader, Lights[2], models, camera3d);
 		//ShadowMap3.Draw(*Shaders.OmniShadowMapShader, Lights[3], models, camera3d);
 
+		//glBindFramebuffer(GL_FRAMEBUFFER, sunShadowMap.GetShadowMapFBO());
+		//glClear(GL_DEPTH_BUFFER_BIT);
+		FUSIONCORE::ClearCascadedTextureBuffers();
+		FUSIONCORE::CalculateLightSpaceMatricesOnGPU(camera3d,cascadedShadowMaps, *Shaders.CascadedLightSpaceMatrixComputeShader);
 		sunShadowMap.Draw(Shaders, camera3d, models,Sun);
+		//sunShadowMap.Draw(Shaders,2, camera3d, models,Sun);
+		//sunShadowMap.Draw(Shaders,1, camera3d, models,Sun);
+		//sunShadowMap.Draw(Shaders,0, camera3d, models,Sun);
+		//sunShadowMap2.Draw(Shaders,camera3d, models, Sun2);
+		//sunShadowMap3.Draw(Shaders,0, camera3d, models, Sun3);
 
 		Gbuffer.Bind();
 		FUSIONUTIL::GLClearColor(glm::vec4(0.0f));
@@ -888,7 +923,7 @@ int Application::Run()
 		FUSIONUTIL::GLClearColor(glm::vec4(0.0f,0.0f,0.0f,1.0f));
 		FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
 		//Gbuffer.DrawSSR(camera3d, *Shaders.SSRshader, [&]() {}, WindowSize);
-		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps,sunShadowMap, cubemap,FF_COLOR_VOID, 0.3f);
+		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cascadedShadowMaps, cubemap,FF_COLOR_VOID, 0.3f);
 
 		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
 		{
@@ -905,8 +940,6 @@ int Application::Run()
 
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		cubemap.Draw(camera3d, WindowSize.Cast<float>());
-
-
 
 		if (PixelModel)
 		{
@@ -984,7 +1017,7 @@ int Application::Run()
 		ScreenFrameBuffer.Unbind();
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize,true,0.7f,0.1f, 5.0f,1.7f,1.6f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, FUSIONCORE::GetCascadedShadowMapTextureArray(), [&]() {}, WindowSize, true, 0.7f, 0.1f, 5.0f, 1.7f, 1.6f);
 
 		
 		//glfwPollEvents();
@@ -1019,6 +1052,7 @@ int Application::Run()
 	}
 
 	FUSIONUTIL::DisposeDefaultShaders(Shaders);
+	FUSIONCORE::TerminateCascadedShadowMapTextureArray();
 
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();

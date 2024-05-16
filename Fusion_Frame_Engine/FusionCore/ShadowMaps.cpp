@@ -20,14 +20,25 @@ struct FUSIONFRAME_EXPORT TextureLayer
 std::map<int, TextureLayer> TextureLayers;
 int UpperTextureSizeLimit = -1;
 GLuint CascadedShadowMapArray_Texture, CascadedShadowMapArray_FBO;
-//std::shared_ptr<FUSIONCORE::UBO> CascadedShadowMapsMetaData;
 std::shared_ptr<FUSIONCORE::SSBO> CascadedShadowMapsMetaData;
 size_t RepresentativeTextureBitCount = 0;
 
 int LayerIDiterator = 0;
 int MinAvailableLayerIndex = 0;
 
-void FUSIONCORE::InitializeCascadedShadowMapTextureArray(size_t UpperTextureSizeLimit_i, size_t LayerCount, size_t MaxCascadedShadowMapCount,size_t RepresentativeTextureBitCount_i)
+struct alignas(16) CascadedMapMetaDataGPU 
+{
+	glm::mat4 lightMatrices[FF_MAX_CASCADES * FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+	glm::vec4 positionAndSize[FF_MAX_CASCADES * FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+	glm::vec4 lightDirection[FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+	float shadowCascadeLevels[FF_MAX_CASCADES * FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+	float layer[FF_MAX_CASCADES * FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+	float cascadeCount[FF_MAX_CASCADED_SHADOW_MAP_COUNT];
+};
+
+CascadedMapMetaDataGPU metaDataGPU;
+
+void FUSIONCORE::InitializeCascadedShadowMapTextureArray(size_t UpperTextureSizeLimit_i, size_t LayerCount,size_t RepresentativeTextureBitCount_i)
 {
 	if (UpperTextureSizeLimit > 0)
 	{
@@ -62,17 +73,12 @@ void FUSIONCORE::InitializeCascadedShadowMapTextureArray(size_t UpperTextureSize
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	/*CascadedShadowMapsMetaData = std::make_shared<FUSIONCORE::UBO>();
-	CascadedShadowMapsMetaData->Bind();
-	CascadedShadowMapsMetaData->BufferDataFill(GL_UNIFORM_BUFFER, sizeof(CascadedMapMetaData) * 10, nullptr, GL_STATIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, CascadedShadowMapsMetaData->GetUBOID());
-	BindUBONull();*/
-
 	CascadedShadowMapsMetaData = std::make_shared<FUSIONCORE::SSBO>();
 	CascadedShadowMapsMetaData->Bind();
-	CascadedShadowMapsMetaData->BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(CascadedMapMetaData) * MaxCascadedShadowMapCount, nullptr, GL_STREAM_DRAW);
+	CascadedShadowMapsMetaData->BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(CascadedMapMetaDataGPU), nullptr, GL_STREAM_DRAW);
+	CascadedShadowMapsMetaData->BindSSBO(10);
 	BindSSBONull(); 
-
+	
 	RepresentativeTextureBitCount = RepresentativeTextureBitCount_i;
 
 	TextureLayer Layer;
@@ -118,7 +124,8 @@ float FUSIONCORE::GetCascadedTextureArrayUpperTextureLimit()
 	return UpperTextureSizeLimit;
 }
 
-FUSIONCORE::SSBO* FUSIONCORE::GetCascadedShadowMapMetaDataUBO()
+
+FUSIONCORE::SSBO* FUSIONCORE::GetCascadedShadowMapMetaDataSSBO()
 {
 	return CascadedShadowMapsMetaData.get();
 }
@@ -128,39 +135,40 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 	LightSpaceMatrixComputeShader.use();
 	int CascadedDirectionalShadowMapsCount = CascadedDirectionalShadowMaps.size();
 
-	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataUBO();
+	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataSSBO();
 
 	static int CascadedShowMapCountPrevious = 0;
 	if (CascadedShowMapCountPrevious != CascadedDirectionalShadowMapsCount)
 	{
 		CascadedShadowMapsMetaData->Bind();
 
-		std::vector<CascadedMapMetaData> MetaDataArray;
-		MetaDataArray.reserve(CascadedDirectionalShadowMapsCount);
 		for (size_t i = 0; i < CascadedDirectionalShadowMapsCount; i++)
 		{
 			CascadedDirectionalShadowMaps[i]->CurrentGlobalArrayIndex = i;
 			CascadedMapMetaData CascadedMetaData = CascadedDirectionalShadowMaps[i]->GetMetaData();
-			MetaDataArray.push_back(CascadedMetaData);
+			
+			std::copy(std::begin(CascadedMetaData.LightMatrices), std::end(CascadedMetaData.LightMatrices), std::begin(metaDataGPU.lightMatrices) + (i * FF_MAX_CASCADES));
+			std::copy(std::begin(CascadedMetaData.PositionAndSize), std::end(CascadedMetaData.PositionAndSize), std::begin(metaDataGPU.positionAndSize) + (i * FF_MAX_CASCADES));
+			metaDataGPU.lightDirection[i] = CascadedMetaData.LightDirection;
+			std::copy(std::begin(CascadedMetaData.ShadowCascadeLevels), std::end(CascadedMetaData.ShadowCascadeLevels), std::begin(metaDataGPU.shadowCascadeLevels) + (i * FF_MAX_CASCADES));
+			std::copy(std::begin(CascadedMetaData.Layer), std::end(CascadedMetaData.Layer), std::begin(metaDataGPU.layer) + (i * FF_MAX_CASCADES));
+			metaDataGPU.cascadeCount[i] = CascadedMetaData.CascadeCount;
 		}
 
-		void* mappedData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-		if (mappedData) {
-			memcpy(mappedData, MetaDataArray.data(), sizeof(CascadedMapMetaData) * MetaDataArray.size());
-			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		}
-
+		const GLsizei dataSize = sizeof(metaDataGPU);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, dataSize, &metaDataGPU);
+		
 		LightSpaceMatrixComputeShader.setFloat("CameraFov", camera.GetCameraFOV());
-		LightSpaceMatrixComputeShader.setFloat("CameraAspectRatio", camera.GetCameraAspectRatio());
 		LightSpaceMatrixComputeShader.setFloat("FarPlane", camera.FarPlane);
 		LightSpaceMatrixComputeShader.setFloat("NearPlane", camera.NearPlane);
 		LightSpaceMatrixComputeShader.setVec3("CameraUpVector", camera.GetUpVector());
 	}
 
 	CascadedShowMapCountPrevious = CascadedDirectionalShadowMapsCount;
-	CascadedShadowMapsMetaData->BindSSBO(2);
-	
+	CascadedShadowMapsMetaData->BindSSBO(10);
+
 	LightSpaceMatrixComputeShader.setMat4("ViewMat", camera.viewMat);
+	LightSpaceMatrixComputeShader.setFloat("CameraAspectRatio", camera.GetCameraAspectRatio());
 
 	glDispatchCompute(CascadedDirectionalShadowMapsCount,1, 1);
 
@@ -406,7 +414,8 @@ FUSIONCORE::CascadedDirectionalShadowMap::CascadedDirectionalShadowMap(std::vect
 					{
 						for (size_t d = 0; d < ShadowMapSizeInBits && fits; ++d)
 						{
-							if (LayerBitMap[x + 1 + d][y + 1 + j] == true) {
+							if (LayerBitMap[x + 1 + d][y + 1 + j] == true) 
+							{
 								fits = false;
 								break;
 							}
@@ -557,7 +566,7 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(FUSIONUTIL::DefaultShaders& 
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_FRONT);
 
-	CascadedShadowMapsMetaData->BindSSBO(2);
+	CascadedShadowMapsMetaData->BindSSBO(10);
 
 	int PreviousLayer = -1;
 
@@ -595,9 +604,6 @@ void FUSIONCORE::CascadedDirectionalShadowMap::Draw(FUSIONUTIL::DefaultShaders& 
 				if (InstanceDataVBO) EnableInstancing = true;
 				shader->setBool("EnableInstancing", EnableInstancing);
 				shader->setVec2("MetaDataMatrixIndex", glm::vec2(this->CurrentGlobalArrayIndex ,y));
-
-				//CascadedShadowMapsMetaData->Bind();
-				//CascadedShadowMapsMetaData->Unbind();
 				//shader->setMat4("LightMatrix", LightMatrices[y]);
 			};
 

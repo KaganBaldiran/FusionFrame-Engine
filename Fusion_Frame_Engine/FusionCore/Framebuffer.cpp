@@ -156,8 +156,6 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,GLuint Shado
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	UseShaderProgram(0);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -319,72 +317,10 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 	glBindTexture(GL_TEXTURE_2D_ARRAY, FUSIONCORE::GetCascadedShadowMapTextureArray());
 	shader.setInt("CascadeShadowMaps", 7);
 
-
-	/*int CascadedDirectionalShadowMapsCount = CascadedDirectionalShadowMaps.size();
-
-	std::vector<CascadedMapMetaData> MetaDataArray;
-	MetaDataArray.reserve(CascadedDirectionalShadowMapsCount);
-	for (size_t i = 0; i < CascadedDirectionalShadowMapsCount; i++)
-	{
-		CascadedMapMetaData CascadedMetaData = CascadedDirectionalShadowMaps[i]->GetMetaData();
-		MetaDataArray.push_back(CascadedMetaData);
-	}*/
-
-	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataUBO();
-	//CascadedShadowMapsMetaData->Bind();
-
-	/*
-	static int CascadedShowMapCountPrevious = 0;
-	if (CascadedShowMapCountPrevious != CascadedDirectionalShadowMapsCount)
-	{
-		void* mappedData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-	    if (mappedData) {
-		   memcpy(mappedData, MetaDataArray.data(), sizeof(CascadedMapMetaData) * MetaDataArray.size());
-		   glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	    }
-		const GLsizei dataSize = sizeof(CascadedMapMetaData) * MetaDataArray.size();
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, dataSize, MetaDataArray.data());
-
-		//const GLsizei dataSize = sizeof(CascadedMapMetaData) * MetaDataArray.size();
-		//glBufferData(GL_SHADER_STORAGE_BUFFER, dataSize, MetaDataArray.data(), GL_STATIC_DRAW);
-
-
-	}
-	else
-	{
-		//if (camera.IsCameraMovedf())
-		//{
-			size_t lightMatricesOffset = offsetof(CascadedMapMetaData, LightMatrices);
-			size_t matrixSize = sizeof(glm::mat4);
-
-			for (size_t i = 0; i < MetaDataArray.size(); i++) {
-				size_t updateOffset = lightMatricesOffset + i * sizeof(CascadedMapMetaData);
-				size_t updateSize = matrixSize * (MetaDataArray[i].CascadeCount + 1);
-				glBufferSubData(GL_SHADER_STORAGE_BUFFER, updateOffset, updateSize, &MetaDataArray[i].LightMatrices[0]);
-			}
-
-			void* mappedData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-			if (mappedData) {
-				size_t lightMatricesOffset = offsetof(CascadedMapMetaData, LightMatrices);
-				size_t matrixSize = sizeof(glm::mat4);
-
-				for (size_t i = 0; i < MetaDataArray.size(); i++) {
-					size_t updateOffset = lightMatricesOffset + i * sizeof(CascadedMapMetaData);
-					size_t updateSize = matrixSize * (MetaDataArray[i].CascadeCount + 1);
-					void* updatePtr = static_cast<char*>(mappedData) + updateOffset;
-					memcpy(updatePtr, &MetaDataArray[i].LightMatrices[0], updateSize);
-				}
-				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-			}
-		//}
-	}
-	*/
-
-
-	//CascadedShowMapCountPrevious = CascadedDirectionalShadowMapsCount;
-	CascadedShadowMapsMetaData->BindSSBO(2);
-	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	//CascadedShadowMapsMetaData->Unbind();
+	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataSSBO();
+	CascadedShadowMapsMetaData->Bind();
+	CascadedShadowMapsMetaData->BindSSBO(10);
+	CascadedShadowMapsMetaData->Unbind();
 
 	shader.setMat4("ViewMatrix", camera.viewMat);
 
@@ -408,8 +344,6 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	UseShaderProgram(0);
 	glEnable(GL_DEPTH_TEST);
 }

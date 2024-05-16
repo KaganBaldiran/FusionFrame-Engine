@@ -7,21 +7,17 @@ layout(location = 3) uniform mat4 ViewMat;
 layout(location = 4) uniform float FarPlane;
 layout(location = 5) uniform float NearPlane;
 
-#define MAX_CASCADE_PLANE_COUNT 5
+#define MAX_CASCADE_PLANE_COUNT 16
+#define MAX_CASCADED_SHADOW_MAP_COUNT 10
 
-struct CascadedMapMetaData
+layout(std430, binding = 10) buffer CascadedMapMetaDatas
 {
-	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT];
-	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT];
-	vec4 LightDirection;
-	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT];
-	float Layer[MAX_CASCADE_PLANE_COUNT];
-	float CascadeCount;
-};
-
-layout(std430, binding = 2) buffer CascadedMapMetaDatas
-{
-	CascadedMapMetaData ShadowMapMetaDatas[];
+	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 LightDirection[MAX_CASCADED_SHADOW_MAP_COUNT];
+	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float Layer[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float CascadeCount[MAX_CASCADED_SHADOW_MAP_COUNT];
 };
 
 const uint UINT_MAX = 4294967295u; // 2^32 - 1
@@ -152,22 +148,24 @@ mat4 GetLightSpaceMatrix(float nearPlane,float farPlane,vec3 LightDirection)
 
 void GetLightSpaceMatrices(int MetaDataIndex)
 {
-	CascadedMapMetaData MetaData = ShadowMapMetaDatas[MetaDataIndex];
-	int ShadowCascadeCount = int(MetaData.CascadeCount);
-	vec3 LightDirection = MetaData.LightDirection.xyz;
+	//CascadedMapMetaData MetaData = ShadowMapMetaDatas;
+	int IndexOffset = MetaDataIndex * MAX_CASCADE_PLANE_COUNT;
+	int ShadowCascadeCount = int(CascadeCount[MetaDataIndex]);
+	vec3 LightDirection = LightDirection[MetaDataIndex].xyz;
 	for (int i = 0; i < ShadowCascadeCount + 1; i++)
 	{
+		int CurrentIndex = IndexOffset + i;
 		if (i == 0)
 		{
-			ShadowMapMetaDatas[MetaDataIndex].LightMatrices[i] = GetLightSpaceMatrix(NearPlane, MetaData.ShadowCascadeLevels[i], LightDirection);
+			LightMatrices[CurrentIndex] = GetLightSpaceMatrix(NearPlane, ShadowCascadeLevels[CurrentIndex], LightDirection);
 		}
 		else if (i < ShadowCascadeCount)
 		{
-			ShadowMapMetaDatas[MetaDataIndex].LightMatrices[i] = GetLightSpaceMatrix(MetaData.ShadowCascadeLevels[i - 1], MetaData.ShadowCascadeLevels[i], LightDirection);
+			LightMatrices[CurrentIndex] = GetLightSpaceMatrix(ShadowCascadeLevels[CurrentIndex - 1], ShadowCascadeLevels[CurrentIndex], LightDirection);
 		}
 		else
 		{
-			ShadowMapMetaDatas[MetaDataIndex].LightMatrices[i] = GetLightSpaceMatrix(MetaData.ShadowCascadeLevels[i - 1],FarPlane, LightDirection);
+			LightMatrices[CurrentIndex] = GetLightSpaceMatrix(ShadowCascadeLevels[CurrentIndex - 1],FarPlane, LightDirection);
 		}
 	}
 }

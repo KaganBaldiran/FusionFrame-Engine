@@ -8,6 +8,10 @@
 
 struct GLFWwindow;
 
+//#define FF_MAX_CASCADES 6
+//#define FF_MAX_CASCADED_SHADOW_MAP_COUNT 2
+#include "FusionFrame.h"
+
 class Application
 {
 public:

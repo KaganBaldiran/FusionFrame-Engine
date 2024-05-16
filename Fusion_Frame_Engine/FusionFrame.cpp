@@ -132,4 +132,18 @@ double FUSIONUTIL::GetTime()
 	return glfwGetTime();
 }
 
+unsigned int FUSIONUTIL::GetMaxTextureUnits()
+{
+	int maxTextureUnits;
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+	return maxTextureUnits;
+}
+
+unsigned int FUSIONUTIL::GetMaxUniformBlockSize()
+{
+	GLint maxUniformBlockSize;
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBlockSize);
+	return maxUniformBlockSize;
+}
+
 

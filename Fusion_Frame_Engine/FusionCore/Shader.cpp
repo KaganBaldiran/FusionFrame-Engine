@@ -354,16 +354,16 @@ void FUSIONCORE::Shader::AlterShaderMacroDefinitionValue(FF_SHADER_SOURCE Shader
 		std::string& Source = ShaderSources[ShaderUsage];
 		size_t MacroPos = Source.find(MacroName);
 		size_t ValueStrLength = Value.size();
-		LOG("SourceSIZE: " << Source.size() << " MacroPos " << MacroName << ": " << MacroPos);
+		
 		if (MacroPos != std::string::npos)
 		{
 			size_t EndOfLinePos = Source.find("\n" , MacroPos);
 
-			LOG("EndOfLinePos: " << EndOfLinePos);
+			
 			if (EndOfLinePos != std::string::npos)
 			{
 				size_t ValueBeginningPos = MacroPos + MacroName.size() + 1;
-				LOG("ValueBeginningPos: " << ValueBeginningPos);
+				
 				if (ValueStrLength == (EndOfLinePos - ValueBeginningPos))
 				{
 					for (size_t i = 0; i < ValueStrLength; i++)

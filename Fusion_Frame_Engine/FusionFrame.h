@@ -65,5 +65,8 @@ namespace FUSIONUTIL
 	FUSIONFRAME_EXPORT_FUNCTION VideoMode GetVideoMode(GLFWmonitor* monitor);
 
 	FUSIONFRAME_EXPORT_FUNCTION double GetTime();
+
+	FUSIONFRAME_EXPORT_FUNCTION unsigned int GetMaxTextureUnits();
+	FUSIONFRAME_EXPORT_FUNCTION unsigned int GetMaxUniformBlockSize();
 }
 

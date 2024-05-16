@@ -10,9 +10,13 @@
 #include "../FusionUtility/FusionDLLExport.h"
 #define MAX_SHADOW_MAP_COUNT glm::max(int(MAX_LIGHT_COUNT / 5.0f),1)
 
-#ifndef MAX_CASCADES
-#define MAX_CASCADES 5
+#ifndef FF_MAX_CASCADES
+#define FF_MAX_CASCADES 16
 #endif // !MAX_CASCADES
+
+#ifndef FF_MAX_CASCADED_SHADOW_MAP_COUNT
+#define FF_MAX_CASCADED_SHADOW_MAP_COUNT 10
+#endif // !FF_MAX_CASCADED_SHADOW_MAP_COUNT
 
 namespace FUSIONUTIL
 {
@@ -24,12 +28,13 @@ namespace FUSIONCORE
 	//Initializes the texture array needed for cascaded directional shadow maps.
 	//Representative texture bit count is needed for placing the textures on the layers.
 	//More bits will result in better texture alignment in trade-off of speed.
-	FUSIONFRAME_EXPORT_FUNCTION void InitializeCascadedShadowMapTextureArray(size_t UpperTextureSizeLimit_i, size_t LayerCount, size_t MaxCascadedShadowMapCount, size_t RepresentativeTextureBitCount_i = 40);
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeCascadedShadowMapTextureArray(size_t UpperTextureSizeLimit_i,size_t LayerCount,size_t RepresentativeTextureBitCount_i = 40);
 	FUSIONFRAME_EXPORT_FUNCTION void ClearCascadedTextureBuffers();
 	FUSIONFRAME_EXPORT_FUNCTION void TerminateCascadedShadowMapTextureArray();
 	FUSIONFRAME_EXPORT_FUNCTION GLuint GetCascadedShadowMapTextureArray();
 	FUSIONFRAME_EXPORT_FUNCTION float GetCascadedTextureArrayUpperTextureLimit();
-	FUSIONFRAME_EXPORT_FUNCTION SSBO* GetCascadedShadowMapMetaDataUBO();
+	//FUSIONFRAME_EXPORT_FUNCTION UBO* GetCascadedShadowMapMetaDataUBO();
+	FUSIONFRAME_EXPORT_FUNCTION SSBO* GetCascadedShadowMapMetaDataSSBO();
 
 	class FUSIONFRAME_EXPORT OmniShadowMap
 	{
@@ -61,11 +66,11 @@ namespace FUSIONCORE
 
 	struct alignas(16) CascadedMapMetaData
 	{
-		glm::mat4 LightMatrices[MAX_CASCADES];
-		glm::vec4 PositionAndSize[MAX_CASCADES];
+		glm::mat4 LightMatrices[FF_MAX_CASCADES];
+		glm::vec4 PositionAndSize[FF_MAX_CASCADES];
 		glm::vec4 LightDirection;
-		float ShadowCascadeLevels[MAX_CASCADES];
-		float Layer[MAX_CASCADES];
+		float ShadowCascadeLevels[FF_MAX_CASCADES];
+		float Layer[FF_MAX_CASCADES];
 		float CascadeCount;
 	};
 

@@ -27,25 +27,22 @@
  uniform bool EnableAnimation;
  uniform bool EnableInstancing;
 
- #define MAX_CASCADE_PLANE_COUNT 5
- uniform vec2 MetaDataMatrixIndex;
+uniform vec2 MetaDataMatrixIndex;
 
-struct CascadedMapMetaData
+#define MAX_CASCADE_PLANE_COUNT 16
+#define MAX_CASCADED_SHADOW_MAP_COUNT 10
+
+layout(std430, binding = 10) buffer CascadedMapMetaDatas
 {
-	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT];
-	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT];
-    vec4 LightDirection;
-	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT];
-	float Layer[MAX_CASCADE_PLANE_COUNT];
-	float CascadeCount;
+	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 LightDirection[MAX_CASCADED_SHADOW_MAP_COUNT];
+	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float Layer[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float CascadeCount[MAX_CASCADED_SHADOW_MAP_COUNT];
 };
 
-layout(std430, binding = 2) readonly buffer CascadedMapMetaDatas
-{
-	CascadedMapMetaData ShadowMapMetaDatas[];
-};
-
- void main()
+void main()
  { 
    if(EnableAnimation)
    {
@@ -73,6 +70,9 @@ layout(std430, binding = 2) readonly buffer CascadedMapMetaDatas
    {
      CurrentPos = vec3(model * vec4(vertexdata,1.0f));
    }
-   gl_Position = ShadowMapMetaDatas[int(MetaDataMatrixIndex.x)].LightMatrices[int(MetaDataMatrixIndex.y)] * vec4(CurrentPos,1.0f);
+   
+   int IndexOffset = MAX_CASCADE_PLANE_COUNT * int(MetaDataMatrixIndex.x);
+   gl_Position = LightMatrices[IndexOffset + int(MetaDataMatrixIndex.y)] * vec4(CurrentPos,1.0f);
+
    FinalTexCoord = textcoord;
  }

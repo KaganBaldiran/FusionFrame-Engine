@@ -18,7 +18,7 @@ uniform bool DOFenabled;
 uniform float DOFintensity;
 
 #define MAX_LIGHT_COUNT 100
-#define MAX_SHADOWMAP_COUNT 10
+#define MAX_SHADOWMAP_COUNT 5
 #define POINT_LIGHT 0x56400
 #define DIRECTIONAL_LIGHT 0x56401
 #define SPOT_LIGHT 0x56402
@@ -42,24 +42,20 @@ uniform float ObjectScale;
 uniform float ShadowMapFarPlane[MAX_SHADOWMAP_COUNT];
 uniform samplerCube OmniShadowMaps[MAX_SHADOWMAP_COUNT];
 
-#define MAX_CASCADE_PLANE_COUNT 5
-
 uniform sampler2DArray CascadeShadowMaps;
 uniform mat4 ViewMatrix;
 
-struct CascadedMapMetaData
-{
-	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT];
-	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT];
-	vec4 LightDirection;
-	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT];
-	float Layer[MAX_CASCADE_PLANE_COUNT];
-	float CascadeCount;
-};
+#define MAX_CASCADE_PLANE_COUNT 16
+#define MAX_CASCADED_SHADOW_MAP_COUNT 10
 
-layout(std430, binding = 2) readonly buffer CascadedMapMetaDatas
+layout(std430, binding = 10) buffer CascadedMapMetaDatas
 {
-    CascadedMapMetaData ShadowMapMetaDatas[];
+	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 LightDirection[MAX_CASCADED_SHADOW_MAP_COUNT];
+	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float Layer[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float CascadeCount[MAX_CASCADED_SHADOW_MAP_COUNT];
 };
 
 uniform vec2 screenSize;
@@ -85,33 +81,35 @@ layout(std430 , binding = 4) restrict buffer LightsDatas
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
    
-float CascadedDirectionalShadowCalculation(vec3 fragPos, CascadedMapMetaData MetaData,vec3 N, vec3 LightDirection)
+float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N, vec3 LightDirection_i)
 {
+     int IndexOffset = MAX_CASCADE_PLANE_COUNT * MetaDataIndex;
      vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
      float Depth = abs(FragPosView.z);
 
-     int CascadeCount = int(MetaData.CascadeCount);
+     int CascadeCount = int(CascadeCount[MetaDataIndex]);
 
-     int Layer = -1;
+     int Layeri = -1;
      for (int i = 0; i < CascadeCount; ++i)
      {
-        if(Depth < MetaData.ShadowCascadeLevels[i])
+        if(Depth < ShadowCascadeLevels[IndexOffset + i])
         {
-          Layer = i;
+          Layeri = i;
           break;
         }
      }
-     if(Layer == -1)
+     if(Layeri == -1)
      {
-       Layer = CascadeCount;
+       Layeri = CascadeCount;
      }
 
-     vec4 FragPosLightSpace = MetaData.LightMatrices[Layer] * vec4(fragPos,1.0f);
+     int OffSetLayerIndex = IndexOffset + Layeri;
+
+     vec4 FragPosLightSpace = LightMatrices[OffSetLayerIndex] * vec4(fragPos,1.0f);
      vec3 ProjectedCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
      ProjectedCoords = ProjectedCoords * 0.5f + 0.5f;
 
-     vec4 PositionAndSize = MetaData.PositionAndSize[Layer];
-     //ProjectedCoords.xy = ProjectedCoords.xy * (float(PositionAndSize.z) / CascadeShadowMapTextureSizeLimit) + (PositionAndSize.xy / CascadeShadowMapTextureSizeLimit);
+     vec4 PositionAndSize = PositionAndSize[OffSetLayerIndex];
      ProjectedCoords.xy = (ProjectedCoords.xy * PositionAndSize.z) + PositionAndSize.xy;
 
      float CurrentDepth = ProjectedCoords.z;
@@ -121,20 +119,20 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos, CascadedMapMetaData Met
      }
 
      vec3 normal = N;
-     float bias = max(0.05 * (1.0f - dot(normal , LightDirection)) , 0.005);
+     float bias = max(0.05 * (1.0f - dot(normal , LightDirection_i)) , 0.005);
      //const float BiasMultiplier = 0.5f;
      const float BiasMultiplier = PositionAndSize.z;
 
-     if(Layer == CascadeCount)
+     if(Layeri == CascadeCount)
      {
         bias *= 1 / (FarPlane * BiasMultiplier);
      }
      else
      {
-        bias *= 1 / (MetaData.ShadowCascadeLevels[Layer] * BiasMultiplier);
+        bias *= 1 / (ShadowCascadeLevels[OffSetLayerIndex] * BiasMultiplier);
      }
 
-     Layer = int(MetaData.Layer[Layer]);
+     Layeri = int(Layer[OffSetLayerIndex]);
 
      float shadow = 0.0f;
      vec2 TexelSize = 1.0f / vec2(textureSize(CascadeShadowMaps,0));
@@ -143,7 +141,7 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos, CascadedMapMetaData Met
      {
         for(int y = -1; y <= 1; ++y)
         {
-           float FilteredDepth = texture(CascadeShadowMaps,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layer)).r;
+           float FilteredDepth = texture(CascadeShadowMaps,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layeri)).r;
            shadow += (CurrentDepth - bias) > FilteredDepth ? 1.0f : 0.0f;
         }
      }
@@ -323,7 +321,7 @@ void main()
             int DirectionalShadowMapIndex = CurrentLight.ShadowMapIndex;
             if(DirectionalShadowMapIndex >= 0)
             {
-               shadow = CascadedDirectionalShadowCalculation(Position,ShadowMapMetaDatas[DirectionalShadowMapIndex],N , CurrentLight.Position.xyz);
+               shadow = CascadedDirectionalShadowCalculation(Position,DirectionalShadowMapIndex,N , CurrentLight.Position.xyz);
             }
           }
           float NDF = DistributionGGX(N,H,roughness);
@@ -393,7 +391,7 @@ void main()
       }
 
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
-     // FragColor = texture(CascadeShadowMaps[0],-N,2); 
+      //FragColor = vec4(vec3(CascadeCount[0]),1.0f); 
       Depth = vec4(Position,1.0f);
       ID = vec4(vec3(ModelID),1.0f);
 }

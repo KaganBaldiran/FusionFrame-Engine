@@ -24,6 +24,7 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MajorGLversion);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MinorGLversion);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -97,13 +98,23 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.DeferredPBRshader->PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE,"Shaders/DeferredPBR.vs");
 	shaders.DeferredPBRshader->PushShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE,"Shaders/DeferredPBR.fs");
 	shaders.DeferredPBRshader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE, "MAX_LIGHT_COUNT",std::to_string(MAX_LIGHT_COUNT));
+	//shaders.DeferredPBRshader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE, "MAX_CASCADE_PLANE_COUNT", std::to_string(FF_MAX_CASCADES));
+	//shaders.DeferredPBRshader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE, "MAX_CASCADED_SHADOW_MAP_COUNT", std::to_string(FF_MAX_CASCADED_SHADOW_MAP_COUNT));
 	//LOG(shaders.DeferredPBRshader->GetShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE));
 	shaders.DeferredPBRshader->Compile();
 
 	shaders.InstancedPBRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/PBR.fs");
 	shaders.InstancedGbufferShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBRinstanced.vs", "Shaders/Gbuffer.fs");
 	shaders.CascadedDirectionalShadowShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShader.vs", "Shaders/CascadedDirectionalShadowShader.gs", "Shaders/CascadedDirectionalShadowShader.fs");
-	shaders.CascadedDirectionalShadowShaderBasic = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedDirectionalShadowShaderBasic.vs", "Shaders/CascadedDirectionalShadowShader.fs");
+	
+	shaders.CascadedDirectionalShadowShaderBasic = std::make_unique<FUSIONCORE::Shader>();
+	shaders.CascadedDirectionalShadowShaderBasic->PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "Shaders/CascadedDirectionalShadowShaderBasic.vs");
+	shaders.CascadedDirectionalShadowShaderBasic->PushShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE, "Shaders/CascadedDirectionalShadowShader.fs");
+	//shaders.CascadedDirectionalShadowShaderBasic->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "MAX_CASCADE_PLANE_COUNT", std::to_string(FF_MAX_CASCADES));
+	//shaders.CascadedDirectionalShadowShaderBasic->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "MAX_CASCADED_SHADOW_MAP_COUNT", std::to_string(FF_MAX_CASCADED_SHADOW_MAP_COUNT));
+	//LOG(shaders.DeferredPBRshader->GetShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE));
+	shaders.CascadedDirectionalShadowShaderBasic->Compile();
+	
 	shaders.ParticleSpawnComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesSpawn.comp.glsl");
 	shaders.ParticleUpdateComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticlesUpdate.comp.glsl");
 	shaders.ParticleRenderShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ParticleRenderShader.vs", "Shaders/ParticleRenderShader.fs");
@@ -113,7 +124,13 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.SSRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs","Shaders/SSR.fs");
 	shaders.ShapeBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeBasic.fs");
 	shaders.ShapeTexturedShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeTextured.fs");
-	shaders.CascadedLightSpaceMatrixComputeShader = std::make_unique<FUSIONCORE::Shader>("Shaders/CascadedShadowMapsLightSpaceMatrix.comp.glsl");
+	
+	shaders.CascadedLightSpaceMatrixComputeShader = std::make_unique<FUSIONCORE::Shader>();
+	shaders.CascadedLightSpaceMatrixComputeShader->PushShaderSource(FUSIONCORE::FF_COMPUTE_SHADER_SOURCE, "Shaders/CascadedShadowMapsLightSpaceMatrix.comp.glsl");
+	//shaders.CascadedLightSpaceMatrixComputeShader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_COMPUTE_SHADER_SOURCE, "MAX_CASCADE_PLANE_COUNT", std::to_string(FF_MAX_CASCADES));
+	//shaders.CascadedLightSpaceMatrixComputeShader->AlterShaderMacroDefinitionValue(FUSIONCORE::FF_COMPUTE_SHADER_SOURCE, "MAX_CASCADED_SHADOW_MAP_COUNT", std::to_string(FF_MAX_CASCADED_SHADOW_MAP_COUNT));
+	//LOG(shaders.DeferredPBRshader->GetShaderSource(FUSIONCORE::FF_FRAGMENT_SHADER_SOURCE));
+	shaders.CascadedLightSpaceMatrixComputeShader->Compile();
 
 	FUSIONCORE::brdfLUT = FUSIONCORE::ComputeLUT(*shaders.brdfLUTShader).first;
 	FUSIONCORE::InitializeAnimationUniformBuffer();

@@ -185,7 +185,7 @@ void FUSIONCORE::InitializeAnimationUniformBuffer()
 {
 	AnimationUniformBufferObject = std::make_unique<UBO>();
 	AnimationUniformBufferObject->Bind();
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * MAX_BONE_COUNT, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * MAX_BONE_COUNT, NULL, GL_STREAM_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, AnimationUniformBufferObject->GetUBOID());
 	BindUBONull();
 }

@@ -268,11 +268,10 @@ void FUSIONCORE::Gbuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps, std::vector<CascadedDirectionalShadowMap*> &CascadedDirectionalShadowMaps, CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
+void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps,CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
 {
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(3, attachments);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, FBOSize.x, FBOSize.y);
 	glClearColor(BackgroundColor.x, BackgroundColor.y, BackgroundColor.z, BackgroundColor.w);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -318,9 +317,7 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 	shader.setInt("CascadeShadowMaps", 7);
 
 	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataSSBO();
-	CascadedShadowMapsMetaData->Bind();
 	CascadedShadowMapsMetaData->BindSSBO(10);
-	CascadedShadowMapsMetaData->Unbind();
 
 	shader.setMat4("ViewMatrix", camera.viewMat);
 
@@ -330,9 +327,9 @@ void FUSIONCORE::Gbuffer::Draw(Camera3D& camera, Shader& shader, std::function<v
 
 	for (size_t i = 0; i < ShadowMaps.size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + 7 + CascadedDirectionalShadowMaps.size() + i);
+		glActiveTexture(GL_TEXTURE0 + 8 + i);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
-		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 7 + CascadedDirectionalShadowMaps.size() + i);
+		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
 		glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
 		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMapsLightIDS[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetBoundLightID());
 	}

@@ -184,7 +184,6 @@ void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount, size_t PrimCount)
@@ -220,7 +219,6 @@ void FUSIONCORE::Mesh::DrawInstanced(Camera3D& camera, Shader& shader, std::func
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()> ShaderPreperations,size_t PrimCount)
@@ -236,7 +234,6 @@ void FUSIONCORE::Mesh::DrawDeferredInstanced(Camera3D& camera, Shader& shader, s
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
@@ -253,7 +250,6 @@ void FUSIONCORE::Mesh::DrawDeferred(Camera3D& camera, Shader& shader, std::funct
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
@@ -271,7 +267,6 @@ void FUSIONCORE::Mesh::DrawDeferredImportedMaterial(Camera3D& camera, Shader& sh
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
@@ -293,7 +288,6 @@ void FUSIONCORE::Mesh::DrawDeferredIndirect(Camera3D& camera, Shader& shader, st
 
 	UseShaderProgram(0);
 	ObjectBuffer.UnbindVAO();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void FUSIONCORE::Mesh::BookKeepDuplicateVertices(Vertex* vertex)

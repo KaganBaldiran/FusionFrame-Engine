@@ -48,7 +48,7 @@ uniform mat4 ViewMatrix;
 #define MAX_CASCADE_PLANE_COUNT 16
 #define MAX_CASCADED_SHADOW_MAP_COUNT 10
 
-layout(std430, binding = 10) buffer CascadedMapMetaDatas
+layout(std430, binding = 10) readonly buffer CascadedMapMetaDatas
 {
 	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
 	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
@@ -135,8 +135,9 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N
      Layeri = int(Layer[OffSetLayerIndex]);
 
      float shadow = 0.0f;
-     vec2 TexelSize = 1.0f / vec2(textureSize(CascadeShadowMaps,0));
-     //vec2 TexelSize = 1.0f / PositionAndSize.zw;
+     vec2 TexelSize = 0.5f / vec2(textureSize(CascadeShadowMaps,0));
+     //vec2 LayerTextureSize = vec2(textureSize(CascadeShadowMaps,0));
+     //vec2 TexelSize = 1.0f / (LayerTextureSize * PositionAndSize.zw);
      for(int x = -1; x <= 1; ++x)
      {
         for(int y = -1; y <= 1; ++y)

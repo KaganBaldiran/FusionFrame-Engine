@@ -300,7 +300,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
         
         shader.setBool("EnableAnimation", true);
         ShaderPreperations();
-        };
+    };
 
     for (size_t i = 0; i < Meshes.size(); i++)
     {

@@ -162,10 +162,10 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 		LightSpaceMatrixComputeShader.setFloat("FarPlane", camera.FarPlane);
 		LightSpaceMatrixComputeShader.setFloat("NearPlane", camera.NearPlane);
 		LightSpaceMatrixComputeShader.setVec3("CameraUpVector", camera.GetUpVector());
+	    CascadedShadowMapsMetaData->BindSSBO(10);
 	}
 
 	CascadedShowMapCountPrevious = CascadedDirectionalShadowMapsCount;
-	CascadedShadowMapsMetaData->BindSSBO(10);
 
 	LightSpaceMatrixComputeShader.setMat4("ViewMat", camera.viewMat);
 	LightSpaceMatrixComputeShader.setFloat("CameraAspectRatio", camera.GetCameraAspectRatio());
@@ -174,6 +174,12 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	UseShaderProgram(0);
+}
+
+void FUSIONCORE::RefreshCascadedShadowMapBuffers(Camera3D& camera, std::vector<CascadedDirectionalShadowMap*>& CascadedDirectionalShadowMaps, Shader& LightSpaceMatrixComputeShader)
+{
+	ClearCascadedTextureBuffers();
+	CalculateLightSpaceMatricesOnGPU(camera, CascadedDirectionalShadowMaps, LightSpaceMatrixComputeShader);
 }
 
 FUSIONCORE::OmniShadowMap::OmniShadowMap(float width, float height, float FarPlane)

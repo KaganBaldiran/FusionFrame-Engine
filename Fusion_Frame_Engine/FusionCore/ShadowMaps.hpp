@@ -33,7 +33,6 @@ namespace FUSIONCORE
 	FUSIONFRAME_EXPORT_FUNCTION void TerminateCascadedShadowMapTextureArray();
 	FUSIONFRAME_EXPORT_FUNCTION GLuint GetCascadedShadowMapTextureArray();
 	FUSIONFRAME_EXPORT_FUNCTION float GetCascadedTextureArrayUpperTextureLimit();
-	//FUSIONFRAME_EXPORT_FUNCTION UBO* GetCascadedShadowMapMetaDataUBO();
 	FUSIONFRAME_EXPORT_FUNCTION SSBO* GetCascadedShadowMapMetaDataSSBO();
 
 	class FUSIONFRAME_EXPORT OmniShadowMap
@@ -104,4 +103,8 @@ namespace FUSIONCORE
 	};
 
 	void CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<CascadedDirectionalShadowMap*>& CascadedDirectionalShadowMaps, Shader& LightSpaceMatrixComputeShader);
+	
+	//Call before drawing cascaded shadow maps to clear and recalculate data on the buffers.
+	//Internally calls "ClearCascadedTextureBuffers()" and "CalculateLightSpaceMatricesOnGPU()" so you don't have to call them. 
+	void RefreshCascadedShadowMapBuffers(Camera3D& camera, std::vector<CascadedDirectionalShadowMap*>& CascadedDirectionalShadowMaps, Shader& LightSpaceMatrixComputeShader);
 }

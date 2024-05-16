@@ -89,7 +89,7 @@ int Application::Run()
 	FUSIONCORE::SHAPES::InitializeShapeBuffers();
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+	FUSIONCORE::ImportCubeMap("Resources/kloppenheim_02_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode.width, mode.height);
@@ -140,8 +140,9 @@ int Application::Run()
 
 	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 10.0f, CAMERA_FAR_PLANE / 2.0f };
 	std::vector<glm::vec2> shadowCascadeTextureSizes{ {128,128},{256,256},{512,512},{1024,1024},{1024,1024}};
+	//std::vector<glm::vec2> shadowCascadeTextureSizes2{ {128,128},{256,256},{512,512},{512,512},{1024,1024}};
 
-	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap2(shadowCascadeTextureSizes, shadowCascadeLevels);
+	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap2(shadowCascadeTextureSizes, shadowCascadeLevels);
 	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(shadowCascadeTextureSizes, shadowCascadeLevels);
 	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap3(1024, 1024, shadowCascadeLevels);
 
@@ -169,12 +170,12 @@ int Application::Run()
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity,FF_POINT_LIGHT, LightIntensity / 30.0f);
 	}
 
-	FUSIONCORE::Color SunColor(FF_COLOR_AMBER_YELLOW);
+	FUSIONCORE::Color SunColor(FF_COLOR_BABY_BLUE);
 	SunColor.Brighter();
 	FUSIONCORE::Light Sun(glm::vec3(-0.593494, 0.648119, 0.777182),SunColor.GetRGB(), 5.0f, FF_DIRECTIONAL_LIGHT);
 
-	FUSIONCORE::Light Sun2(glm::vec3(-0.593494, 0.648119, -0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
-	FUSIONCORE::Light Sun3(glm::vec3(-0.593494, -0.648119, 0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
+	//FUSIONCORE::Light Sun2(glm::vec3(-0.593494, 0.648119, -0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
+	//FUSIONCORE::Light Sun3(glm::vec3(-0.593494, -0.648119, 0.777182), FF_COLOR_IRIS_PURPLE, 5.0f, FF_DIRECTIONAL_LIGHT);
 	//FUSIONUTIL::ThreadPool threads(5, 20);
 //#define ASYNC
 #define NOTASYNC
@@ -227,7 +228,14 @@ int Application::Run()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> Rock = std::make_unique<FUSIONCORE::Model>("Resources\\models\\RockFormation\\RockFormation.obj");
+	std::unique_ptr<FUSIONCORE::Model> Island = std::make_unique<FUSIONCORE::Model>("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Island_low.fbx");
 
+	FUSIONCORE::Texture2D IslandBaseColor("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_BaseColor.png", FF_TEXTURE_TARGET_GL_TEXTURE_2D, FF_DATA_TYPE_GL_UNSIGNED_BYTE, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D IslandNormal("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Normal_inverted.png", FF_TEXTURE_TARGET_GL_TEXTURE_2D, FF_DATA_TYPE_GL_UNSIGNED_BYTE, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, true);
+	FUSIONCORE::Texture2D IslandRoughness("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Roughness.png", FF_TEXTURE_TARGET_GL_TEXTURE_2D, FF_DATA_TYPE_GL_UNSIGNED_BYTE, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_FILTER_MODE_GL_LINEAR, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, true);
+
+	Island->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
+	Island->GetTransformation().TranslateNoTraceBack(glm::vec3(0.0f, 60.0f, 0.0f));
 	//Stove->SetIndirectCommandBuffer(1, 0, 0, 0);
 
 	FUSIONCORE::Model Isaac("C:\\Users\\kbald\\Desktop\\Isaac\\Isaac_low.obj");
@@ -341,6 +349,11 @@ int Application::Run()
 	ShrubMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShrubSpecular);
 	ShrubMaterial.PushTextureMap(TEXTURE_ALPHA0, ShrubAlpha);
 
+	FUSIONCORE::Material IslandMaterial;
+	IslandMaterial.PushTextureMap(TEXTURE_DIFFUSE0, IslandBaseColor);
+	IslandMaterial.PushTextureMap(TEXTURE_NORMAL0, IslandNormal);
+	IslandMaterial.PushTextureMap(TEXTURE_SPECULAR0, IslandRoughness);
+
 	model1->GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 	model1->GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
 	MainCharac->GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
@@ -363,10 +376,14 @@ int Application::Run()
 	FUSIONPHYSICS::CollisionBoxAABB StoveBox(Stove->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBoxAABB tryBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
+	FUSIONPHYSICS::CollisionBoxAABB IslandBox(Island->GetTransformation(), { 1.0f,1.0f,1.0f });
 	//FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.7f,0.8f,1.0f });
 	FUSIONPHYSICS::CollisionBoxAABB SofaBox(sofa->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBoxPlane Plane2({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane floorBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
+
+	Island->PushChild(&IslandBox);
+	Island->UpdateChildren();
 
 	FUSIONCORE::Model IMPORTTEST("Resources\\floor\\grid.obj");
 	//FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\floor\\grid.obj", IMPORTTEST);
@@ -403,7 +420,9 @@ int Application::Run()
 
 	Shaders.DeferredPBRshader->use();
 
-	FUSIONCORE::SetEnvironment(*Shaders.DeferredPBRshader, 1.0f, FF_COLOR_CORNFLOWER_BLUE, FF_COLOR_CORNFLOWER_BLUE);
+	FUSIONCORE::Color FogColor(FF_COLOR_CORNFLOWER_BLUE);
+	FogColor.Darker(0.3f);
+	FUSIONCORE::SetEnvironment(*Shaders.DeferredPBRshader, 3.0f, FogColor.GetRGB(), FogColor.GetRGB());
 	//FUSIONCORE::SetEnvironmentIBL(*Shaders.DeferredPBRshader, 2.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 	FUSIONCORE::UseShaderProgram(0);
 
@@ -437,6 +456,7 @@ int Application::Run()
 	models.push_back(Tower.get());
 	models.push_back(shrub.get());
 	models.push_back(Rock.get());
+	models.push_back(Island.get());
 
 	//models.push_back(Rock.get());
 
@@ -453,12 +473,12 @@ int Application::Run()
 	//shadowMaps.push_back(&ShadowMap3);
 
 	sunShadowMap.BindShadowMapLight(Sun);
-	sunShadowMap2.BindShadowMapLight(Sun2);
+	//sunShadowMap2.BindShadowMapLight(Sun2);
 	//sunShadowMap3.BindShadowMapLight(Sun3);
 
 	std::vector<FUSIONCORE::CascadedDirectionalShadowMap*> cascadedShadowMaps;
 	cascadedShadowMaps.push_back(&sunShadowMap);
-	cascadedShadowMaps.push_back(&sunShadowMap2);
+	//cascadedShadowMaps.push_back(&sunShadowMap2);
 	//cascadedShadowMaps.push_back(&sunShadowMap3);
 
 	Shaders.DeferredPBRshader->use();
@@ -490,6 +510,7 @@ int Application::Run()
 	ObjectInstances.push_back(&Box1);
 	ObjectInstances.push_back(&Plane);
 	ObjectInstances.push_back(&tryBox);
+	ObjectInstances.push_back(&IslandBox);
 
 	ObjectInstances.reserve(RockBoxes.size());
 	for (size_t i = 0; i < RockBoxes.size(); i++)
@@ -501,6 +522,11 @@ int Application::Run()
 	auto DistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurfaceRandomized(grid->Meshes[0], grid->GetTransformation(), 1000, 118);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(instanceVBO, DistibutedPoints);
 	shrub->SetInstanced(instanceVBO, DistibutedPoints.size() / 4);
+
+	/*FUSIONCORE::VBO IslandVBO;
+	auto IslandDistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurfaceRandomized(grid->Meshes[0], grid->GetTransformation(), 5, 200);
+	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(IslandVBO, IslandDistibutedPoints);
+	Island->SetInstanced(IslandVBO, IslandDistibutedPoints.size());*/
 	/*FUSIONCORE::VBO TowerinstanceVBO;
 	auto TowerDistibutedPoints = FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(grid->Meshes[0], grid->GetTransformation(), 4, 109);
 	FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(TowerinstanceVBO, TowerDistibutedPoints);*/
@@ -891,13 +917,12 @@ int Application::Run()
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, sunShadowMap.GetShadowMapFBO());
 		//glClear(GL_DEPTH_BUFFER_BIT);
-		FUSIONCORE::ClearCascadedTextureBuffers();
-		FUSIONCORE::CalculateLightSpaceMatricesOnGPU(camera3d,cascadedShadowMaps, *Shaders.CascadedLightSpaceMatrixComputeShader);
+		FUSIONCORE::RefreshCascadedShadowMapBuffers(camera3d, cascadedShadowMaps, *Shaders.CascadedLightSpaceMatrixComputeShader);
 		sunShadowMap.Draw(Shaders, camera3d, models,Sun);
 		//sunShadowMap.Draw(Shaders,2, camera3d, models,Sun);
 		//sunShadowMap.Draw(Shaders,1, camera3d, models,Sun);
 		//sunShadowMap.Draw(Shaders,0, camera3d, models,Sun);
-		sunShadowMap2.Draw(Shaders,camera3d, models, Sun2);
+		//sunShadowMap2.Draw(Shaders,camera3d, models, Sun2);
 		//sunShadowMap3.Draw(Shaders,0, camera3d, models, Sun3);
 
 		Gbuffer.Bind();
@@ -926,7 +951,8 @@ int Application::Run()
 		//shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size());
 		shrub->DrawDeferredInstancedImportedMaterial(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, instanceVBO, DistibutedPoints.size());
 		//if (FUSIONCORE::IsModelInsideCameraFrustum(*model1, camera3d))
-		
+		Island->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, IslandMaterial);
+
 		{
 			Rock->DrawDeferredInstancedImportedMaterial(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, RockInstanceVBO, RockDistibutedPoints.size());
 		}
@@ -980,7 +1006,7 @@ int Application::Run()
 		FUSIONUTIL::GLClearColor(glm::vec4(0.0f,0.0f,0.0f,1.0f));
 		FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
 		//Gbuffer.DrawSSR(camera3d, *Shaders.SSRshader, [&]() {}, WindowSize);
-		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cascadedShadowMaps, cubemap,FF_COLOR_VOID, 0.3f);
+		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap,FF_COLOR_VOID, 0.3f);
 		
 		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
 		{
@@ -1075,7 +1101,7 @@ int Application::Run()
 		ScreenFrameBuffer.Unbind();
 		////glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, FUSIONCORE::GetCascadedShadowMapTextureArray(), [&]() {}, WindowSize, true, 0.7f, 0.1f, 5.0f, 1.7f, 1.6f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, FUSIONCORE::GetCascadedShadowMapTextureArray(), [&]() {}, WindowSize, true, 0.7f, 0.1f, 3.0f, 1.7f, 1.6f);
 
 		//glfwPollEvents();
 		FUSIONUTIL::PollEvents();
@@ -1123,6 +1149,7 @@ int Application::Run()
 	WallMaterial.Clean();
 	AnimationModelMaterial.Clean();
 	ShrubMaterial.Clean();
+	IslandMaterial.Clean();
 
 	//glfwTerminate();
 

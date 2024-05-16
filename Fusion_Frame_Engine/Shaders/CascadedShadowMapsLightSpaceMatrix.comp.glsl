@@ -148,7 +148,6 @@ mat4 GetLightSpaceMatrix(float nearPlane,float farPlane,vec3 LightDirection)
 
 void GetLightSpaceMatrices(int MetaDataIndex)
 {
-	//CascadedMapMetaData MetaData = ShadowMapMetaDatas;
 	int IndexOffset = MetaDataIndex * MAX_CASCADE_PLANE_COUNT;
 	int ShadowCascadeCount = int(CascadeCount[MetaDataIndex]);
 	vec3 LightDirection = LightDirection[MetaDataIndex].xyz;

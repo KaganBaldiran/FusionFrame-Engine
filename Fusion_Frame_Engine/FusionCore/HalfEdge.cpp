@@ -23,6 +23,11 @@ glm::vec3 FUSIONCORE::TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos)
     return glm::vec3(transformed);
 }
 
+glm::vec3 FUSIONCORE::TranslateNormal(glm::mat4 ModelMatrix, glm::vec3 Normal)
+{
+    return glm::normalize(glm::transpose(glm::inverse(glm::mat3(ModelMatrix))) * Normal);
+}
+
 glm::vec3 FUSIONCORE::FindNormal(std::vector<Vertex> Vertices)
 {
     glm::vec3 Normal = glm::cross((Vertices[1].Position - Vertices[0].Position), (Vertices[2].Position - Vertices[0].Position));

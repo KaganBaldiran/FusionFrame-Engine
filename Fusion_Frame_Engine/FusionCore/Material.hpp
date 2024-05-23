@@ -25,6 +25,26 @@ namespace FUSIONCORE
 	FUSIONFRAME_EXPORT_FUNCTION void SetEnvironment(Shader& shader, float FogIntesity = 1.0f, glm::vec3 FogColor = glm::vec3(1.0f), glm::vec3 EnvironmentRadiance = glm::vec3(1.0f));
 	FUSIONFRAME_EXPORT_FUNCTION void SetEnvironmentIBL(Shader& shader, float FogIntesity = 1.0f, glm::vec3 EnvironmentRadiance = glm::vec3(1.0f));
 	
+	/*
+	 Represents a material used for shading 3D models.
+
+	 The Material class encapsulates properties of a material used for shading 3D models,
+	 including roughness, metallic, albedo color, and texture maps. It provides methods
+	 for managing texture maps.
+ 
+	 Example usage:
+	 // Create a material with default properties
+	 Material myMaterial;
+
+	 // Set the albedo color of the material
+	 myMaterial.Albedo = {1.0f, 0.0f, 0.0f, 1.0f};
+
+	 // Add a texture map to the material
+	 myMaterial.PushTextureMap("diffuse",Texture);
+
+	 // Enable clay material mode for the material
+	 myMaterial.EnableClayMaterial();
+	 */
 	class FUSIONFRAME_EXPORT Material
 	{
 	public:

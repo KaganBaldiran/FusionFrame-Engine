@@ -44,6 +44,7 @@ namespace FUSIONUTIL
 	FUSIONFRAME_EXPORT_FUNCTION void GetWindowSize(GLFWwindow* window, int& x, int& y);
 	FUSIONFRAME_EXPORT_FUNCTION glm::ivec2 GetWindowPosition(GLFWwindow* window);
 	FUSIONFRAME_EXPORT_FUNCTION void GetWindowPosition(GLFWwindow* window, int& x, int& y);
+	FUSIONFRAME_EXPORT_FUNCTION void SetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int Xpos, int Ypos, int width, int height, int refreshRate);
 
 	FUSIONFRAME_EXPORT_FUNCTION bool IsKeyPressedOnce(GLFWwindow* window, int Key, bool& Signal);
 	FUSIONFRAME_EXPORT_FUNCTION int GetKey(GLFWwindow* window,int key);

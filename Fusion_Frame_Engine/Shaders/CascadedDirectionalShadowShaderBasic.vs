@@ -30,7 +30,7 @@
 uniform vec2 MetaDataMatrixIndex;
 
 #define MAX_CASCADE_PLANE_COUNT 16
-#define MAX_CASCADED_SHADOW_MAP_COUNT 10
+#define MAX_CASCADED_SHADOW_MAP_COUNT 12
 
 layout(std430, binding = 10) readonly buffer CascadedMapMetaDatas
 {

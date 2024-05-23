@@ -37,7 +37,7 @@ namespace FUSIONCORE
 
 	//Uploads all the light datas avaliable to the light SSBO. Might turn to be kind of an expensive operation.
 	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
-	FUSIONFRAME_EXPORT_FUNCTION void UploadLightsShaderUniformBuffer();
+	FUSIONFRAME_EXPORT_FUNCTION void UploadLightsShaderUniformBuffer(FUSIONCORE::Shader& DestShader);
 	//Sets light data SSBO in a given shader.
 	FUSIONFRAME_EXPORT_FUNCTION void SendLightsShader(Shader& shader);
 	//Uploads the given light data to the light SSBO.
@@ -45,6 +45,27 @@ namespace FUSIONCORE
 	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
 	FUSIONFRAME_EXPORT_FUNCTION void UploadSingleLightShaderUniformBuffer(LightData& Light);
 
+	/*
+	 Represents a light source in a 3D scene.
+
+	 The Light class represents a light source in a 3D scene, providing functionality
+	 for setting light attributes such as position, color, intensity, and type. It supports
+	 different types of lights including point lights and directional lights. Additionally,
+	 it includes methods for drawing the light and retrieving its attributes.
+
+	 Example usage:
+	 // Create a point light with white color and default intensity
+	 Light pointLight(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), 1.0f, FF_POINT_LIGHT);
+
+	 // Set the direction of a directional light
+	 directionalLight.SetLightDirection(glm::vec3(0.0f, -1.0f, 0.0f));
+
+	 // Get the type of the light
+	 int lightType = pointLight.GetLightType();
+
+	 // Get the color of the light
+	 glm::vec3 lightColor = pointLight.GetLightColor();
+	 */
 	class FUSIONFRAME_EXPORT Light : public Object
 	{
 	public:

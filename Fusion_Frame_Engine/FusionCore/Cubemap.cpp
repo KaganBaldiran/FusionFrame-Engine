@@ -878,14 +878,14 @@ std::pair<GLuint, int> FUSIONCORE::ComputeLUT(Shader& LUTshader)
     return { LUT, FF_HDRI_COMPLETE };
 }
 
-int FUSIONCORE::ImportCubeMap(const char* HDRIfilePath , unsigned int CubeMapSize , CubeMap& cubemap, GLuint HDRItoCubeMapShader, GLuint ConvolutateCubeMapShader, GLuint PrefilterHDRIShader)
+int FUSIONCORE::ImportCubeMap(const char* HDRIfilePath , unsigned int CubeMapSize , CubeMap& cubemap,FUSIONUTIL::DefaultShaders& shaders)
 {
-    std::pair<GLuint, int> CubeMapTexture = HDRItoCubeMap(HDRIfilePath, CubeMapSize, HDRItoCubeMapShader);
+    std::pair<GLuint, int> CubeMapTexture = HDRItoCubeMap(HDRIfilePath, CubeMapSize, shaders.HDRIShader->GetID());
 
     if (CubeMapTexture.second == FF_HDRI_COMPLETE)
     {
-        cubemap.SetConvDiffCubeMap(ConvolutateCubeMap(CubeMapTexture.first, ConvolutateCubeMapShader).first);
-        cubemap.SetPreFilteredEnvMap(PreFilterCubeMap(CubeMapTexture.first, PrefilterHDRIShader).first);
+        cubemap.SetConvDiffCubeMap(ConvolutateCubeMap(CubeMapTexture.first, shaders.ConvolutateCubeMapShader->GetID()).first);
+        cubemap.SetPreFilteredEnvMap(PreFilterCubeMap(CubeMapTexture.first, shaders.PreFilterCubeMapShader->GetID()).first);
         cubemap.SetCubeMapTexture(CubeMapTexture.first);
 
         LOG_INF("Imported HDRI :: " + std::string(HDRIfilePath));

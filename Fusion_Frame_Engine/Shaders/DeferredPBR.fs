@@ -46,7 +46,9 @@ uniform sampler2DArray CascadeShadowMaps;
 uniform mat4 ViewMatrix;
 
 #define MAX_CASCADE_PLANE_COUNT 16
-#define MAX_CASCADED_SHADOW_MAP_COUNT 10
+#define MAX_CASCADED_SHADOW_MAP_COUNT 12
+
+uniform float CascadedShadowMapSoftness;
 
 layout(std430, binding = 10) readonly buffer CascadedMapMetaDatas
 {
@@ -59,7 +61,6 @@ layout(std430, binding = 10) readonly buffer CascadedMapMetaDatas
 };
 
 uniform vec2 screenSize;
-//uniform vec3 gridSize;
 
 struct Light
 {
@@ -135,7 +136,7 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N
      Layeri = int(Layer[OffSetLayerIndex]);
 
      float shadow = 0.0f;
-     vec2 TexelSize = 0.5f / vec2(textureSize(CascadeShadowMaps,0));
+     vec2 TexelSize = CascadedShadowMapSoftness / vec2(textureSize(CascadeShadowMaps,0));
      //vec2 LayerTextureSize = vec2(textureSize(CascadeShadowMaps,0));
      //vec2 TexelSize = 1.0f / (LayerTextureSize * PositionAndSize.zw);
      for(int x = -1; x <= 1; ++x)

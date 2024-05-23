@@ -13,6 +13,28 @@ namespace FUSIONPHYSICS
 
 namespace FUSIONCORE
 {
+     /*
+     Represents a basic object in a scene.
+
+     The Object class serves as a base class for objects within a scene, providing
+     functionality for managing transformations, parent-child relationships, and associated
+     quad nodes for collision detection. It allows adding and removing child objects,
+     updating transformations, and retrieving information about children and associated quad nodes.
+
+     Example usage:
+     // Create a new object
+     Object myObject;
+
+     // Add a child object
+     Object childObject;
+     myObject.PushChild(&childObject);
+
+     // Update object children transformations
+     myObject.UpdateChildren();
+
+     // Retrieve the transformation of the object
+     WorldTransform transform = myObject.GetTransformation();
+     */
     class FUSIONFRAME_EXPORT Object
     {
     protected:

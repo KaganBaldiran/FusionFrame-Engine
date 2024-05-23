@@ -13,14 +13,14 @@
 
 namespace FUSIONCORE
 {
-    enum FF_SHADER_SOURCE {
+    enum FUSIONFRAME_EXPORT FF_SHADER_SOURCE {
         FF_GEOMETRY_SHADER_SOURCE = 0x9001,
         FF_VERTEX_SHADER_SOURCE = 0x9002,
         FF_FRAGMENT_SHADER_SOURCE = 0x9003,
         FF_COMPUTE_SHADER_SOURCE = 0x9004
     };
 
-    enum FF_SHADER_LAYOUT_QUALIFIER {
+    enum FUSIONFRAME_EXPORT FF_SHADER_LAYOUT_QUALIFIER {
         FF_LOCATION_SHADER_LAYOUT_QUALIFIER = 0x10001,
         FF_INVOCATION_SHADER_LAYOUT_QUALIFIER = 0x10002,
         FF_BINDING_SHADER_LAYOUT_QUALIFIER = 0x10003,
@@ -39,6 +39,29 @@ namespace FUSIONCORE
     FUSIONFRAME_EXPORT_FUNCTION void UseShaderProgram(GLuint program);
     FUSIONFRAME_EXPORT_FUNCTION void DeleteShaderProgram(GLuint program);
 
+     /*
+     Manages shader programs used for rendering.
+
+     The Shader class provides functionalities for creating, compiling, and managing shader programs
+     used in rendering. It supports different types of shaders, including vertex, geometry, and fragment shaders,
+     and allows for deferred compilation and alteration of shader code.
+
+     Key functionalities include:
+     - Compiling shader programs from source files or strings.
+     - Deferred compilation to support altering shader code before final compilation.
+     - Setting uniform values such as bools, ints, floats, vectors, and matrices.
+
+     Example usage:
+     // Create a shader program from vertex and fragment shader source files
+     Shader myShader("vertex_shader.vert", "fragment_shader.frag");
+
+     // Set uniform values
+     myShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+     myShader.setFloat("ambientIntensity", 0.5f);
+
+     // Use the shader program for rendering
+     myShader.use();
+    */
     class FUSIONFRAME_EXPORT Shader
     {
     public:

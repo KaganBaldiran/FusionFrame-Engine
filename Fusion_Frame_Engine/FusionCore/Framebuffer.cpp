@@ -112,7 +112,7 @@ void FUSIONCORE::FrameBuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,GLuint ShadowMap,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
+void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
 {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -140,7 +140,7 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,GLuint Shado
 	shader.setInt("IDtexture", 3);
 
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, ShadowMap);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, GetCascadedShadowMapTextureArray());
 	shader.setInt("CascadeShadowMaps1024", 4);
 
 	shader.setVec3("CamPos", camera.Position);

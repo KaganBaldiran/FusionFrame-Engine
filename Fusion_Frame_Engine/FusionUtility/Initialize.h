@@ -107,9 +107,31 @@ namespace FUSIONUTIL
 
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
     FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
-    FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, const char* WindowName);
+     /*
+     Initializes a GLFW window.
+
+     Parameters:
+       - width: The width of the window.
+       - height: The height of the window.
+       - MajorGLversion: The major version of the OpenGL context.
+       - MinorGLversion: The minor version of the OpenGL context.
+       - EnableGLdebug: Whether to enable OpenGL debug context.
+       - WindowName: The name of the window.
+
+     Returns:
+       A pointer to the GLFW window if initialization is successful, otherwise nullptr.
+     */
+    FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
+    /*
+    Terminates the window and associated resources.
+    This function cleans up resources allocated and terminates the window.
+    */
     FUSIONFRAME_EXPORT_FUNCTION void TerminateWindow();
 
     FUSIONFRAME_EXPORT_FUNCTION void SwapBuffers(GLFWwindow* window);
     FUSIONFRAME_EXPORT_FUNCTION void PollEvents();
+
+    //Refreses the window and swaps the buffers
+    //Internally calls "SwapBuffers()" and "PollEvents()"
+    FUSIONFRAME_EXPORT_FUNCTION void RefreshWindow(GLFWwindow* window);
 }

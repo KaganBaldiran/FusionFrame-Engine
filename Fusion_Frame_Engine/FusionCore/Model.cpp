@@ -537,8 +537,8 @@ FUSIONCORE::Model::~Model()
     for (size_t i = 0; i < this->Meshes.size(); i++)
     {
         Meshes[i].Clean();
-        LOG_INF("Model" << this->ModelID << " buffers cleaned!");
     }
+    LOG_INF("Model" << this->ModelID << " buffers cleaned!");
 }
 
 void FUSIONCORE::Model::SetVertexBoneDataDefault(Vertex& vertex)
@@ -869,7 +869,7 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
                 FilePath += "/" + std::string(str.C_Str());
             }
             
-            Texture2D texture(FilePath.c_str(), GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, true);
+            Texture2D texture(FilePath.c_str(),GL_REPEAT,GL_REPEAT,GL_TEXTURE_2D,GL_UNSIGNED_BYTE,GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR, true);
             texture.PbrMapType = typeName;
 
             Destination.push_back(texture);

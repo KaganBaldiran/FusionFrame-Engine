@@ -158,7 +158,6 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 		const GLsizei dataSize = sizeof(metaDataGPU);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, dataSize, &metaDataGPU);
 		
-		LightSpaceMatrixComputeShader.setFloat("CameraFov", camera.GetCameraFOV());
 		LightSpaceMatrixComputeShader.setFloat("FarPlane", camera.FarPlane);
 		LightSpaceMatrixComputeShader.setFloat("NearPlane", camera.NearPlane);
 		LightSpaceMatrixComputeShader.setVec3("CameraUpVector", camera.GetUpVector());
@@ -167,6 +166,7 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 
 	CascadedShowMapCountPrevious = CascadedDirectionalShadowMapsCount;
 
+	LightSpaceMatrixComputeShader.setFloat("CameraFov", camera.GetCameraFOV());
 	LightSpaceMatrixComputeShader.setMat4("ViewMat", camera.viewMat);
 	LightSpaceMatrixComputeShader.setFloat("CameraAspectRatio", camera.GetCameraAspectRatio());
 
@@ -690,4 +690,11 @@ void FUSIONCORE::CascadedDirectionalShadowMap::BindShadowMapLight(Light& light)
 	FUSIONCORE::LightDatas[light.GetLightID()].ShadowMapIndex = DirectionalShadowMapBoundLightCount;
 	BoundLightID = light.GetLightID();
 	this->MetaData.LightDirection = glm::vec4(light.GetLightDirectionPosition(),0.0f);
+}
+
+void FUSIONCORE::SetCascadedShadowSoftness(Shader& TargetShader, float Softness)
+{
+	TargetShader.use();
+	TargetShader.setFloat("CascadedShadowMapSoftness", Softness);
+	UseShaderProgram(0);
 }

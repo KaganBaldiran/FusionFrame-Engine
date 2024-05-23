@@ -53,6 +53,25 @@ namespace FUSIONCORE
 		glm::vec3 target;
 	};
 
+	/*
+ Represents a 3D camera used for viewing scenes in a 3D environment.
+
+ The Camera3D class extends the base Camera class and provides functionality
+ specific to 3D cameras. 
+
+ Example usage:
+ // Create a 3D camera
+ Camera3D myCamera;
+
+ // Update camera matrices based on window size and other parameters
+ myCamera.UpdateCameraMatrix(45.0f, aspectRatio, 0.1f, 1000.0f, windowSize);
+
+ // Handle user inputs to control camera movement
+ myCamera.HandleInputs(window, windowSize);
+
+ // Get the up vector of the camera
+ glm::vec3 upVector = myCamera.GetUpVector();
+ */
 	class FUSIONFRAME_EXPORT Camera3D : public Camera
 	{
 	public:
@@ -66,7 +85,7 @@ namespace FUSIONCORE
 		void SetTargetPosition(glm::vec3 TargetPos);
 		void SetTarget(Object* object, float Distance);
 		void SetTarget(Object* object, float Distance, glm::vec3 Offset);
-		void SetMinMaxZoom(bool clampZoom = false, float minZoom = -1.0f, float maxZoom = -1.0f);
+		void SetMinMaxZoom(bool clampZoom = false, float minZoom = -1.0f, float maxZoom = 1.0f);
 		inline float GetCameraZoom() { return this->Zoom; };
 		void SetZoomSensitivity(float Speed);
 #endif
@@ -115,7 +134,30 @@ namespace FUSIONCORE
 		int CameraLayout;
 	};
 
+	/*
+    Checks if a model is completely inside the camera frustum using AABB (Axis Aligned Bounding Box) test.
+
+    This function determines whether the specified model is completely inside the camera frustum
+    using an AABB test (Axis Aligned Bounding Box). It returns true if the model is entirely within
+    the frustum, otherwise false.
+
+    @param model The model to check.
+    @param camera The camera representing the view frustum.
+    @return True if the model is completely inside the camera frustum, otherwise false.
+    */
 	FUSIONFRAME_EXPORT_FUNCTION bool IsModelInsideCameraFrustumAABB(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera);
+
+	/*
+	 Checks if a model is completely inside the camera frustum using sphere test.
+
+	 This function determines whether the specified model is completely inside the camera frustum
+	 using a sphere test. It returns true if the model is entirely within the frustum, otherwise false.
+
+	 @param model The model to check.
+	 @param camera The camera representing the view frustum.
+	 @param RadiusPadding Additional padding to the radius of the model's bounding sphere.
+	 @return True if the model is completely inside the camera frustum, otherwise false.
+	 */
 	FUSIONFRAME_EXPORT_FUNCTION bool IsModelInsideCameraFrustumSphere(FUSIONCORE::Model& model, FUSIONCORE::Camera3D& camera, float RadiusPadding = 0.0f);
 
 	//Requires an active quadtree world partitioning 

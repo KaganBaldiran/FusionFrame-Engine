@@ -79,6 +79,11 @@ void FUSIONUTIL::GetWindowPosition(GLFWwindow* window, int& x, int& y)
 	glfwGetWindowPos(window, &x, &y);
 }
 
+void FUSIONUTIL::SetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int Xpos, int Ypos, int width, int height, int refreshRate)
+{
+	glfwSetWindowMonitor(window, monitor, Xpos, Ypos, width, height, refreshRate);
+}
+
 bool FUSIONUTIL::IsKeyPressedOnce(GLFWwindow* window, int Key, bool& Signal)
 {
 	if (!Signal && glfwGetKey(window, Key) == GLFW_RELEASE)

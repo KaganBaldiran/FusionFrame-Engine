@@ -26,6 +26,33 @@ namespace FUSIONCORE
 		glm::vec3 Scale;
 	};
 
+	/*
+	 Represents the transformation properties of an object in the world.
+
+	 The WorldTransform class encapsulates the translation, rotation, and scaling properties
+	 of an object in the world. It provides methods for applying transformations, such as translation,
+	 rotation, and scaling, and calculates the resulting model matrix.
+
+	 Key functionalities include:
+	 - Applying translation, rotation, and scaling to an object.
+	 - Calculating the model matrix based on the applied transformations.
+
+	 Example usage:
+	 // Create a world transform object
+	 WorldTransform transform;
+
+	 // Apply translation
+	 transform.Translate(glm::vec3(1.0f, 0.0f, 0.0f));
+
+	 // Apply rotation
+	 transform.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(45.0f));
+
+	 // Apply scaling
+	 transform.Scale(glm::vec3(2.0f, 2.0f, 2.0f));
+
+	 // Get the model matrix
+	 glm::mat4 modelMatrix = transform.GetModelMat4();
+	*/
 	class FUSIONFRAME_EXPORT WorldTransform
 	{
 	public:

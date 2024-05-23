@@ -47,6 +47,7 @@ namespace FUSIONCORE
 	};
 
 	FUSIONFRAME_EXPORT_FUNCTION glm::vec3 TranslateVertex(glm::mat4 Matrix, glm::vec3 VertexPos);
+	glm::vec3 TranslateNormal(glm::mat4 ModelMatrix, glm::vec3 Normal);
 	FUSIONFRAME_EXPORT_FUNCTION glm::vec3 FindNormal(std::vector<Vertex> Vertices);
 	FUSIONFRAME_EXPORT_FUNCTION glm::vec3 FindNormal(glm::mat4 ModelMatrix, std::vector<Vertex> Vertices);
 

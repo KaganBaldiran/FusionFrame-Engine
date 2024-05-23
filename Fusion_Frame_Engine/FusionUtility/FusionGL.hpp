@@ -12,6 +12,9 @@ namespace FUSIONUTIL
 	FUSIONFRAME_EXPORT_FUNCTION void GLClear(GLbitfield BitMask);
 	FUSIONFRAME_EXPORT_FUNCTION void GLviewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
+	FUSIONFRAME_EXPORT_FUNCTION void ClearFrameBuffer(GLint x, GLint y, GLsizei width, GLsizei height, glm::vec4 color);
+	
+
 	FUSIONFRAME_EXPORT_FUNCTION void GLBindFrameBuffer(GLenum target, GLuint framebuffer);
 
 	FUSIONFRAME_EXPORT_FUNCTION void GLPolygonMode(GLenum face, GLenum mode);

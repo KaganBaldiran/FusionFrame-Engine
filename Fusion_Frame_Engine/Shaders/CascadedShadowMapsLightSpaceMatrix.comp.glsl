@@ -8,7 +8,7 @@ layout(location = 4) uniform float FarPlane;
 layout(location = 5) uniform float NearPlane;
 
 #define MAX_CASCADE_PLANE_COUNT 16
-#define MAX_CASCADED_SHADOW_MAP_COUNT 10
+#define MAX_CASCADED_SHADOW_MAP_COUNT 12
 
 layout(std430, binding = 10) buffer CascadedMapMetaDatas
 {

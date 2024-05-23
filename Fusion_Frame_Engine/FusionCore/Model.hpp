@@ -41,6 +41,23 @@ namespace FUSIONCORE
 
     FUSIONFRAME_EXPORT_FUNCTION glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
    
+     /*
+     Represents a 3D model loaded from a file.
+
+     The Model class represents a 3D model loaded from a file, providing functionality
+     for rendering the model with different shaders, materials, and environment maps.
+     It supports various rendering techniques such as deferred rendering, instancing,
+     and indirect rendering. Additionally, it includes methods for processing model
+     data, loading textures, extracting bones for animation, and handling asynchronous
+     model loading.
+
+     Example usage:
+     // Load a model from a file
+     Model myModel("path/to/model.obj");
+
+     // Draw the model with a specific shader and camera
+     myModel.Draw(camera, shader, ShaderPreparations);
+     */
     class FUSIONFRAME_EXPORT Model : public Object
     {
     public:

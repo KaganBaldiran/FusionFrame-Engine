@@ -8,6 +8,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "../FusionUtility/FusionDLLExport.h"
+#include "../FusionUtility/Initialize.h"
 
 #define FF_HDRI_COMPLETE 0x345
 #define FF_HDRI_ERROR 0x346
@@ -22,7 +23,25 @@ namespace FUSIONCORE
 	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> PreFilterCubeMap(GLuint CubeMap, GLuint PreFilterCubeMapShader);
 	FUSIONFRAME_EXPORT_FUNCTION std::pair<GLuint, int> ComputeLUT(Shader& LUTshader);
 
-	 class FUSIONFRAME_EXPORT CubeMap
+	/*
+	 Represents a cube map used for environment mapping in rendering.
+
+	 The CubeMap class encapsulates the functionality to create, manage, and draw cube maps, which are commonly used for environment mapping.
+	 It provides methods for loading cube map textures and drawing the cube map.
+	 Also can be created from a HDRI by calling ImportCubeMap() function.
+
+	 Key functionalities include:
+	 - Creating cube maps from image files or existing OpenGL texture objects.
+	 - Drawing the cube map using a specified camera and window size.
+
+	 Example usage:
+	 // Create a cube map from a set of texture faces
+	 CubeMap cubemap({"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"}, cubemapShader);
+
+	 // Draw the cube map using a camera and window size
+	 cubemap.Draw(camera, windowSize);
+	*/
+	class FUSIONFRAME_EXPORT CubeMap
 	{
 	public:
 
@@ -48,7 +67,7 @@ namespace FUSIONCORE
 		GLuint ConvDiffCubeMap;
 	};
 
-	FUSIONFRAME_EXPORT_FUNCTION int ImportCubeMap(const char* HDRIfilePath, unsigned int CubeMapSize, CubeMap& cubemap, GLuint HDRItoCubeMapShader, GLuint ConvolutateCubeMapShader, GLuint PrefilterHDRIShader);
+	FUSIONFRAME_EXPORT_FUNCTION int ImportCubeMap(const char* HDRIfilePath, unsigned int CubeMapSize, CubeMap& cubemap,FUSIONUTIL::DefaultShaders& shaders);
 }
 
 #endif 

@@ -4,7 +4,7 @@
 #include <glew.h>
 #include <glfw3.h>
 
-FUSIONCORE::Texture2D::Texture2D(const char* filePath , GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter , GLuint Wrap_S_filter, GLuint Wrap_T_filter , bool Flip)
+FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuint Wrap_T_filter,GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter, bool Flip)
 {
 	PathData = std::string(filePath);
 	this->PixelType = PixelType;

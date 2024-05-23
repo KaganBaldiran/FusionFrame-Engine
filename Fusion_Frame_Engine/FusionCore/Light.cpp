@@ -124,7 +124,7 @@ void FUSIONCORE::InitializeLightsShaderStorageBufferObject()
 	BindUBONull();
 }
 
-void FUSIONCORE::UploadLightsShaderUniformBuffer()
+void FUSIONCORE::UploadLightsShaderUniformBuffer(FUSIONCORE::Shader& DestShader)
 {
 	std::vector<LightData> TempLightDatas;
 	TempLightDatas.reserve(LightCount);
@@ -132,11 +132,12 @@ void FUSIONCORE::UploadLightsShaderUniformBuffer()
 	{
 		TempLightDatas.push_back(lightdata.second);  
 	}
-
+	DestShader.use();
 	LightsShaderStorageBufferObject->Bind();
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,sizeof(LightData) * LightCount, TempLightDatas.data());
 	LightsShaderStorageBufferObject->BindSSBO(4);
 	BindSSBONull();
+	FUSIONCORE::UseShaderProgram(0);
 }
 
 void FUSIONCORE::SendLightsShader(Shader& shader)

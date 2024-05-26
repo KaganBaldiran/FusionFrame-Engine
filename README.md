@@ -15,6 +15,7 @@ Fusion Frame engine is a framework type game engine that focuses on delivering a
 - Deferred and forward mesh instancing 
 - Compute shader based particle emitter
 - Skeletal animation support
+- Deferred ScreenSpace decals
 
 Also planning to implement a voxel based GI soon.
 

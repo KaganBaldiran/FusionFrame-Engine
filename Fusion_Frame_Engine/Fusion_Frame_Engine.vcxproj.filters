@@ -130,6 +130,12 @@
     <None Include="Shaders\CascadedShadowMapsLightSpaceMatrix.comp.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\Decal.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Decal.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -254,6 +260,9 @@
     <ClCompile Include="FusionCore\Shapes.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
+    <ClCompile Include="FusionCore\Decal.cpp">
+      <Filter>Sources\FusionCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -369,6 +378,9 @@
     </ClInclude>
     <ClInclude Include="FusionUtility\FusionGL.hpp">
       <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionCore\Decal.hpp">
+      <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

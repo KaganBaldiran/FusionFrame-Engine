@@ -57,8 +57,8 @@ uniform int disableclaymaterial[5];
 uniform float ModelID;
 uniform float ObjectScale;
 
-uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT];
-uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT];
+uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT / 10];
+uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT / 10];
 
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;

@@ -45,15 +45,17 @@ mat4 ortho(float left, float right, float bottom, float top, float near, float f
 }
 
 mat4 perspective(float fov, float aspect, float near, float far) {
-    float f = 1.0 / tan(fov * 0.5);
-    float rangeInv = 1.0 / (near - far);
+    float rad = radians(fov); 
+    float tanHalfFovy = tan(rad / 2.0);
 
-    return mat4(
-        f / aspect, 0.0, 0.0, 0.0,
-        0.0, f, 0.0, 0.0,
-        0.0, 0.0, (near + far) * rangeInv, -1.0,
-        0.0, 0.0, near * far * rangeInv * 2.0, 0.0
-    );
+    mat4 result = mat4(0.0);
+    result[0][0] = 1.0 / (aspect * tanHalfFovy);
+    result[1][1] = 1.0 / (tanHalfFovy);
+    result[2][2] = -(far + near) / (far - near);
+    result[2][3] = -1.0;
+    result[3][2] = -(2.0 * far * near) / (far - near);
+
+    return result;
 }
 
 mat4 lookAt(vec3 eye, vec3 center, vec3 up) {

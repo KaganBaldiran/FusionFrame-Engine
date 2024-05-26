@@ -29,13 +29,10 @@ int Application::Run()
 
 	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
 
-
-	//FUSIONCORE::InitializeAnimationUniformBuffer();
-
+	FUSIONUTIL::InitializeEngineBuffers();
 	FUSIONCORE::InitializeCascadedShadowMapTextureArray(4096, 1, 1024);
 	FUSIONUTIL::DefaultShaders Shaders;
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
-	FUSIONCORE::SHAPES::InitializeShapeBuffers();
 
 	//FUSIONCORE::Shader shader;
 	//shader.PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "Shaders/Gbuffer.fs");
@@ -93,12 +90,12 @@ int Application::Run()
 	//FUSIONCORE::OmniShadowMap ShadowMap2(shadowMapSize, shadowMapSize, 75.0f);
 	//FUSIONCORE::OmniShadowMap ShadowMap3(shadowMapSize, shadowMapSize, 75.0f);
 
-	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 10.0f, CAMERA_FAR_PLANE / 2.0f };
-	std::vector<glm::vec2> shadowCascadeTextureSizes{ {128,128},{256,256},{512,512},{1024,1024},{1024,1024} };
+	std::vector<float> shadowCascadeLevels{ CAMERA_FAR_PLANE / 50.0f, CAMERA_FAR_PLANE / 25.0f, CAMERA_FAR_PLANE / 7.0f, CAMERA_FAR_PLANE / 2.0f };
+	std::vector<glm::vec2> shadowCascadeTextureSizes{ {128,128},{256,256},{512,512},{2048,2048},{2048,2048}};
 	//std::vector<glm::vec2> shadowCascadeTextureSizes2{ {128,128},{256,256},{512,512},{512,512},{1024,1024}};
 
-	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap2(shadowCascadeTextureSizes, shadowCascadeLevels);
-	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(shadowCascadeTextureSizes, shadowCascadeLevels);
+	//FUSIONCORE::CascadedDirectionalShadowMap StaticShadowMap(shadowCascadeTextureSizes, shadowCascadeLevels);
+	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(shadowCascadeTextureSizes,shadowCascadeLevels);
 	FUSIONCORE::SetCascadedShadowSoftness(*Shaders.DeferredPBRshader,1.0f);
 	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap3(1024, 1024, shadowCascadeLevels);
 
@@ -185,19 +182,19 @@ int Application::Run()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> Rock = std::make_unique<FUSIONCORE::Model>("Resources\\models\\RockFormation\\RockFormation.obj");
-	std::unique_ptr<FUSIONCORE::Model> Island = std::make_unique<FUSIONCORE::Model>("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Island_low.fbx");
+	//std::unique_ptr<FUSIONCORE::Model> Island = std::make_unique<FUSIONCORE::Model>("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Island_low.fbx");
 
-	FUSIONCORE::Texture2D IslandBaseColor("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_BaseColor.png");
-	FUSIONCORE::Texture2D IslandNormal("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Normal_inverted.png");
-	FUSIONCORE::Texture2D IslandRoughness("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Roughness.png");
+	//FUSIONCORE::Texture2D IslandBaseColor("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_BaseColor.png");
+	//FUSIONCORE::Texture2D IslandNormal("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Normal_inverted.png");
+	//FUSIONCORE::Texture2D IslandRoughness("C:\\Users\\kbald\\Desktop\\Ziad_Game\\Island\\Textures\\1K\\Island_low_Island_Roughness.png");
 
-	Island->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
-	Island->GetTransformation().TranslateNoTraceBack(glm::vec3(0.0f, 60.0f, 0.0f));
+	//Island->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
+	//Island->GetTransformation().TranslateNoTraceBack(glm::vec3(0.0f, 60.0f, 0.0f));
 	//Stove->SetIndirectCommandBuffer(1, 0, 0, 0);
 
-	FUSIONCORE::Model Isaac("C:\\Users\\kbald\\Desktop\\Isaac\\Isaac_low.obj");
+	//FUSIONCORE::Model Isaac("C:\\Users\\kbald\\Desktop\\Isaac\\Isaac_low.obj");
 
-	Isaac.GetTransformation().ScaleNoTraceBack(glm::vec3(7.0f));
+	//Isaac.GetTransformation().ScaleNoTraceBack(glm::vec3(7.0f));
 
 	grid->GetTransformation().ScaleNoTraceBack({ 8.0f,8.0f ,8.0f });
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
@@ -311,10 +308,10 @@ int Application::Run()
 	ShrubMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShrubSpecular);
 	ShrubMaterial.PushTextureMap(TEXTURE_ALPHA0, ShrubAlpha);
 
-	FUSIONCORE::Material IslandMaterial;
+	/*FUSIONCORE::Material IslandMaterial;
 	IslandMaterial.PushTextureMap(TEXTURE_DIFFUSE0, IslandBaseColor);
 	IslandMaterial.PushTextureMap(TEXTURE_NORMAL0, IslandNormal);
-	IslandMaterial.PushTextureMap(TEXTURE_SPECULAR0, IslandRoughness);
+	IslandMaterial.PushTextureMap(TEXTURE_SPECULAR0, IslandRoughness);*/
 
 	model1->GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 	model1->GetTransformation().ScaleNoTraceBack(glm::vec3(0.15f, 0.15f, 0.15f));
@@ -338,14 +335,14 @@ int Application::Run()
 	FUSIONPHYSICS::CollisionBoxAABB StoveBox(Stove->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBoxAABB tryBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane Plane({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
-	FUSIONPHYSICS::CollisionBoxAABB IslandBox(Island->GetTransformation(), { 1.0f,1.0f,1.0f });
+	//FUSIONPHYSICS::CollisionBoxAABB IslandBox(Island->GetTransformation(), { 1.0f,1.0f,1.0f });
 	//FUSIONPHYSICS::CollisionBox3DAABB SofaBox(sofa->GetTransformation(), { 0.7f,0.8f,1.0f });
 	FUSIONPHYSICS::CollisionBoxAABB SofaBox(sofa->GetTransformation(), glm::vec3(1.0f));
 	FUSIONPHYSICS::CollisionBoxPlane Plane2({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 	FUSIONPHYSICS::CollisionBoxPlane floorBox({ 1.0f,1.0f,1.0f }, { 1.0f,1.0f,1.0f });
 
-	Island->PushChild(&IslandBox);
-	Island->UpdateChildren();
+	/*Island->PushChild(&IslandBox);
+	Island->UpdateChildren();*/
 
 	FUSIONCORE::Model IMPORTTEST("Resources\\floor\\grid.obj");
 	//FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\floor\\grid.obj", IMPORTTEST);
@@ -401,20 +398,23 @@ int Application::Run()
 
 	bool showDebug = false;
 
-	std::vector<FUSIONCORE::Model*> models;
-	models.push_back(Stove.get());
-	models.push_back(sofa.get());
-	models.push_back(model1.get());
-	models.push_back(grid.get());
-	models.push_back(MainCharac.get());
-	models.push_back(&IMPORTTEST);
-	models.push_back(&subdModel);
-	models.push_back(Tower.get());
-	models.push_back(shrub.get());
-	models.push_back(Rock.get());
-	models.push_back(Island.get());
+	std::vector<FUSIONCORE::Model*> StaticModels;
+	StaticModels.push_back(Stove.get());
+	StaticModels.push_back(sofa.get());
+	StaticModels.push_back(grid.get());
+	StaticModels.push_back(&IMPORTTEST);
+	StaticModels.push_back(&subdModel);
+	StaticModels.push_back(Tower.get());
+	StaticModels.push_back(shrub.get());
+	StaticModels.push_back(Rock.get());
+	//models.push_back(Island.get());
+	StaticModels.push_back(model1.get());
+	StaticModels.push_back(MainCharac.get());
 
 	//models.push_back(Rock.get());
+	std::vector<FUSIONCORE::Model*> DynamicModels;
+	DynamicModels.push_back(model1.get());
+	DynamicModels.push_back(MainCharac.get());
 
 	//cubemap.SetCubeMapTexture(ShadowMap0.GetShadowMap());
 	//ShadowMap0.BindShadowMapLight(Lights[0]);
@@ -454,7 +454,7 @@ int Application::Run()
 	Capsule0.GetTransformation().TranslateNoTraceBack({ 15.0f,5.0f,0.0f });
 	animationModel.PushChild(&Capsule0);
 	Capsule0.GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
-	models.push_back(&animationModel);
+	StaticModels.push_back(&animationModel);
 
 	std::vector<FUSIONCORE::Object*> ObjectInstances;
 	ObjectInstances.push_back(&Capsule0);
@@ -464,7 +464,7 @@ int Application::Run()
 	ObjectInstances.push_back(&Box1);
 	ObjectInstances.push_back(&Plane);
 	ObjectInstances.push_back(&tryBox);
-	ObjectInstances.push_back(&IslandBox);
+	//ObjectInstances.push_back(&IslandBox);
 	ObjectInstances.push_back(&AlpCollisionBox);
 
 	ObjectInstances.reserve(RockBoxes.size());
@@ -533,7 +533,10 @@ int Application::Run()
 
 	FUSIONCORE::Model* PixelModel = nullptr;
 
-
+	FUSIONCORE::DecalDeferred decal0;
+	decal0.GetTransformation().Scale({ 4.0f, 6.0f, 1.0f });
+	decal0.GetTransformation().Translate({ -4.0f, 10.0f, 28.0f });
+	decal0.GetTransformation().Rotate({ 0.0f, 1.0f, 0.0f },90.0f);
 
 	while (!FUSIONUTIL::WindowShouldClose(window))
 	{
@@ -541,9 +544,7 @@ int Application::Run()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-
 		//LOG("FPS: " << 1.0f / deltaTime);
-
 		auto start_time = std::chrono::high_resolution_clock::now();
 
 		tryBox.GetTransformation().Translate({ 0.0f,0.0f,std::sin(time(0)) / 5.0f });
@@ -574,7 +575,7 @@ int Application::Run()
 		glm::vec3 CapsuleQuadCenter = Capsule0.GetAssociatedQuads()[0]->Center;
 		emitter0.GetTransformation().Position = { (CapsuleQuadCenter.x + Capsule0.GetTransformation().Position.x) * 0.5f,Capsule0.GetTransformation().Position.y , (CapsuleQuadCenter.z + Capsule0.GetTransformation().Position.z) * 0.5f };
 
-		LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
+		//LOG("UNIQUE BOX COUNT: " << UniqueQuadObjects.size());
 		auto CapsuleModelMat = Capsule0.GetTransformation().GetModelMat4();
 		for (const auto& Box : UniqueQuadObjects)
 		{
@@ -856,6 +857,24 @@ int Application::Run()
 		{
 		  camera3d.Orientation = direction;
 		}*/
+		/*static float FOV = 45.0f;
+		if (FUSIONUTIL::IsKeyPressedOnce(window,FF_KEY_H))
+		{
+			FOV = 45.0f;
+		}
+		else if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_J))
+		{
+			FOV = 70.0f;
+		}
+		
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_K))
+		{
+			camera3d.Orientation = { 0.219249, -0.26206, -0.939816 };
+		}*/
+
+		//LOG("camera3d.Orientation: " << Vec3<float>(camera3d.Orientation));
+
+
 		camera3d.UpdateCameraMatrix(70.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
@@ -877,7 +896,7 @@ int Application::Run()
 		//glBindFramebuffer(GL_FRAMEBUFFER, sunShadowMap.GetShadowMapFBO());
 		//glClear(GL_DEPTH_BUFFER_BIT);
 		FUSIONCORE::RefreshCascadedShadowMapBuffers(camera3d, cascadedShadowMaps, *Shaders.CascadedLightSpaceMatrixComputeShader);
-		sunShadowMap.Draw(Shaders, camera3d, models, Sun);
+		sunShadowMap.Draw(Shaders, camera3d, StaticModels, Sun);
 		//sunShadowMap.Draw(Shaders,2, camera3d, models,Sun);
 		//sunShadowMap.Draw(Shaders,1, camera3d, models,Sun);
 		//sunShadowMap.Draw(Shaders,0, camera3d, models,Sun);
@@ -904,7 +923,7 @@ int Application::Run()
 		//shrub->DrawDeferredInstanced(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, ShrubMaterial,instanceVBO,DistibutedPoints.size());
 		shrub->DrawDeferredInstancedImportedMaterial(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, instanceVBO, DistibutedPoints.size());
 		//if (FUSIONCORE::IsModelInsideCameraFrustum(*model1, camera3d))
-		Island->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, IslandMaterial);
+		//Island->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, IslandMaterial);
 
 		{
 			Rock->DrawDeferredInstancedImportedMaterial(camera3d, *Shaders.InstancedGbufferShader, shaderPrepe, RockInstanceVBO, RockDistibutedPoints.size());
@@ -932,7 +951,7 @@ int Application::Run()
 			Tower->DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe);
 
 		}
-		Isaac.DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe);
+		//Isaac.DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe);
 
 		animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices);
 		//if (FUSIONCORE::IsObjectQuadInsideCameraFrustum(RockBox, camera3d))
@@ -954,12 +973,14 @@ int Application::Run()
 		}
 		Capsule.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material());
 
+		decal0.Draw(Gbuffer, AnimationModelMaterial, camera3d, Shaders);
+		
 		Gbuffer.Unbind();
 		ScreenFrameBuffer.Bind();
 		FUSIONUTIL::GLClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
 		//Gbuffer.DrawSSR(camera3d, *Shaders.SSRshader, [&]() {}, WindowSize);
-		Gbuffer.Draw(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, FF_COLOR_VOID, 0.3f);
+		Gbuffer.DrawSceneDeferred(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, FF_COLOR_VOID, 0.3f);
 
 		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
 		{
@@ -973,6 +994,7 @@ int Application::Run()
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
+
 
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 
@@ -996,8 +1018,8 @@ int Application::Run()
 		}
 #ifdef ENGINE_DEBUG
 
-		static bool AllowD = true;
-		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_D, AllowD))
+		//static bool AllowD = true;
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_D))
 		{
 			showDebug = !showDebug;
 		}
@@ -1037,7 +1059,6 @@ int Application::Run()
 
 		//glDisable(GL_DEPTH_TEST);
 
-
 		//FUSIONCORE::SHAPES::DrawRectangleTextured(bearNormal, {0.0f,1.0f}, {1.0f,0.1f}, 0.0f, camera2d, *Shaders.ShapeTexturedShader);
 
 
@@ -1051,10 +1072,10 @@ int Application::Run()
 		//FUSIONCORE::SHAPES::DrawHexagonTextured(FloorAlbedo, { 0.0f,0.0f }, { 0.5f,0.5f }, 0.0f, camera2d,Shaders);
 		//glEnable(GL_DEPTH_TEST);
 
-		ScreenFrameBuffer.Unbind();
+		//ScreenFrameBuffer.Unbind();
 		////glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
-		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, false, 0.7f, 0.1f, 3.0f, 1.7f, 1.6f);
+		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, [&]() {}, WindowSize, true, 0.7f, 0.1f, 3.0f, 1.7f, 1.6f);
 
 		//glfwPollEvents();
 		FUSIONUTIL::PollEvents();
@@ -1102,7 +1123,7 @@ int Application::Run()
 	WallMaterial.Clean();
 	AnimationModelMaterial.Clean();
 	ShrubMaterial.Clean();
-	IslandMaterial.Clean();
+	//IslandMaterial.Clean();
 
 	FUSIONUTIL::TerminateWindow();
 	return 0;

@@ -148,6 +148,8 @@
     <None Include="Shaders\ConvolutationCubeMap.vs" />
     <None Include="Shaders\CubeMap.frag" />
     <None Include="Shaders\CubeMap.vert" />
+    <None Include="Shaders\Decal.fs" />
+    <None Include="Shaders\Decal.vs" />
     <None Include="Shaders\DeferredPBR.fs" />
     <None Include="Shaders\DeferredPBR.vs" />
     <None Include="Shaders\FBO.fs" />
@@ -186,6 +188,7 @@
     <ClCompile Include="FusionCore\Camera.cpp" />
     <ClCompile Include="FusionCore\Color.cpp" />
     <ClCompile Include="FusionCore\Cubemap.cpp" />
+    <ClCompile Include="FusionCore\Decal.cpp" />
     <ClCompile Include="FusionCore\Framebuffer.cpp" />
     <ClCompile Include="FusionCore\HalfEdge.cpp" />
     <ClCompile Include="FusionCore\Light.cpp" />
@@ -212,6 +215,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
+    <ClInclude Include="FusionCore\Decal.hpp" />
     <ClInclude Include="FusionCore\Shapes.hpp" />
     <ClInclude Include="FusionCore\Animation.hpp" />
     <ClInclude Include="FusionCore\Animator.hpp" />

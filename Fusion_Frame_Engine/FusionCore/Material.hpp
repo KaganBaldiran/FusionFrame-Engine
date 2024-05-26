@@ -11,12 +11,14 @@
 #define TEXTURE_SPECULAR0 "texture_specular0"
 #define TEXTURE_METALIC0 "texture_metalic0"
 #define TEXTURE_ALPHA0 "texture_alpha0"
+#define TEXTURE_EMISSIVE0 "texture_emissive0"
 
 #define TEXTURE_DIFFUSE1 "texture_diffuse1"
 #define TEXTURE_NORMAL1 "texture_normal1"
 #define TEXTURE_SPECULAR1 "texture_specular1"
 #define TEXTURE_METALIC1 "texture_metalic1"
 #define TEXTURE_ALPHA1 "texture_alpha1"
+#define TEXTURE_EMISSIVE0 "texture_emissive1"
 
 #define FF_IMPORTED_MATERIAL NULL
 

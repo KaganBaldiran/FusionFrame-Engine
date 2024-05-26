@@ -89,6 +89,28 @@ void FUSIONUTIL::BindTexture(GLuint texture, GLenum target, GLenum unit)
     glBindTexture(target, texture);
 }
 
+ GLuint FUSIONUTIL::CreateTexture2D(GLint internalFormat,GLint level,GLsizei width, GLsizei height,GLint Border,GLenum format, GLenum type, const void* data)
+{
+    GLuint Texture;
+    glGenTextures(1, &Texture);
+    glBindTexture(GL_TEXTURE_2D, Texture);
+    glTexImage2D(GL_TEXTURE_2D, level, internalFormat, width, height, Border, format, type, data);
+    return Texture;
+}
+
+ void FUSIONUTIL::GLdeleteTextures(GLsizei n,const GLuint *texture)
+ {
+     glDeleteTextures(n, texture);
+ }
+
+ void FUSIONUTIL::SetTextureParameters(GLuint texture,GLenum wrapS, GLenum wrapT, GLenum minFilter, GLenum magFilter)
+ {
+     glTextureParameteri(texture, GL_TEXTURE_WRAP_S, wrapS);
+     glTextureParameteri(texture, GL_TEXTURE_WRAP_T, wrapT);
+     glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, minFilter);
+     glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, magFilter);
+ }
+
 void FUSIONUTIL::EnableDepthTest()
 {
     glEnable(GL_DEPTH_TEST);

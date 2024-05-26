@@ -103,8 +103,10 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> ShapeBasicShader;
         std::unique_ptr<FUSIONCORE::Shader> ShapeTexturedShader;
         std::unique_ptr<FUSIONCORE::Shader> CascadedLightSpaceMatrixComputeShader;
+        std::unique_ptr<FUSIONCORE::Shader> DecalShader;
 	};
 
+    void InitializeEngineBuffers();
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
     FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
      /*

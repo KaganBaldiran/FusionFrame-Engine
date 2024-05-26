@@ -1,66 +1,73 @@
-#version 330 core
+#version 460 core
 out vec4 FragColor;
   
 in vec2 TexCoords;
 uniform sampler2D Viewport;
 uniform sampler2D DepthAttac;
-uniform sampler2D ID;
+uniform sampler2D SSRtexture;
+uniform sampler2D IDtexture;
+
+uniform sampler2DArray CascadeShadowMaps1024;
 
 uniform float FarPlane;
 uniform float NearPlane;
 uniform vec3 CamPos;
 
-uniform float DOFdistance;
+uniform float DOFdistanceFar;
+uniform float DOFdistanceClose;
 uniform bool DOFenabled;
 uniform float DOFintensity;
-
-uniform sampler2DArray SunShadowMap;
-
+uniform float Gamma;
+uniform float Exposure;
 
 void main()
 { 
-    
+    vec4 OutColor;
 	if(DOFenabled)
     {
 	    float DeltaDistance = FarPlane - NearPlane;
         float CamDistance = distance(CamPos,texture(DepthAttac, TexCoords).xyz)/DeltaDistance;
-		//float DeltaDistance = FarPlane - NearPlane;
-        //float CamDistance = length(abs(CamPos - texture(DepthAttac, TexCoords).xyz))/DeltaDistance;
-
-		if(CamDistance >= DOFdistance)
+		
+		if(CamDistance >= DOFdistanceFar || CamDistance <= DOFdistanceClose)
 		{
-			vec2 texelSize = DOFintensity / vec2(textureSize(Viewport,0));
+			vec2 texelSize = 1.0f / vec2(textureSize(Viewport,0));
 			vec3 result = vec3(0.0f);
-			for(int x = -2 ; x < 2 ; ++x)
+            int TraversePixelCount = int(2.0f * DOFintensity); 
+			for(int x = -TraversePixelCount ; x < TraversePixelCount ; ++x)
 			{
-				for(int y = -2 ; y < 2 ; ++y)
+				for(int y = -TraversePixelCount ; y < TraversePixelCount ; ++y)
 				{
-					vec2 offset = vec2(float(x) , float(y)) * texelSize;
-					result += texture(Viewport,TexCoords + offset).xyz; 
+					vec2 offset = vec2(float(x), float(y)) * texelSize;
+                    vec2 sampleCoords = TexCoords + offset;
+                    sampleCoords = clamp(sampleCoords, 0.0, 1.0);
+					result += texture(Viewport, sampleCoords).xyz; 
 				}
 			}
-
-			result = result / vec3(4.0f * 4.0f);
-			FragColor = vec4(pow(result.xyz.xyz,vec3(0.9)),1.0f);
+			result = result / vec3(pow(TraversePixelCount + TraversePixelCount,2));
+            OutColor = vec4(result,1.0f);
 		}
 		else
 		{ 
-		   vec4 OutColor = texture(Viewport, TexCoords);
-		   FragColor = vec4(pow(OutColor.xyz.xyz,vec3(0.9)),OutColor.w);
+		   OutColor = texture(Viewport, TexCoords);
 		}
 	}
     else
 	{
-       
-	  //float DeltaDistance = FarPlane - NearPlane;
-      //float CamDistance = length(CamPos - texture(DepthAttac, TexCoords).xyz)/DeltaDistance;
-
-      vec4 OutColor = texture(Viewport, TexCoords);
-      FragColor = vec4(pow(OutColor.xyz,vec3(0.9)),OutColor.w);
-	  //FragColor = vec4(vec3(texture(SunShadowMap, vec3(TexCoords,2)).r),1.0f); 
-
-	  //FragColor = vec4(vec3(CamDistance),1.0f);
-	  //float OutColor = texture(ID , TexCoords).r / 10.0f;
-      //FragColor = vec4(pow(vec3(OutColor),vec3(0.9)),1.0f);
+      OutColor = texture(Viewport, TexCoords);
     }
+	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
+    //OutColor /= 2.0f;
+    //vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
+	
+	//OutColor.xyz *= texture(Viewport, ReflectionUVcoords.xy).xyz;
+    
+	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);
+    FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
+	//vec2 Coords = TexCoords * 0.5f + vec2(0.5f,0.0f);
+
+    //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
+
+	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
+   // FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
+    //FragColor = vec4(vec3(texture(IDtexture, TexCoords).x / 10.0f),1.0f);
 }

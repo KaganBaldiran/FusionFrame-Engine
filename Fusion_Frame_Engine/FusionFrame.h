@@ -21,6 +21,7 @@
 #include "FusionCore/Animator.hpp"
 #include "FusionCore/MeshOperations.h"
 #include "FusionCore/Shapes.hpp"
+#include "FusionCore/Decal.hpp"
 #include "FusionPhysics/ParticleSystem.hpp"
 #include "FusionUtility/Definitions.hpp"
 #include "FusionUtility/FusionGL.hpp"
@@ -46,7 +47,7 @@ namespace FUSIONUTIL
 	FUSIONFRAME_EXPORT_FUNCTION void GetWindowPosition(GLFWwindow* window, int& x, int& y);
 	FUSIONFRAME_EXPORT_FUNCTION void SetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int Xpos, int Ypos, int width, int height, int refreshRate);
 
-	FUSIONFRAME_EXPORT_FUNCTION bool IsKeyPressedOnce(GLFWwindow* window, int Key, bool& Signal);
+	FUSIONFRAME_EXPORT_FUNCTION bool IsKeyPressedOnce(GLFWwindow* window, int Key);
 	FUSIONFRAME_EXPORT_FUNCTION int GetKey(GLFWwindow* window,int key);
 	FUSIONFRAME_EXPORT_FUNCTION int GetMouseKey(GLFWwindow* window, int key);
 

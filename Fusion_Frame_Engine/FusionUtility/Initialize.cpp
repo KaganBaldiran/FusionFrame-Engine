@@ -6,6 +6,8 @@
 #include "../FusionCore/Animator.hpp"
 #include "../FusionCore/Light.hpp"
 #include "../FusionCore/ShadowMaps.hpp"
+#include "../FusionCore/Shapes.hpp"
+#include "../FusionCore/Decal.hpp"
 #include "../FusionPhysics/ParticleSystem.hpp"
 
 void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
@@ -113,10 +115,6 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 		glDebugMessageCallback(debugCallback, nullptr);
 	}
 
-	FUSIONCORE::InitializeAnimationUniformBuffer();
-	FUSIONPHYSICS::InitializeParticleEmitterUBO();
-	FUSIONCORE::InitializeLightsShaderStorageBufferObject();
-
     return window;
 }
 
@@ -140,6 +138,15 @@ void FUSIONUTIL::RefreshWindow(GLFWwindow* window)
 {
 	SwapBuffers(window);
 	PollEvents();
+}
+
+void FUSIONUTIL::InitializeEngineBuffers()
+{
+	FUSIONCORE::InitializeAnimationUniformBuffer();
+	FUSIONPHYSICS::InitializeParticleEmitterUBO();
+	FUSIONCORE::InitializeLightsShaderStorageBufferObject();
+	FUSIONCORE::SHAPES::InitializeShapeBuffers();
+	FUSIONCORE::InitializeDecalUnitBox();
 }
 
 void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
@@ -187,6 +194,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.SSRshader = std::make_unique<FUSIONCORE::Shader>("Shaders/DeferredPBR.vs","Shaders/SSR.fs");
 	shaders.ShapeBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeBasic.fs");
 	shaders.ShapeTexturedShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeTextured.fs");
+	shaders.DecalShader = std::make_unique<FUSIONCORE::Shader>("Shaders/Decal.vs","Shaders/Decal.fs");
 	
 	shaders.CascadedLightSpaceMatrixComputeShader = std::make_unique<FUSIONCORE::Shader>();
 	shaders.CascadedLightSpaceMatrixComputeShader->PushShaderSource(FUSIONCORE::FF_COMPUTE_SHADER_SOURCE, "Shaders/CascadedShadowMapsLightSpaceMatrix.comp.glsl");
@@ -227,4 +235,5 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeBasicShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeTexturedShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CascadedLightSpaceMatrixComputeShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.DecalShader->GetID());
 }

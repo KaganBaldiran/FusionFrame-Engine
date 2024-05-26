@@ -121,6 +121,7 @@ namespace FUSIONCORE
 	{
 	public:
 
+		//Cascade count rule: if there are n cascade levels then n+1 texture sizes must be provided.
 		CascadedDirectionalShadowMap(std::vector<glm::vec2> ShadowCascadeTextureSizes, std::vector<float> ShadowCascadeLevels);
 		glm::mat4 GetLightSpaceMatrix(Camera3D& camera, const float nearPlane, const float farPlane, const glm::vec3 LightDirection);
 		std::vector<glm::mat4> GetLightSpaceMatrices(Camera3D& camera, const glm::vec3 LightDirection);

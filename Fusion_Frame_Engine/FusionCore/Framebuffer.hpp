@@ -108,7 +108,7 @@ namespace FUSIONCORE
 		void Bind();
 		void Unbind();
 
-		void Draw(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps, CubeMap& cubeMap, glm::vec4 BackgroundColor = glm::vec4(0.0f), float EnvironmentAmbientAmount = 0.2f);
+		void DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps, CubeMap& cubeMap, glm::vec4 BackgroundColor = glm::vec4(0.0f), float EnvironmentAmbientAmount = 0.2f);
 		void DrawSSR(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize);
 		void clean();
 

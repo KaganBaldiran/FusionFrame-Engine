@@ -83,6 +83,9 @@ int Application::Run()
 	FUSIONCORE::Texture2D ShrubSpecular("Resources\\models\\shrub\\textures\\shrub_04_rough_1k.png");
 	FUSIONCORE::Texture2D ShrubAlpha("Resources\\models\\shrub\\textures\\shrub_04_alpha_1k.png");
 
+	FUSIONCORE::Texture2D FalloutPoster("Resources\\FalloutPoster.png",FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE,
+		FF_TEXTURE_TARGET_GL_TEXTURE_2D,FF_DATA_TYPE_GL_UNSIGNED_BYTE,FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR, FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR,false);
+
 	int shadowMapSize = 512;
 
 	//FUSIONCORE::OmniShadowMap ShadowMap0(shadowMapSize, shadowMapSize, 75.0f);
@@ -307,6 +310,11 @@ int Application::Run()
 	ShrubMaterial.PushTextureMap(TEXTURE_NORMAL0, ShrubNormal);
 	ShrubMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShrubSpecular);
 	ShrubMaterial.PushTextureMap(TEXTURE_ALPHA0, ShrubAlpha);
+
+	FUSIONCORE::Material FalloutPosterMaterial;
+	FalloutPosterMaterial.PushTextureMap(TEXTURE_DIFFUSE0, FalloutPoster);
+	FalloutPosterMaterial.SetTiling(-1.0f);
+	//FalloutPosterMaterial.Albedo = { 1.0f,0.0f,0.0f,1.0f };
 
 	/*FUSIONCORE::Material IslandMaterial;
 	IslandMaterial.PushTextureMap(TEXTURE_DIFFUSE0, IslandBaseColor);
@@ -953,7 +961,6 @@ int Application::Run()
 		}
 		//Isaac.DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrepe);
 
-		animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices);
 		//if (FUSIONCORE::IsObjectQuadInsideCameraFrustum(RockBox, camera3d))
 
 
@@ -973,7 +980,8 @@ int Application::Run()
 		}
 		Capsule.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material());
 
-		decal0.Draw(Gbuffer, AnimationModelMaterial, camera3d, Shaders);
+		decal0.Draw(Gbuffer, FalloutPosterMaterial, camera3d, { WindowSize.x , WindowSize.y }, Shaders);
+		animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices);
 		
 		Gbuffer.Unbind();
 		ScreenFrameBuffer.Bind();
@@ -1123,6 +1131,7 @@ int Application::Run()
 	WallMaterial.Clean();
 	AnimationModelMaterial.Clean();
 	ShrubMaterial.Clean();
+	FalloutPosterMaterial.Clean();
 	//IslandMaterial.Clean();
 
 	FUSIONUTIL::TerminateWindow();

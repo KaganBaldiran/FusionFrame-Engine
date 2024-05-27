@@ -103,7 +103,7 @@ namespace FUSIONCORE
 		GLuint GetFBO() { return fbo; };
 		GLuint GetNormalMetalicPass() { return NormalMetalicPass; };
 		GLuint GetPositionDepthPass() { return PositionDepthPass; };
-		Vec2<int> GetFBOSize() { return FBOSize; };
+		glm::ivec2 GetFBOSize() { return FBOSize; };
 
 		void Bind();
 		void Unbind();
@@ -116,7 +116,7 @@ namespace FUSIONCORE
 
 		GLuint fbo, AlbedoSpecularPass, NormalMetalicPass, rbo, PositionDepthPass , MetalicRoughnessPass;
 		Buffer ObjectBuffer;
-		Vec2<int> FBOSize;
+		glm::ivec2 FBOSize;
 		int ID;
 	};
 	/**

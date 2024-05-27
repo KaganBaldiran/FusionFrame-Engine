@@ -54,7 +54,7 @@ void FUSIONCORE::InitializeDecalUnitBox()
     UnitBoxBuffer->Unbind();
 }
 
-void FUSIONCORE::DecalDeferred::Draw(Gbuffer& GeometryBuffer, Material Material, Camera3D& camera, FUSIONUTIL::DefaultShaders& shaders)
+void FUSIONCORE::DecalDeferred::Draw(Gbuffer& GeometryBuffer, Material Material, Camera3D& camera,glm::ivec2 WindowSize, FUSIONUTIL::DefaultShaders& shaders)
 {
     auto& shader = shaders.DecalShader;
     shader->use();
@@ -63,9 +63,9 @@ void FUSIONCORE::DecalDeferred::Draw(Gbuffer& GeometryBuffer, Material Material,
     glDrawBuffers(3, attachments);
     glDisable(GL_DEPTH_TEST);
 
-    shader->setMat4("ViewMatrix", camera.viewMat);
+    shader->setVec2("NormalizedWindowSize", glm::vec2(WindowSize) / glm::vec2(GeometryBuffer.GetFBOSize()));
     shader->setMat4("ModelMatrix", this->transformation.GetModelMat4());
-    shader->setMat4("ProjectionMatrix", camera.projMat);
+    shader->setMat4("ProjViewMatrix", camera.ProjectionViewMat);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, GeometryBuffer.GetPositionDepthPass());

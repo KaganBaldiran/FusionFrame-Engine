@@ -178,7 +178,8 @@ FUSIONCORE::Gbuffer::Gbuffer(int width, int height)
 {
 	static int itr = 0;
 	ID = itr;
-	FBOSize.SetValues(width, height);
+	FBOSize.x = width;
+	FBOSize.y = height;
 
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);

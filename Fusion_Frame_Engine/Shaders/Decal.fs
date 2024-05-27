@@ -5,10 +5,10 @@ layout (location = 1) out vec4 NormalPass;
 layout (location = 3) out vec4 MetalicRoughnessModelIDPass;
 
 in mat4 ModelMat;
-in mat4 ViewMat;
 in vec4 PositionClipSpace;
 
 uniform sampler2D WorldPositionBuffer;
+uniform vec2 NormalizedWindowSize;
 
 uniform sampler2D texture_diffuse0;
 uniform sampler2D texture_normal0;
@@ -33,8 +33,9 @@ uniform float ModelID;
 void main()
 {
 	vec2 screenPos = PositionClipSpace.xy / PositionClipSpace.w;
-	screenPos = screenPos * 0.5f + 0.5f; 
-
+	screenPos = screenPos * 0.5f + 0.5f;  
+    screenPos *= NormalizedWindowSize;
+    
     vec4 WorldPosition = texture(WorldPositionBuffer , screenPos);
 	vec4 SampledPosition = WorldPosition;
 	SampledPosition = inverse(ModelMat) * SampledPosition;

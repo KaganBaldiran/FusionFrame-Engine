@@ -19,8 +19,8 @@ void FUSIONUTIL::GLviewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void FUSIONUTIL::ClearFrameBuffer(GLint x, GLint y, GLsizei width, GLsizei height, glm::vec4 color)
 {
-    FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
     FUSIONUTIL::GLClearColor(color);
+    FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
     FUSIONUTIL::GLviewport(x,y,width,height);
 }
 

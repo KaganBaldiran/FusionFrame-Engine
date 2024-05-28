@@ -82,6 +82,7 @@ int Application::Run()
 	FUSIONCORE::Texture2D ShrubNormal("Resources\\models\\shrub\\textures\\shrub_04_nor_gl_1k.png");
 	FUSIONCORE::Texture2D ShrubSpecular("Resources\\models\\shrub\\textures\\shrub_04_rough_1k.png");
 	FUSIONCORE::Texture2D ShrubAlpha("Resources\\models\\shrub\\textures\\shrub_04_alpha_1k.png");
+	FUSIONCORE::Texture2D FalloutPosterNormal("Resources\\Paper_Wrinkled_001_normal.jpg",FF_TEXTURE_WRAP_MODE_GL_REPEAT);
 
 	FUSIONCORE::Texture2D FalloutPoster("Resources\\FalloutPoster.png",FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE,
 		FF_TEXTURE_TARGET_GL_TEXTURE_2D,FF_DATA_TYPE_GL_UNSIGNED_BYTE,FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR, FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR,false);
@@ -313,7 +314,10 @@ int Application::Run()
 
 	FUSIONCORE::Material FalloutPosterMaterial;
 	FalloutPosterMaterial.PushTextureMap(TEXTURE_DIFFUSE0, FalloutPoster);
+	FalloutPosterMaterial.PushTextureMap(TEXTURE_NORMAL0, FalloutPosterNormal);
 	FalloutPosterMaterial.SetTiling(-1.0f);
+	FalloutPosterMaterial.roughness = 0.7f;
+	//FalloutPosterMaterial.metalic = 0.8f;
 	//FalloutPosterMaterial.Albedo = { 1.0f,0.0f,0.0f,1.0f };
 
 	/*FUSIONCORE::Material IslandMaterial;
@@ -883,7 +887,7 @@ int Application::Run()
 		//LOG("camera3d.Orientation: " << Vec3<float>(camera3d.Orientation));
 
 
-		camera3d.UpdateCameraMatrix(70.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD, 0.06f);
 
@@ -912,10 +916,13 @@ int Application::Run()
 		//sunShadowMap3.Draw(Shaders,0, camera3d, models, Sun3);
 
 		Gbuffer.Bind();
-		FUSIONUTIL::GLClearColor(glm::vec4(0.0f));
-		FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
+		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
+		//FUSIONUTIL::GLClearColor(glm::vec4(0.0f));
+		//FUSIONUTIL::GLClear(FF_CLEAR_BUFFER_BIT_GL_COLOR_BUFFER_BIT | FF_CLEAR_BUFFER_BIT_GL_DEPTH_BUFFER_BIT);
 		FUSIONUTIL::EnableDepthTest();
-		FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
+
+		Gbuffer.SetDrawModeDefaultRestricted();
+		//FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
 
 		glm::vec2 PrevMousePos = glm::vec2(mousePos.x, mousePos.y);
 		//glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
@@ -980,7 +987,9 @@ int Application::Run()
 		}
 		Capsule.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, FUSIONCORE::Material());
 
+		Gbuffer.SetDrawModeDecalPass();
 		decal0.Draw(Gbuffer, FalloutPosterMaterial, camera3d, { WindowSize.x , WindowSize.y }, Shaders);
+		Gbuffer.SetDrawModeDefault();
 		animationModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, AnimationModelMaterial, animationMatrices);
 		
 		Gbuffer.Unbind();

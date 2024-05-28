@@ -8,6 +8,7 @@ uniform sampler2D AlbedoSpecularPass;
 uniform sampler2D NormalPass;
 uniform sampler2D PositionDepthPass;
 uniform sampler2D MetalicRoughnessModelIDPass;
+uniform sampler2D DecalNormalPass;
 
 uniform float FarPlane;
 uniform float NearPlane;
@@ -259,6 +260,7 @@ void main()
 
    vec4 AlbedoSpecular = texture(AlbedoSpecularPass, TexCoords);
    vec3 Normal = texture(NormalPass, TexCoords).rgb;
+   vec3 DecalNormal = texture(DecalNormalPass,TexCoords).rgb;
    vec4 PositionDepth = texture(PositionDepthPass, TexCoords);
 
    vec3 Albedo = AlbedoSpecular.rgb;
@@ -278,7 +280,7 @@ void main()
    */
 
       float shadow = 0.0f;
-      vec3 N = normalize(Normal);
+      vec3 N = normalize(Normal + DecalNormal);
       vec3 V = normalize(CameraPos - Position);
 
       vec3 F0 = vec3(0.04);
@@ -393,6 +395,7 @@ void main()
       }
 
       FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
+      //FragColor = vec4(DecalNormal, 1.0); 
       //FragColor = vec4(vec3(CascadeCount[0]),1.0f); 
       Depth = vec4(Position,1.0f);
       ID = vec4(vec3(ModelID),1.0f);

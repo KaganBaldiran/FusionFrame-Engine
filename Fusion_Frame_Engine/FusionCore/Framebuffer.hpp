@@ -20,6 +20,9 @@
 
 namespace FUSIONCORE
 {
+	//internal , do not call
+	//Planned to be hidden soon
+	void InitializeFBObuffers();
 	 /**
 	 Represents a framebuffer object used in forward rendering pipelines.
 
@@ -64,8 +67,7 @@ namespace FUSIONCORE
 		
 	private:
 
-		GLuint fbo, fboImage, fboDepth ,IDtexture, rbo , SSRtexture;
-		Buffer ObjectBuffer;
+		GLuint fbo,fboImage,fboDepth,IDtexture,rbo,SSRtexture;
 		Vec2<int> FBOSize;
 		int ID;
 	};
@@ -103,19 +105,29 @@ namespace FUSIONCORE
 		GLuint GetFBO() { return fbo; };
 		GLuint GetNormalMetalicPass() { return NormalMetalicPass; };
 		GLuint GetPositionDepthPass() { return PositionDepthPass; };
+		GLuint GetDecalNormalPass() { return DecalNormalPass; };
 		glm::ivec2 GetFBOSize() { return FBOSize; };
+
+		//Set the drawbuffer mode so it would draw into all attachments 
+		void SetDrawModeDefault();
+		//Set the drawbuffer mode so it would draw into other attachments excluding default normal and world-space position attachment
+		void SetDrawModeDecalPass();
+		//Set the drawbuffer mode so it would draw into all attachments excluding decal normal attachment
+		void SetDrawModeDefaultRestricted();
 
 		void Bind();
 		void Unbind();
 
 		void DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps, CubeMap& cubeMap, glm::vec4 BackgroundColor = glm::vec4(0.0f), float EnvironmentAmbientAmount = 0.2f);
 		void DrawSSR(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize);
+		//If there are decals using this Geometry buffer , call this .
+		//It coppies the
+		void DrawDecalNormalPass();
 		void clean();
 
 	private:
 
-		GLuint fbo, AlbedoSpecularPass, NormalMetalicPass, rbo, PositionDepthPass , MetalicRoughnessPass;
-		Buffer ObjectBuffer;
+		GLuint fbo, AlbedoSpecularPass, NormalMetalicPass, rbo, PositionDepthPass,DecalNormalPass, MetalicRoughnessPass;
 		glm::ivec2 FBOSize;
 		int ID;
 	};

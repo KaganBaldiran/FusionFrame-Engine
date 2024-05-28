@@ -1,14 +1,16 @@
 #version 460 core
 
 layout (location = 0) out vec4 AlbedoSpecularPass;
-layout (location = 1) out vec4 NormalPass;
-layout (location = 3) out vec4 MetalicRoughnessModelIDPass;
+layout (location = 1) out vec4 MetalicRoughnessModelIDPass;
+layout (location = 2) out vec4 NormalPass;
 
 in mat4 ModelMat;
 in vec4 PositionClipSpace;
 
 uniform sampler2D WorldPositionBuffer;
+uniform sampler2D WorldSpaceNormalBuffer;
 uniform vec2 NormalizedWindowSize;
+uniform mat4 inverseModelMatrix;
 
 uniform sampler2D texture_diffuse0;
 uniform sampler2D texture_normal0;
@@ -38,7 +40,7 @@ void main()
     
     vec4 WorldPosition = texture(WorldPositionBuffer , screenPos);
 	vec4 SampledPosition = WorldPosition;
-	SampledPosition = inverse(ModelMat) * SampledPosition;
+	SampledPosition = inverseModelMatrix * SampledPosition;
 	
 	if(abs(SampledPosition.x) > 0.5f || abs(SampledPosition.y) > 0.5f || abs(SampledPosition.z) > 0.5f)
 	{
@@ -87,20 +89,15 @@ void main()
     if(disableclaymaterial[2] != 1)
     {
         resultnormal = texture(texture_normal0,SampledPosition.xy * TilingCoeff).rgb;
-        resultnormal = resultnormal * 2.0f - 1.0f;
+        resultnormal = normalize(resultnormal * 2.0f - 1.0f);
 
-        vec3 Dx = dFdx(WorldPosition.xyz);
-        vec3 Dy = dFdy(WorldPosition.xyz);
-        vec3 normal = normalize(cross(Dx,Dy));
-        mat3 TBN;
-        
-        vec3 bitangent = normalize(Dx);
-        vec3 tangent = normalize(Dy);
-        
-        TBN[0] = tangent;
-        TBN[1] = bitangent;
-        TBN[2] = normal;
+        vec4 WorldNormal = texture(WorldSpaceNormalBuffer , screenPos);
+        vec3 normal = WorldNormal.xyz;
+	    vec3 up = abs(normal.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+        vec3 tangent = normalize(cross(up, normal));
+        vec3 bitangent = cross(normal, tangent);
 
+        mat3 TBN = mat3(tangent, bitangent, normal);	
         resultnormal = normalize(TBN * resultnormal);
         NormalPass = vec4(resultnormal,1.0f);
     }

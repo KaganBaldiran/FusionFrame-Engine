@@ -4,6 +4,7 @@ layout (location = 0) out vec4 AlbedoSpecularPass;
 layout (location = 1) out vec4 NormalPass;
 layout (location = 2) out vec4 PositionDepthPass;
 layout (location = 3) out vec4 MetalicRoughnessModelIDPass;
+layout (location = 4) out vec4 DecalNormalPass;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
@@ -98,4 +99,5 @@ void main()
     NormalPass = vec4(resultnormal,1.0f);
     PositionDepthPass = vec4(CurrentPos,1.0f);
     MetalicRoughnessModelIDPass = vec4(roughnessmap ,metalicmap,ModelID,1.0f);
+    DecalNormalPass = vec4(0.0f,0.0f,0.0f,1.0f);
 }

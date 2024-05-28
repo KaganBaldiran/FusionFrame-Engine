@@ -2,6 +2,37 @@
 #include <glew.h>
 #include <glfw3.h>
 
+std::unique_ptr<FUSIONCORE::VBO> ObjectBufferVBO;
+std::unique_ptr<FUSIONCORE::VAO> ObjectBufferVAO;
+
+void FUSIONCORE::InitializeFBObuffers()
+{
+	ObjectBufferVBO = std::make_unique<VBO>();
+	ObjectBufferVAO = std::make_unique<VAO>();
+
+	float quadVertices[] = {
+		// positions   // texCoords
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f
+	};
+
+	ObjectBufferVAO->Bind();
+	ObjectBufferVBO->Bind();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	BindVAONull();
+	BindVBONull();
+}
+
 void FUSIONCORE::CopyDepthInfoFBOtoFBO(GLuint src, glm::vec2 srcSize, GLuint dest)
 {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
@@ -83,23 +114,6 @@ FUSIONCORE::FrameBuffer::FrameBuffer(int width, int height)
 
 	LOG_INF("Completed the frameBuffer[ID:" << ID << "]!");
 
-	float quadVertices[] = {
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
-
-	ObjectBuffer.Bind();
-	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	ObjectBuffer.AttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	ObjectBuffer.AttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	ObjectBuffer.Unbind();
-
 	itr++;
 }
 
@@ -120,7 +134,7 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,std::functio
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBuffer.BindVAO();
+	ObjectBufferVAO->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -155,7 +169,7 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,std::functio
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	ObjectBuffer.UnbindVAO();
+	BindVAONull();
 	UseShaderProgram(0);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -168,8 +182,6 @@ void FUSIONCORE::FrameBuffer::clean()
 	glDeleteTextures(1, &SSRtexture);
 	glDeleteRenderbuffers(1, &rbo);
 	glDeleteFramebuffers(1, &fbo);
-
-	ObjectBuffer.clean();
 
 	LOG_INF("Cleaned frameBuffer[ID:" << ID << "]!");
 };
@@ -219,8 +231,17 @@ FUSIONCORE::Gbuffer::Gbuffer(int width, int height)
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, MetalicRoughnessPass, 0);
 
-	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 , GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(4, attachments);
+	glGenTextures(1, &DecalNormalPass);
+	glBindTexture(GL_TEXTURE_2D, DecalNormalPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, DecalNormalPass, 0);
+
+	SetDrawModeDefault();
 
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -239,26 +260,27 @@ FUSIONCORE::Gbuffer::Gbuffer(int width, int height)
 
 	LOG_INF("Completed the G-buffer[ID:" << ID << "]!");
 
-	float quadVertices[] = {
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
-
-	ObjectBuffer.Bind();
-	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	ObjectBuffer.AttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	ObjectBuffer.AttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	ObjectBuffer.Unbind();
-
 	itr++;
 }
 
+
+void FUSIONCORE::Gbuffer::SetDrawModeDefault()
+{
+	unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 , GL_COLOR_ATTACHMENT3 , GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, attachments);
+}
+
+void FUSIONCORE::Gbuffer::SetDrawModeDecalPass()
+{
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(3, attachments);
+}
+
+void FUSIONCORE::Gbuffer::SetDrawModeDefaultRestricted()
+{
+	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 , GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
+}
 
 void FUSIONCORE::Gbuffer::Bind()
 {
@@ -278,7 +300,7 @@ void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, st
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBuffer.BindVAO();
+	ObjectBufferVAO->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -297,25 +319,29 @@ void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, st
 	glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
 	shader.setInt("MetalicRoughnessModelIDPass", 3);
 
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, DecalNormalPass);
+	shader.setInt("DecalNormalPass", 4);
+
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
 
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
-	shader.setInt("ConvDiffCubeMap", 4);
-
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
-	shader.setInt("prefilteredMap", 5);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
+	shader.setInt("ConvDiffCubeMap", 5);
 
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
-	shader.setInt("LUT", 6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
+	shader.setInt("prefilteredMap", 6);
 
 	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
+	shader.setInt("LUT", 7);
+
+	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, FUSIONCORE::GetCascadedShadowMapTextureArray());
-	shader.setInt("CascadeShadowMaps", 7);
+	shader.setInt("CascadeShadowMaps", 8);
 
 	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataSSBO();
 	CascadedShadowMapsMetaData->BindSSBO(10);
@@ -328,9 +354,9 @@ void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, st
 
 	for (size_t i = 0; i < ShadowMaps.size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + 8 + i);
+		glActiveTexture(GL_TEXTURE0 + 9 + i);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
-		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 8 + i);
+		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 9 + i);
 		glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
 		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMapsLightIDS[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetBoundLightID());
 	}
@@ -341,7 +367,7 @@ void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, st
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	ObjectBuffer.UnbindVAO();
+	BindVAONull();
 	UseShaderProgram(0);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -356,7 +382,7 @@ void FUSIONCORE::Gbuffer::DrawSSR(Camera3D& camera, Shader& shader, std::functio
 	glDisable(GL_DEPTH_TEST);
 
 	shader.use();
-	ObjectBuffer.BindVAO();
+	ObjectBufferVAO->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -388,7 +414,7 @@ void FUSIONCORE::Gbuffer::DrawSSR(Camera3D& camera, Shader& shader, std::functio
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	ObjectBuffer.UnbindVAO();
+	BindVAONull();
 	glActiveTexture(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	UseShaderProgram(0);
@@ -401,10 +427,9 @@ void FUSIONCORE::Gbuffer::clean()
 	glDeleteTextures(1, &NormalMetalicPass);
 	glDeleteTextures(1, &PositionDepthPass);
 	glDeleteTextures(1, &MetalicRoughnessPass);
+	glDeleteTextures(1, &DecalNormalPass);
 	glDeleteRenderbuffers(1, &rbo);
 	glDeleteFramebuffers(1, &fbo);
-
-	ObjectBuffer.clean();
 
 	LOG_INF("Cleaned G-buffer[ID:" << ID << "]!");
 };

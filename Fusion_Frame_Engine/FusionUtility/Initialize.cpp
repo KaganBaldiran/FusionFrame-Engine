@@ -147,6 +147,7 @@ void FUSIONUTIL::InitializeEngineBuffers()
 	FUSIONCORE::InitializeLightsShaderStorageBufferObject();
 	FUSIONCORE::SHAPES::InitializeShapeBuffers();
 	FUSIONCORE::InitializeDecalUnitBox();
+	FUSIONCORE::InitializeFBObuffers();
 }
 
 void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)

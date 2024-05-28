@@ -32,7 +32,6 @@ namespace FUSIONCORE
 	private:
 
 		GLuint ebo;
-
 	};
 
 	class FUSIONFRAME_EXPORT VBO

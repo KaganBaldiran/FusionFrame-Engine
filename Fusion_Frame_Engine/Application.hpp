@@ -16,7 +16,6 @@ class Application
 {
 public:
 	int Run();
-	bool IsKeyPressedOnce(GLFWwindow* window , int Key, bool& Signal);
 	float RoundNonZeroToOne(float input);
 
 private:

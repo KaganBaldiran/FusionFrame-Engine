@@ -728,7 +728,7 @@ std::pair<bool,float> FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, Colli
 		return { true,0.0f };
 	}
 
-	float maxProjectionA = FLT_MIN;
+	float maxProjectionA = -FLT_MAX;
 	float minProjectionA = FLT_MAX;
 	auto& Box1Vertices = Box1.GetVertices();
 	for (size_t i = 0; i < Box1Vertices.size(); i++)
@@ -739,7 +739,7 @@ std::pair<bool,float> FUSIONPHYSICS::FindMinSeparation(CollisionBox& Box1, Colli
 		minProjectionA = glm::min(minProjectionA, projection);
 	}
 
-	float maxProjectionB = FLT_MIN;
+	float maxProjectionB = -FLT_MAX;
 	float minProjectionB = FLT_MAX;
 	auto& Box2Vertices = Box2.GetVertices();
 	for (size_t i = 0; i < Box2Vertices.size(); i++)

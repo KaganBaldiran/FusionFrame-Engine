@@ -99,7 +99,7 @@ namespace FUSIONCORE
 	class FUSIONFRAME_EXPORT Gbuffer
 	{
 	public:
-		Gbuffer(int width, int height);
+		Gbuffer(int width, int height, bool EnableHighPrecisionPositionBuffer = true);
 		
 		GLuint GetAlbedoSpecularPass() { return AlbedoSpecularPass; };
 		GLuint GetFBO() { return fbo; };

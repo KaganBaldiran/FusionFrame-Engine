@@ -186,12 +186,14 @@ void FUSIONCORE::FrameBuffer::clean()
 	LOG_INF("Cleaned frameBuffer[ID:" << ID << "]!");
 };
 
-FUSIONCORE::Gbuffer::Gbuffer(int width, int height)
+FUSIONCORE::Gbuffer::Gbuffer(int width, int height,bool EnableHighPrecisionPositionBuffer)
 {
 	static int itr = 0;
 	ID = itr;
 	FBOSize.x = width;
 	FBOSize.y = height;
+
+	GLenum PositionBufferFormat = EnableHighPrecisionPositionBuffer ? GL_RGB32F : GL_RGB16F;
 
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -217,7 +219,7 @@ FUSIONCORE::Gbuffer::Gbuffer(int width, int height)
 
 	glGenTextures(1, &PositionDepthPass);
 	glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, PositionBufferFormat, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

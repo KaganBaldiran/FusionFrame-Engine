@@ -262,7 +262,7 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader& shader, Light& BoundLight, std::vec
 		if (model->IsAnimationEnabled())
 		{
 			shaderPrep = [&]()
-				{
+			{
 					auto& AnimationBoneMatrices = *model->GetAnimationMatricesPointer();
 					for (int i = 0; i < AnimationBoneMatrices.size(); ++i)
 					{
@@ -272,17 +272,17 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader& shader, Light& BoundLight, std::vec
 					glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 					glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
-				};
+			};
 		}
 		else
 		{
 			shaderPrep = [&]()
-				{
+			{
 					shader.setBool("EnableAnimation", model->IsAnimationEnabled());
 					glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 					glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
-				};
+			};
 		}
 		model->Draw(camera, shader, shaderPrep);
 	}
@@ -696,5 +696,12 @@ void FUSIONCORE::SetCascadedShadowSoftness(Shader& TargetShader, float Softness)
 {
 	TargetShader.use();
 	TargetShader.setFloat("CascadedShadowMapSoftness", Softness);
+	UseShaderProgram(0);
+}
+
+void FUSIONCORE::SetCascadedShadowBiasMultiplier(Shader& TargetShader, float ShadowBiasMultiplier)
+{
+	TargetShader.use();
+	TargetShader.setFloat("ShadowBiasMultiplier", ShadowBiasMultiplier);
 	UseShaderProgram(0);
 }

@@ -4,6 +4,16 @@
 #include <glfw3.h>
 #include "Buffer.h"
 
+std::unordered_map<size_t, FUSIONCORE::Object*> IDobjectMap;
+
+FUSIONCORE::Object::Object()
+{
+	static size_t IDiterator = 0;
+	this->ObjectID = IDiterator;
+	IDobjectMap[ObjectID] = this;
+	IDiterator++;
+}
+
 void FUSIONCORE::Object::SetAssociatedQuads(const std::vector<FUSIONPHYSICS::QuadNode*>& CurrentQuads)
 {
 	this->AssociatedQuads.assign(CurrentQuads.begin(), CurrentQuads.end());
@@ -102,4 +112,13 @@ FUSIONCORE::Object* FUSIONCORE::Object::GetChild(int index)
 int FUSIONCORE::Object::GetChildrenCount()
 {
 	return Children.size();
+}
+
+FUSIONCORE::Object* FUSIONCORE::GetObject(size_t ObjectID)
+{
+	if (IDobjectMap.find(ObjectID) != IDobjectMap.end())
+	{
+		return IDobjectMap[ObjectID];
+	}
+	return nullptr;
 }

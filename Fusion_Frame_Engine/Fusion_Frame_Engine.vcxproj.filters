@@ -191,9 +191,6 @@
     <ClCompile Include="Application.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="FusionFrame.cpp">
-      <Filter>Sources\FusionUtility</Filter>
-    </ClCompile>
     <ClCompile Include="FusionCore\Animation.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
@@ -263,6 +260,9 @@
     <ClCompile Include="FusionCore\Decal.cpp">
       <Filter>Sources\FusionCore</Filter>
     </ClCompile>
+    <ClCompile Include="FusionFrame.cpp">
+      <Filter>Sources\FusionUtility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FusionUtility\Initialize.h">
@@ -288,9 +288,6 @@
     </ClInclude>
     <ClInclude Include="Application.hpp">
       <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="FusionFrame.h">
-      <Filter>Headers\FusionUtility</Filter>
     </ClInclude>
     <ClInclude Include="FusionPhysics\QuickHull.hpp">
       <Filter>Headers\FusionPhysics</Filter>
@@ -361,9 +358,6 @@
     <ClInclude Include="FusionPhysics\ParticleSystem.hpp">
       <Filter>Headers\FusionPhysics</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.hpp">
-      <Filter>Headers\FusionCore</Filter>
-    </ClInclude>
     <ClInclude Include="FusionCore\Framebuffer.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
@@ -380,6 +374,12 @@
       <Filter>Headers\FusionUtility</Filter>
     </ClInclude>
     <ClInclude Include="FusionCore\Decal.hpp">
+      <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionFrame.h">
+      <Filter>Headers\FusionUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="FusionCore\Scene.hpp">
       <Filter>Headers\FusionCore</Filter>
     </ClInclude>
   </ItemGroup>

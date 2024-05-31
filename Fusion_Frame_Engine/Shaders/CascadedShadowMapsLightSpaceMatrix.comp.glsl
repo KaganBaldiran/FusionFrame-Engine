@@ -59,19 +59,27 @@ mat4 perspective(float fov, float aspect, float near, float far) {
 }
 
 mat4 lookAt(vec3 eye, vec3 center, vec3 up) {
-	vec3 f = normalize(center - eye);
-	vec3 u = normalize(up);
-	vec3 s = normalize(cross(f, u));
-	u = cross(s, f);
+    vec3 z = normalize(eye - center); 
+    vec3 x = normalize(cross(up, z)); 
+    vec3 y = cross(z, x); 
 
-	mat4 Result = mat4(
-		s.x, u.x, -f.x, 0.0,
-		s.y, u.y, -f.y, 0.0,
-		s.z, u.z, -f.z, 0.0,
-		-dot(s, eye), -dot(u, eye), dot(f, eye), 1.0
-	);
-	return Result;
+    mat4 result = mat4(1.0); 
+    result[0][0] = x.x;
+    result[1][0] = x.y;
+    result[2][0] = x.z;
+    result[0][1] = y.x;
+    result[1][1] = y.y;
+    result[2][1] = y.z;
+    result[0][2] = z.x;
+    result[1][2] = z.y;
+    result[2][2] = z.z;
+    result[3][0] = -dot(x, eye);
+    result[3][1] = -dot(y, eye);
+    result[3][2] = -dot(z, eye);
+
+    return result;
 }
+
 
 mat4 GetLightSpaceMatrix(float nearPlane,float farPlane,vec3 LightDirection)
 {
@@ -124,6 +132,14 @@ mat4 GetLightSpaceMatrix(float nearPlane,float farPlane,vec3 LightDirection)
 		minZ = min(minZ, LightSpaceCorner.z);
 		maxZ = max(maxZ, LightSpaceCorner.z);
 	}
+
+	float temp = -minZ;
+    minZ = -maxZ;
+    maxZ = temp;
+
+	float mid = (maxZ - minZ) / 2;
+    minZ -= mid * 5.0f;
+    maxZ += mid * 5.0f;
 
 	const float Zmultiplier = abs(FarPlane - NearPlane) * 0.05f;
 	if (minZ < 0.0f)

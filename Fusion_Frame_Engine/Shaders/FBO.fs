@@ -16,6 +16,7 @@ uniform vec3 CamPos;
 uniform float DOFdistanceFar;
 uniform float DOFdistanceClose;
 uniform bool DOFenabled;
+uniform bool Debug;
 uniform float DOFintensity;
 uniform float Gamma;
 uniform float Exposure;
@@ -65,7 +66,10 @@ void main()
     FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
 	//vec2 Coords = TexCoords * 0.5f + vec2(0.5f,0.0f);
 
-    //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
+	if(Debug)
+	{
+      FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
+	}
 
 	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
    // FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);

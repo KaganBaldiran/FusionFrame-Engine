@@ -114,5 +114,5 @@ void main()
     }
 
     AlbedoSpecularPass = vec4(texturecolor,1.0f);
-    MetalicRoughnessModelIDPass = vec4(roughnessmap ,metalicmap,ModelID,1.0f);
+    MetalicRoughnessModelIDPass = vec4(roughnessmap ,metalicmap,0.0f,1.0f);
 }

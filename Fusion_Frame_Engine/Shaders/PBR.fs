@@ -1,19 +1,12 @@
-#version 420 core
-
-layout (location = 0) out vec4 OutColor;
+#version 460 core
+layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 Depth;
-layout (location = 3) out float ID;
+layout (location = 2) out vec4 ID;
 
 in vec3 Normal;
 in vec2 FinalTexCoord;
 in mat3 TBN;
 in vec3 CurrentPos;
-
-uniform float TilingCoeff;
-
-uniform vec3 CameraPos;
-uniform float FarPlane;
-uniform float NearPlane;
 
 uniform sampler2D texture_diffuse0;
 uniform sampler2D texture_normal0;
@@ -26,19 +19,28 @@ uniform sampler2D texture_specular1;
 uniform sampler2D texture_metalic1;
 uniform sampler2D texture_alpha1;
 
+uniform float TilingCoeff;
+
 uniform vec4 albedo;
 uniform float metallic;
 uniform float roughness;
 
+uniform int disableclaymaterial[5];
+
+uniform float FarPlane;
+uniform float NearPlane;
+uniform vec3 CameraPos;
+
+uniform float DOFdistance;
+uniform bool DOFenabled;
+uniform float DOFintensity;
+
 #define MAX_LIGHT_COUNT 100
+#define MAX_SHADOWMAP_COUNT 5
 #define POINT_LIGHT 0x56400
 #define DIRECTIONAL_LIGHT 0x56401
 #define SPOT_LIGHT 0x56402
 
-uniform vec3 LightPositions[MAX_LIGHT_COUNT];
-uniform vec3 LightColors[MAX_LIGHT_COUNT];
-uniform float LightIntensities[MAX_LIGHT_COUNT];
-uniform int LightTypes[MAX_LIGHT_COUNT];
 uniform int LightCount;
 
 uniform float FogIntesityUniform;
@@ -52,17 +54,120 @@ uniform sampler2D LUT;
 uniform bool EnableIBL;
 uniform float ao;
 
-uniform int disableclaymaterial[5];
-
 uniform float ModelID;
 uniform float ObjectScale;
 
-uniform float ShadowMapFarPlane[MAX_LIGHT_COUNT / 10];
-uniform samplerCube OmniShadowMaps[MAX_LIGHT_COUNT / 10];
+uniform float ShadowMapFarPlane[MAX_SHADOWMAP_COUNT];
+uniform samplerCube OmniShadowMaps[MAX_SHADOWMAP_COUNT];
+
+uniform sampler2DArray CascadeShadowMaps;
+uniform mat4 ViewMatrix;
+
+#define MAX_CASCADE_PLANE_COUNT 16
+#define MAX_CASCADED_SHADOW_MAP_COUNT 12
+
+uniform float CascadedShadowMapSoftness;
+
+layout(std430, binding = 10) readonly buffer CascadedMapMetaDatas
+{
+	mat4 LightMatrices[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 PositionAndSize[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	vec4 LightDirection[MAX_CASCADED_SHADOW_MAP_COUNT];
+	float ShadowCascadeLevels[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float Layer[MAX_CASCADE_PLANE_COUNT * MAX_CASCADED_SHADOW_MAP_COUNT];
+	float CascadeCount[MAX_CASCADED_SHADOW_MAP_COUNT];
+};
+
+uniform vec2 screenSize;
+
+struct Light
+{
+  vec4 Position;
+  vec4 Color;
+  int Type;
+  float Intensity;
+  float Radius;
+  int ShadowMapIndex;
+};
+
+#define MAX_LIGHT_PER_CLUSTER 100
+
+layout(std430 , binding = 4) restrict buffer LightsDatas
+{
+    Light Lights[];
+};
 
 uniform int OmniShadowMapCount;
 const float PI = 3.14159265359;
+   
+float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N, vec3 LightDirection_i)
+{
+     int IndexOffset = MAX_CASCADE_PLANE_COUNT * MetaDataIndex;
+     vec4 FragPosView = ViewMatrix * vec4(fragPos,1.0f);
+     float Depth = abs(FragPosView.z);
 
+     int CascadeCount = int(CascadeCount[MetaDataIndex]);
+
+     int Layeri = -1;
+     for (int i = 0; i < CascadeCount; ++i)
+     {
+        if(Depth < ShadowCascadeLevels[IndexOffset + i])
+        {
+          Layeri = i;
+          break;
+        }
+     }
+     if(Layeri == -1)
+     {
+       Layeri = CascadeCount;
+     }
+
+     int OffSetLayerIndex = IndexOffset + Layeri;
+
+     vec4 FragPosLightSpace = LightMatrices[OffSetLayerIndex] * vec4(fragPos,1.0f);
+     vec3 ProjectedCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
+     ProjectedCoords = ProjectedCoords * 0.5f + 0.5f;
+
+     vec4 PositionAndSize = PositionAndSize[OffSetLayerIndex];
+     ProjectedCoords.xy = (ProjectedCoords.xy * PositionAndSize.z) + PositionAndSize.xy;
+
+     float CurrentDepth = ProjectedCoords.z;
+     if(CurrentDepth > 1.0f)
+     {
+        return 0.0f;
+     }
+
+     vec3 normal = N;
+     float bias = max(0.05 * (1.0f - dot(normal , LightDirection_i)) , 0.005);
+     //const float BiasMultiplier = 0.5f;
+     const float BiasMultiplier = PositionAndSize.z;
+
+     if(Layeri == CascadeCount)
+     {
+        bias *= 1 / (FarPlane * BiasMultiplier);
+     }
+     else
+     {
+        bias *= 1 / (ShadowCascadeLevels[OffSetLayerIndex] * BiasMultiplier);
+     }
+
+     Layeri = int(Layer[OffSetLayerIndex]);
+
+     float shadow = 0.0f;
+     vec2 TexelSize = CascadedShadowMapSoftness / vec2(textureSize(CascadeShadowMaps,0));
+     //vec2 LayerTextureSize = vec2(textureSize(CascadeShadowMaps,0));
+     //vec2 TexelSize = 1.0f / (LayerTextureSize * PositionAndSize.zw);
+     for(int x = -1; x <= 1; ++x)
+     {
+        for(int y = -1; y <= 1; ++y)
+        {
+           float FilteredDepth = texture(CascadeShadowMaps,vec3(ProjectedCoords.xy + vec2(x,y) * TexelSize , Layeri)).r;
+           shadow += (CurrentDepth - bias) > FilteredDepth ? 1.0f : 0.0f;
+        }
+     }
+     shadow /= 9.0f;
+     return shadow;
+ }
 
  float ShadowCalculationOmni(vec3 fragPos , samplerCube OmnishadowMap , vec3 LightPosition , float farplane)
   {
@@ -114,7 +219,7 @@ const float PI = 3.14159265359;
       return shadow;
   }
   */
-float DistributionGGX(vec3 N , vec3 H, float roughness)
+  float DistributionGGX(vec3 N , vec3 H, float roughness)
   {
       float a = roughness * roughness;
       float a2 = a*a;
@@ -160,105 +265,144 @@ float DistributionGGX(vec3 N , vec3 H, float roughness)
   } 
 
 void main()
-{
-    vec3 texturecolor;
+{ 
+      vec3 texturecolor;
 
-    float AlphaMap;
-    if(disableclaymaterial[4] == 1)
-    {
-      AlphaMap = 1.0f;
-    }
-    else
-    {
-      AlphaMap = texture(texture_alpha0, FinalTexCoord * TilingCoeff).r;
-    }
+ float AlphaMap;
+ if(disableclaymaterial[4] == 1)
+ {
+   AlphaMap = 1.0f;
+ }
+ else
+ {
+   AlphaMap = texture(texture_alpha0, FinalTexCoord * TilingCoeff).r;
+ }
 
-    if(AlphaMap < 0.5f)
-    {
-      discard;
-    }
-     
-    if(disableclaymaterial[0] == 1)
-    {
-      texturecolor = albedo.rgb;
-    }
-    else
-    {
-      texturecolor = texture(texture_diffuse0, FinalTexCoord * TilingCoeff).rgb;
-    }
+ if(AlphaMap < 0.5f)
+ {
+   discard;
+ }
+  
+ if(disableclaymaterial[0] == 1)
+ {
+   texturecolor = albedo.rgb;
+ }
+ else
+ {
+   texturecolor = texture(texture_diffuse0, FinalTexCoord * TilingCoeff).rgb;
+ }
 
-    float roughnessmap;
+ float roughnessmap;
 
-    if(disableclaymaterial[1] == 1)
-    {
-      roughnessmap = roughness;
-    }
-    else
-    {
-      roughnessmap = texture(texture_specular0, FinalTexCoord * TilingCoeff).r;
-    }
+ if(disableclaymaterial[1] == 1)
+ {
+   roughnessmap = roughness;
+ }
+ else
+ {
+   roughnessmap = texture(texture_specular0, FinalTexCoord * TilingCoeff).r;
+ }
 
-    vec3 resultnormal;
+ vec3 resultnormal;
 
-    if(disableclaymaterial[2] == 1)
-    {
-        resultnormal = normalize(Normal);
-    }
-    else
-    {
-        resultnormal = texture(texture_normal0,FinalTexCoord * TilingCoeff).rgb;
-        resultnormal = resultnormal * 2.0f - 1.0f;
-        resultnormal = normalize(TBN * resultnormal);
-    }
+ if(disableclaymaterial[2] == 1)
+ {
+     resultnormal = normalize(Normal);
+ }
+ else
+ {
+     resultnormal = texture(texture_normal0,FinalTexCoord * TilingCoeff).rgb;
+     resultnormal = resultnormal * 2.0f - 1.0f;
+     resultnormal = normalize(TBN * resultnormal);
+ }
 
 
-    float metalicmap;
+ float metalicmap;
 
-    if(disableclaymaterial[3] == 1)
-    {
-      metalicmap = metallic;
-    }
-    else
-    {
-      metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
-    }
+ if(disableclaymaterial[3] == 1)
+ {
+   metalicmap = metallic;
+ }
+ else
+ {
+   metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
+ }
 
-      float shadow;
-      vec3 N = normalize(resultnormal);
-      vec3 V = normalize(CameraPos - CurrentPos);
+   //vec3 DecalNormal = texture(DecalNormalPass,TexCoords).rgb;
+
+   vec3 Albedo = texturecolor;
+   float roughness = roughnessmap;
+   float Metalic = metalicmap;
+   vec3 Position = CurrentPos;
+
+   vec4 FragPosView = ViewMatrix * vec4(Position,1.0f);
+
+   /*
+   uint zTile = uint((log(abs(FragPosView.z) / NearPlane) * gridSize.z) / log(FarPlane / NearPlane));
+   vec2 tileSize = screenSize / gridSize.xy;
+   uvec3 tile = uvec3(gl_FragCoord.xy / tileSize, zTile);
+   uint tileIndex = uint(tile.x + (tile.y * gridSize.x) + (tile.z * gridSize.x * gridSize.y));
+
+   Cluster cluster = Clusters[tileIndex];
+   */
+
+      float shadow = 0.0f;
+      vec3 N = resultnormal;
+      vec3 V = normalize(CameraPos - Position);
 
       vec3 F0 = vec3(0.04);
-      F0 = mix(F0,texturecolor,metalicmap);
+      F0 = mix(F0,Albedo,Metalic);
 
       vec3 Lo = vec3(0.0);
       for(int i = 0; i < LightCount;++i)
       {
+          Light CurrentLight = Lights[i];
+          //Light CurrentLight = Lights[cluster.LightIndices[i]];
           vec3 L;
           vec3 H;
           vec3 radiance;
 
-          if(LightTypes[i] == POINT_LIGHT)
+          if(CurrentLight.Type == POINT_LIGHT)
           {
-            L = normalize(LightPositions[i] - CurrentPos);
-            H = normalize(V + L);
-            float distance = length(LightPositions[i] - CurrentPos);
-            float attenuation = 1.0 / (distance * distance);
-            radiance = LightColors[i].xyz * attenuation;
-          }
-          else if(LightTypes[i] == DIRECTIONAL_LIGHT)
-          {
-            L = normalize(LightPositions[i]);
-            H = normalize(V + L); 
-            radiance = LightColors[i].xyz;
-          }
+		    vec3 CurrentLightPosition = CurrentLight.Position.xyz;
+            float distance = length(CurrentLightPosition - Position);
+            
+            if(distance > CurrentLight.Radius)
+            {
+               continue;
+            }
 
-          float NDF = DistributionGGX(N,H,roughnessmap);
-          float G = GeometrySmith(N,V,L,roughnessmap);
+            L = normalize(CurrentLightPosition - Position);
+            H = normalize(V + L);
+            float attenuation = 1.0 / (distance * distance);
+            radiance = CurrentLight.Color.xyz * attenuation;
+
+            int OmniShadowMapIndex = CurrentLight.ShadowMapIndex;
+            if(OmniShadowMapIndex >= 0)
+            {
+               shadow = ShadowCalculationOmni(Position,OmniShadowMaps[OmniShadowMapIndex],CurrentLight.Position.xyz , ShadowMapFarPlane[OmniShadowMapIndex]);
+            }
+          }
+          else if(CurrentLight.Type == DIRECTIONAL_LIGHT)
+          {
+            L = normalize(CurrentLight.Position.xyz);
+            H = normalize(V + L); 
+            radiance = CurrentLight.Color.xyz;
+
+            int DirectionalShadowMapIndex = CurrentLight.ShadowMapIndex;
+            if(DirectionalShadowMapIndex >= 0)
+            {
+               shadow = CascadedDirectionalShadowCalculation(Position,DirectionalShadowMapIndex,N , CurrentLight.Position.xyz);
+            }
+          }
+          float NDF = DistributionGGX(N,H,roughness);
+          float G = GeometrySmith(N,V,L,roughness);
           vec3 F = FresnelSchlick(max(dot(H,V),0.0),F0);
+          //vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
           vec3 kS = F;
           vec3 Kd = vec3(1.0) - kS;
-          Kd *= 1.0 - metalicmap;
+          Kd *= 1.0 - Metalic;
 
           vec3 numerator = NDF * G * F;
           float denominator = 4.0 * max(dot(N,V),0.0) * max(dot(N,L),0.0) + 0.0001;
@@ -266,17 +410,9 @@ void main()
 
           float NdotL = max(dot(N,L),0.0);
 
-          if(i < OmniShadowMapCount)
-          {
-             shadow = ShadowCalculationOmni(CurrentPos,OmniShadowMaps[i],LightPositions[i] , ShadowMapFarPlane[i]);
-             Lo += (1.0 - shadow) * (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
-          }
-          else
-          {
-             Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
-          }
+          Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
 
-          //Lo += (Kd * texturecolor / PI + specular) * radiance * LightIntensities[i] * NdotL;
+          //Lo += (Kd * texturecolor / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
       }
 
       vec3 color;
@@ -284,34 +420,34 @@ void main()
 
       if(EnableIBL)
       {
-         vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughnessmap);
+         vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
          vec3 R = reflect(-V , N);
          const float MAX_REFLECTION_LOD = 4.0f;
-         vec3 prefilteredColor = textureLod(prefilteredMap,R,roughnessmap * MAX_REFLECTION_LOD).rgb;
-         vec2 EnvLut = texture(LUT,vec2(max(dot(N,V),0.0),roughnessmap)).rg;
+         vec3 prefilteredColor = textureLod(prefilteredMap,R,roughness * MAX_REFLECTION_LOD).rgb;
+         vec2 EnvLut = texture(LUT,vec2(max(dot(N,V),0.0),roughness)).rg;
          vec3 specular = prefilteredColor * (F * EnvLut.x + EnvLut.y);
 
          vec3 irradiance = texture(ConvDiffCubeMap, N).rgb;
          vec3 kS = F; 
          vec3 kD = 1.0 - kS;
-         vec3 diffuse = irradiance * texturecolor;
+         vec3 diffuse = irradiance * Albedo;
          ambient = (kD * diffuse + specular) * ao; 
          color = ambient + Lo;
       }
       else
       {
-         ambient = vec3(0.03) * texturecolor * ao;
+         ambient = vec3(0.03) * Albedo * ao;
          color = ambient + Lo;
       }
       
       color = color / (color + vec3(1.0));
-      color = pow(color, vec3(1.0/2.2));  
+      //color = pow(color, vec3(1.0/2.2));  
 
       bool FogEnabled = false;
 
       float DeltaPlane = FarPlane - NearPlane;
-      float distanceFromCamera = distance(CameraPos,CurrentPos) / DeltaPlane;
+      float distanceFromCamera = distance(CameraPos,Position) / DeltaPlane;
 
       float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
@@ -325,8 +461,9 @@ void main()
          FinalFogColor = FogColor;
       }
 
-      ID = ModelID;
-      Depth = vec4(CurrentPos,1.0f);
-      float EnvironmentRadianceIntensity = 1.0f / normalize(DeltaPlane) * normalize(DeltaPlane);
-      OutColor = vec4(color + (FinalFogColor * FogIntensity), 1.0);   
+      FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
+      //FragColor = vec4(DecalNormal, 1.0); 
+      //FragColor = vec4(vec3(CascadeCount[0]),1.0f); 
+      Depth = vec4(Position,1.0f);
+      ID = vec4(vec3(ModelID),1.0f);
 }

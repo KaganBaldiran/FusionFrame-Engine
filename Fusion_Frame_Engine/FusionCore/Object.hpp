@@ -38,11 +38,13 @@ namespace FUSIONCORE
     class FUSIONFRAME_EXPORT Object
     {
     protected:
+        size_t ObjectID;
         std::vector<Object*> Children;
         WorldTransform transformation;
         Object* Parent;
         std::vector<FUSIONPHYSICS::QuadNode*> AssociatedQuads;
     public:
+        Object();
         //Mostly internal use
         void SetAssociatedQuads(const std::vector<FUSIONPHYSICS::QuadNode*>& CurrentQuads);
         
@@ -58,7 +60,8 @@ namespace FUSIONCORE
         virtual void Update();
         Object* GetChild(int index);
         int GetChildrenCount();
-        WorldTransform& GetTransformation() { return this->transformation; };
+        inline WorldTransform& GetTransformation() { return this->transformation; };
+        inline size_t GetObjectID() { return this->ObjectID; };
 
         template<typename T>
         T DynamicObjectCast() { return dynamic_cast<T>(this); };
@@ -68,4 +71,6 @@ namespace FUSIONCORE
             return this == other;
         }
     };
+
+    FUSIONFRAME_EXPORT_FUNCTION Object* GetObject(size_t ObjectID);
 }

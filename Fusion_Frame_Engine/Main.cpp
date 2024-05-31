@@ -1,5 +1,4 @@
 #include "Application.hpp"
-#include "FusionFrame.h"
 
 int main()
 {

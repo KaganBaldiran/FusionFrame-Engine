@@ -83,3 +83,19 @@ void FUSIONCORE::DecalDeferred::Draw(Gbuffer& GeometryBuffer, Material Material,
     BindVAONull();
     UseShaderProgram(0);
 }
+
+void FUSIONCORE::DecalDeferred::VisualiseDecalCage(Camera3D& camera, Shader& shader,glm::vec3 CageColor)
+{
+    shader.use();
+    UnitBoxBuffer->BindVAO();
+    
+    auto ModelMatrix = this->transformation.GetModelMat4();
+    shader.setMat4("model", ModelMatrix);
+    shader.setMat4("ProjView", camera.ProjectionViewMat);
+    shader.setVec3("LightColor", CageColor);
+
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    BindVAONull();
+    UseShaderProgram(0);
+}

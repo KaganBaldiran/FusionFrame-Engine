@@ -84,11 +84,16 @@ void FUSIONUTIL::SetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int 
 	glfwSetWindowMonitor(window, monitor, Xpos, Ypos, width, height, refreshRate);
 }
 
-bool FUSIONUTIL::IsKeyPressedOnce(GLFWwindow* window, int Key)
+bool FUSIONUTIL::IsKeyPressedOnce(GLFWwindow* window, int Key,bool &Signal)
 {
-	if (glfwGetKey(window, Key) == GLFW_RELEASE)
+	if (!Signal && FUSIONUTIL::GetKey(window, Key) == FF_GLFW_RELEASE)
 	{
-		return glfwGetKey(window, Key) == GLFW_PRESS;
+		Signal = true;
+	}
+	if (FUSIONUTIL::GetKey(window, Key) == FF_GLFW_PRESS && Signal)
+	{
+		Signal = false;
+		return true;
 	}
 	return false;
 }

@@ -154,4 +154,5 @@ namespace FUSIONCORE
 	//Internally calls "ClearCascadedTextureBuffers()" and "CalculateLightSpaceMatricesOnGPU()" so you don't have to call them. 
 	FUSIONFRAME_EXPORT_FUNCTION void RefreshCascadedShadowMapBuffers(Camera3D& camera, std::vector<CascadedDirectionalShadowMap*>& CascadedDirectionalShadowMaps, Shader& LightSpaceMatrixComputeShader);
 	FUSIONFRAME_EXPORT_FUNCTION void SetCascadedShadowSoftness(Shader& TargetShader,float Softness = 1.0f);
+	FUSIONFRAME_EXPORT_FUNCTION void SetCascadedShadowBiasMultiplier(Shader& TargetShader,float ShadowBiasMultiplier = 0.005f);
 }

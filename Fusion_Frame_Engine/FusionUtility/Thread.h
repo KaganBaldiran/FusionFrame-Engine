@@ -90,11 +90,11 @@ namespace FUSIONUTIL
 							if (workingThreads == 0)
 							{
 								allow = true;
-								LOG("Allowed :: " << allow);
+								//LOG("Allowed :: " << allow);
 								condition.notify_all();
 							}
-							LOG("Thread executed the task!");
-							LOG("workingThreads: " << workingThreads);
+							//LOG("Thread executed the task!");
+							//LOG("workingThreads: " << workingThreads);
 						}
 					}
 				});
@@ -143,8 +143,8 @@ namespace FUSIONUTIL
 			{
 			  std::unique_lock<std::mutex> lock(mutex);
 			  condition.wait(lock, [this]() { return allow; });
-			  LOG_INF("Main thread released wait");
-			  LOG_INF("Main thread finished waiting");
+			  //LOG_INF("Main thread released wait");
+			  //LOG_INF("Main thread finished waiting");
 			  firstTime = true;
 			  workingThreads = -1;
 			  allow = false;

@@ -94,6 +94,10 @@ namespace FUSIONCORE
         //It's crucial to keep the original VBO intact;
         //Not needed to be called unless effects like shadows are desired. 
         void SetInstanced(VBO& InstanceDataVBO,size_t InstanceCount);
+        //Binding material pointer to have an alpha map to render shadows
+        //It's crucial to keep the original material and it's textures intact
+        //No need to call unless material has an alpha map
+        void SetAlphaMaterial(Material& material);
 
         std::vector<Mesh> Meshes;
         std::vector<Texture2D> textures_loaded;
@@ -131,6 +135,7 @@ namespace FUSIONCORE
             glm::vec3 dynamic_origin;
             bool AnimationEnabled;
             std::vector<glm::mat4>* FinalAnimationMatrices;
+            Material* AlphaMaterial;
 
             std::map<std::string, BoneInfo> Bones;
             int boneCounter = 0;

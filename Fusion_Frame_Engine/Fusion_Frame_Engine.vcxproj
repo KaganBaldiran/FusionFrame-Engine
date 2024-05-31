@@ -216,6 +216,7 @@
   <ItemGroup>
     <ClInclude Include="Application.hpp" />
     <ClInclude Include="FusionCore\Decal.hpp" />
+    <ClInclude Include="FusionCore\Scene.hpp" />
     <ClInclude Include="FusionCore\Shapes.hpp" />
     <ClInclude Include="FusionCore\Animation.hpp" />
     <ClInclude Include="FusionCore\Animator.hpp" />
@@ -252,7 +253,6 @@
     <ClInclude Include="FusionUtility\StopWatch.h" />
     <ClInclude Include="FusionUtility\Thread.h" />
     <ClInclude Include="FusionUtility\VectorMath.h" />
-    <ClInclude Include="Scene.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

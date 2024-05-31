@@ -16,6 +16,7 @@ FUSIONCORE::Model::Model()
 {
     this->AnimationEnabled = false;
     FinalAnimationMatrices = nullptr;
+    this->AlphaMaterial = nullptr;
     this->ModelID = counter;
     IDmodelMap[ModelID] = this;
     counter++;
@@ -28,6 +29,7 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
 {
     this->AnimationEnabled = AnimationModel;
     FinalAnimationMatrices = nullptr;
+    this->AlphaMaterial = nullptr;
     this->loadModel(filePath, Async, AnimationModel);
     FindGlobalMeshScales();
     this->ModelID = counter;
@@ -530,6 +532,11 @@ void FUSIONCORE::Model::SetInstanced(VBO& InstanceDataVBO, size_t InstanceCount)
     this->InstanceCount = InstanceCount;
     this->InstanceDataVBO = &InstanceDataVBO;
     this->InstanceDataVBO->SetVBOstate(true);
+}
+
+void FUSIONCORE::Model::SetAlphaMaterial(Material& material)
+{
+    this->AlphaMaterial = &material;
 }
 
 FUSIONCORE::Model::~Model()

@@ -188,7 +188,7 @@ FUSIONCORE::OmniShadowMap::OmniShadowMap(float width, float height, float FarPla
 	ID = IDiterator;
 	IDiterator++;
 
-	this->far = FarPlane;
+	this->FarPlane = FarPlane;
 	this->ShadowMapSize({ width,height });
 	this->shadowProj = glm::mat4(1.0f);
 
@@ -223,7 +223,7 @@ void FUSIONCORE::OmniShadowMap::LightMatrix(glm::vec3 lightPos, GLuint shader)
 	float aspect = ShadowMapSize.x / ShadowMapSize.y;
 	float near = 0.1f;
 
-	this->shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+	this->shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, FarPlane);
 
 	std::vector<glm::mat4> shadowTransforms;
 	shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
@@ -271,7 +271,7 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader& shader, Light& BoundLight, std::vec
 					shader.setBool("EnableAnimation", model->IsAnimationEnabled());
 					glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 					glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), FarPlane);
 			};
 		}
 		else
@@ -281,7 +281,7 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader& shader, Light& BoundLight, std::vec
 					shader.setBool("EnableAnimation", model->IsAnimationEnabled());
 					glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 					glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+					glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), FarPlane);
 			};
 		}
 		model->Draw(camera, shader, shaderPrep);
@@ -307,7 +307,7 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader shader, Light& BoundLight, Model& mo
 
 	glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 	glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-	glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+	glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), FarPlane);
 
 	std::function<void()> shaderPrep = []() {};
 
@@ -335,7 +335,7 @@ void FUSIONCORE::OmniShadowMap::Draw(Shader shader, Light& BoundLight, std::vect
 
 	glUniformMatrix4fv(glGetUniformLocation(shader.GetID(), "shadowMapProj"), 1, GL_FALSE, glm::value_ptr(this->shadowProj));
 	glUniform3f(glGetUniformLocation(shader.GetID(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-	glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), far);
+	glUniform1f(glGetUniformLocation(shader.GetID(), "farPlane"), FarPlane);
 
 	std::function<void()> shaderPrep = []() {};
 	for (size_t i = 0; i < models.size(); i++)

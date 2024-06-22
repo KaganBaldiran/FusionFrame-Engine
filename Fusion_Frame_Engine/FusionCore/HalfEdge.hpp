@@ -20,7 +20,7 @@ namespace FUSIONCORE
 
 		int m_BoneIDs[MAX_BONE_INFLUENCE];
 		float m_Weights[MAX_BONE_INFLUENCE];
-		HalfEdge* halfEdge;
+		HalfEdge* halfEdge = nullptr;
 
 		bool operator==(const Vertex& other) const
 		{

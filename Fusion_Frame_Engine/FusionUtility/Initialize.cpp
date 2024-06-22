@@ -10,6 +10,11 @@
 #include "../FusionCore/Decal.hpp"
 #include "../FusionPhysics/ParticleSystem.hpp"
 
+#include "../../Include/Imgui/imgui.h"
+#include "../../Include/Imgui/imgui_impl_opengl3.h"
+#include "../../Include/Imgui/imgui_impl_glfw.h"
+#include "../../Include/Imgui/imgui_internal.h"
+
 void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 
 	const char* sourceStr;
@@ -108,6 +113,8 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 	glfwSetScrollCallback(window, FUSIONCORE::scrollCallback);
 
 	if (EnableGLdebug)
@@ -116,6 +123,38 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 	}
 
     return window;
+}
+
+void FUSIONUTIL::InitializeImguiGLFW(GLFWwindow* window)
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+void FUSIONUTIL::RenderImguiGLFW()
+{
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void FUSIONUTIL::TerminateRenderImguiGLFW()
+{
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+}
+
+void FUSIONUTIL::CreateFrameImguiGLFW()
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 }
 
 void FUSIONUTIL::TerminateWindow()

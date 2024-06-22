@@ -53,7 +53,7 @@ FUSIONCORE::Color FUSIONCORE::ReadFrameBufferPixel(int Xcoord, int Ycoord,unsign
     return PixelColor;
 }
 
-FUSIONCORE::FrameBuffer::FrameBuffer(int width, int height)
+FUSIONCORE::ScreenFrameBuffer::ScreenFrameBuffer(int width, int height)
 {
 	static int itr = 0;
 	ID = itr;
@@ -117,16 +117,16 @@ FUSIONCORE::FrameBuffer::FrameBuffer(int width, int height)
 	itr++;
 }
 
-void FUSIONCORE::FrameBuffer::Bind() 
+void FUSIONCORE::ScreenFrameBuffer::Bind() 
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
 }
-void FUSIONCORE::FrameBuffer::Unbind()
+void FUSIONCORE::ScreenFrameBuffer::Unbind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
+void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
 {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -174,7 +174,7 @@ void FUSIONCORE::FrameBuffer::Draw(Camera3D& camera, Shader& shader,std::functio
 	glEnable(GL_DEPTH_TEST);
 }
 
-void FUSIONCORE::FrameBuffer::clean()
+void FUSIONCORE::ScreenFrameBuffer::clean()
 {
 	glDeleteTextures(1, &fboImage);
 	glDeleteTextures(1, &fboDepth);
@@ -435,3 +435,106 @@ void FUSIONCORE::Gbuffer::clean()
 
 	LOG_INF("Cleaned G-buffer[ID:" << ID << "]!");
 };
+
+FUSIONCORE::Framebuffer::Framebuffer(unsigned int width, unsigned int height)
+{
+	static unsigned int IDiterator = 0;
+	ID = IDiterator;
+	IDiterator++;
+
+	ColorAttachmentCount = 0;
+
+	FramebufferSize.x = width;
+	FramebufferSize.y = height;
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		LOG_ERR("Error Completing the G-buffer[ID:" << ID << "]!");
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+void FUSIONCORE::Framebuffer::PushFramebufferAttachment2D(FBOattachmentType attachmentType, GLint InternalFormat, GLenum Format, GLenum type, GLint MinFilter, GLint MaxFilter, GLint Wrap_S, GLint Wrap_T)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	Attachments.emplace_back();
+	GLuint& attachmentID = Attachments.back();
+
+	glGenTextures(1, &attachmentID);
+	glBindTexture(GL_TEXTURE_2D, attachmentID);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, FramebufferSize.x, FramebufferSize.y, 0, Format, type, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, MinFilter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, MaxFilter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, Wrap_S);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, Wrap_T);
+
+	GLenum AttachmentType = GL_COLOR_ATTACHMENT0;
+
+	switch (attachmentType)
+	{
+	case FBO_ATTACHMENT_COLOR:
+		AttachmentType = GL_COLOR_ATTACHMENT0 + ColorAttachmentCount;
+		break;
+	case FBO_ATTACHMENT_DEPTH:
+		AttachmentType = GL_DEPTH_ATTACHMENT;
+		break;
+	default:
+		break;
+	}
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, AttachmentType, GL_TEXTURE_2D, attachmentID, 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		LOG_ERR("Error pushing FBO attachment[ID:" << attachmentID << "]!");
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	ColorAttachmentCount++;
+}
+
+void FUSIONCORE::Framebuffer::SetDrawModeDefault()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	std::vector<unsigned int> AtBuffers;
+	for (size_t i = 0; i < Attachments.size(); i++)
+	{
+		AtBuffers.push_back(GL_COLOR_ATTACHMENT0 + i);
+	}
+	glDrawBuffers(Attachments.size(), AtBuffers.data());
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FUSIONCORE::Framebuffer::Bind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
+void FUSIONCORE::Framebuffer::Unbind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+FUSIONCORE::Framebuffer::~Framebuffer()
+{
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteRenderbuffers(1, &rbo);
+
+	for (auto& Attachment : Attachments)
+	{
+		glDeleteTextures(1, &Attachment);
+	}
+}

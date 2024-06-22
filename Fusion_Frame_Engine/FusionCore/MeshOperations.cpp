@@ -82,6 +82,39 @@ bool FUSIONCORE::MESHOPERATIONS::ExportObj(const char* FilePath, FUSIONCORE::Mod
 	return true;
 }
 
+void CalculateTangentBitangentApproximation(FUSIONCORE::Mesh Mesh)
+{
+	auto& vertices = Mesh.GetVertices();
+	auto& faces = Mesh.GetFaces();
+
+	for (auto& face : faces)
+	{
+		if (face->Indices.size() < 3)
+		{
+			continue; 
+		}
+
+		auto v0 = vertices[face->Indices[0]]->Position;
+		auto v1 = vertices[face->Indices[1]]->Position;
+		auto v2 = vertices[face->Indices[2]]->Position;
+
+		glm::vec3 edge1 = v1 - v0;
+		glm::vec3 edge2 = v2 - v0;
+
+		glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+		glm::vec3 tangent = glm::normalize(edge1);
+
+		glm::vec3 bitangent = glm::normalize(glm::cross(normal, tangent));
+
+		for (size_t i = 0; i < face->Indices.size(); i++)
+		{
+			auto& vertex = vertices[face->Indices[i]];
+			vertex->Tangent = tangent;
+			vertex->Bitangent = bitangent;
+		}
+	}
+}
+
 void FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices) 
 {
 	for (size_t i = 0; i < indices.size(); i += 3) {
@@ -348,63 +381,197 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 {
 	auto& Vertices = mesh.GetVertices();
-	auto& DuplicateVertexMap = mesh.GetDuplicateVertexMap();
-	std::vector<std::shared_ptr<FUSIONCORE::Vertex>> SmoothedVertices;
+	auto& EdgeMap = mesh.GetEdgeHashMap();
+	auto& HalfEdges = mesh.GetHalfEdges();
+	std::vector<std::pair<glm::vec3, int>> SmoothedVertices;
 	SmoothedVertices.reserve(Vertices.size());
 	for (size_t i = 0; i < Vertices.size(); i++)
 	{
-		auto& vertex = Vertices[i];
+		auto vertex = Vertices[i];
 
-		glm::vec3 AveragedPosition;
+		if (vertex->halfEdge == nullptr)
+		{
+			continue;
+		}
+
+		glm::vec3 AveragedPosition = glm::vec3(0.0f);
 		int EdgeIterationCount = 0;
 		auto RelatedEdge = vertex->halfEdge;
+		AveragedPosition += RelatedEdge->StartingVertex->Position;
+		EdgeIterationCount++;		
 		do
 		{
+			if (RelatedEdge == nullptr) {
+				break;
+			}
 			AveragedPosition += RelatedEdge->EndingVertex->Position;
-			AveragedPosition += RelatedEdge->StartingVertex->Position;
-			EdgeIterationCount += 2;
+			EdgeIterationCount++;
 			if (!RelatedEdge->BoundryEdge)
 			{
-			    AveragedPosition += RelatedEdge->EndingVertex->Position;
-				AveragedPosition += RelatedEdge->StartingVertex->Position;
-				EdgeIterationCount += 2;
-				RelatedEdge = RelatedEdge->TwinHalfEdge->NextHalfEdge;
+				if (RelatedEdge->PrevHalfEdge->BoundryEdge)
+				{
+					break;
+				}
+				
+				RelatedEdge = RelatedEdge->PrevHalfEdge->TwinHalfEdge;
+				
 			}
 			else
 			{
-				//LOG("STILL IN LOOP");
-				if (RelatedEdge->PrevHalfEdge->BoundryEdge)
-				{
-					//LOG("SHOULD BREAK");
-
-					break;
-				}
-				RelatedEdge = RelatedEdge->PrevHalfEdge;
-				AveragedPosition += RelatedEdge->EndingVertex->Position;
-				AveragedPosition += RelatedEdge->StartingVertex->Position;
-				EdgeIterationCount += 2;
-				RelatedEdge = RelatedEdge->TwinHalfEdge;
+				break;	
 			}
 		} while (RelatedEdge != vertex->halfEdge);
 
 		AveragedPosition /= EdgeIterationCount;
-		/*if (DuplicateVertexMap.find(vertex->Position) != DuplicateVertexMap.end())
-		{
-			auto& DuplicateVertices = DuplicateVertexMap[vertex->Position];
-			for (size_t y = 0; y < DuplicateVertices.size(); y++)
-			{
-				DuplicateVertices[y]->Position = AveragedPosition;
-			}
-		}*/
-		vertex->Position = AveragedPosition;
-		SmoothedVertices.push_back(vertex);
-		//LOG("EdgeIterationCount: " << EdgeIterationCount);
+		SmoothedVertices.push_back({ AveragedPosition,i });
 	}
-	std::swap(Vertices, SmoothedVertices);
+
+	for (size_t i = 0; i < SmoothedVertices.size(); i++)
+	{
+		auto& VertexPair = SmoothedVertices[i];
+		auto& vertex = Vertices[VertexPair.second];
+		auto& halfedge = vertex->halfEdge;
+		vertex->Position = VertexPair.first;
+	}
+
+	EdgeMap.clear();
+	for (size_t i = 0; i < HalfEdges.size(); i++)
+	{
+		auto& halfedge = HalfEdges[i];
+		EdgeMap[{halfedge->StartingVertex->Position, halfedge->EndingVertex->Position}] = i;
+	}
 }
 
 
-void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Mesh& Mesh, int level)
+glm::vec3 GetTriangleNormal(FUSIONCORE::Vertex Vertex0,FUSIONCORE::Vertex Vertex1,FUSIONCORE::Vertex Vertex2)
+{
+	glm::vec3 Normal = glm::cross((Vertex1.Position - Vertex0.Position), (Vertex2.Position - Vertex0.Position));
+	if (glm::length(Normal) < glm::epsilon<float>())
+	{
+		LOG_ERR("Error: Attempting to normalize a zero-length vector.");
+	}
+	else {
+		Normal = glm::normalize(Normal);
+	}
+	return Normal;
+}
+
+void CalculateSmoothNormals(FUSIONCORE::Mesh& mesh)
+{
+	auto& Vertices = mesh.GetVertices();
+	auto& HalfEdges = mesh.GetHalfEdges();
+	std::vector<std::pair<glm::vec3, int>> SmoothedVertices;
+	SmoothedVertices.reserve(Vertices.size());
+	for (size_t i = 0; i < Vertices.size(); i++)
+	{
+		auto vertex = Vertices[i];
+
+		if (vertex->halfEdge == nullptr)
+		{
+			continue;
+		}
+
+		glm::vec3 AveragedNormal = glm::vec3(0.0f);
+		int EdgeIterationCount = 0;
+		auto RelatedEdge = vertex->halfEdge;
+		AveragedNormal += RelatedEdge->StartingVertex->Normal;
+		EdgeIterationCount++;
+		do
+		{
+			if (RelatedEdge == nullptr) {
+				break;
+			}
+			AveragedNormal += RelatedEdge->EndingVertex->Normal;
+			EdgeIterationCount++;
+			if (!RelatedEdge->BoundryEdge)
+			{
+				if (RelatedEdge->PrevHalfEdge->BoundryEdge)
+				{
+					break;
+				}
+
+				RelatedEdge = RelatedEdge->PrevHalfEdge->TwinHalfEdge;
+
+			}
+			else
+			{
+				break;
+			}
+		} while (RelatedEdge != vertex->halfEdge);
+
+		AveragedNormal /= EdgeIterationCount;
+		SmoothedVertices.push_back({ AveragedNormal,i });
+	}
+
+	for (size_t i = 0; i < SmoothedVertices.size(); i++)
+	{
+		auto& VertexPair = SmoothedVertices[i];
+		auto& vertex = Vertices[VertexPair.second];
+		auto& halfedge = vertex->halfEdge;
+		vertex->Normal = glm::normalize(VertexPair.first);
+	}
+}
+
+void ContructVerticesFromFaces(FUSIONCORE::Mesh& Mesh, glm::vec3 ModelOrigin)
+{
+	auto& faces = Mesh.GetFaces();
+	auto& vertices = Mesh.GetVertices();
+	auto& indices = Mesh.GetIndices();
+	auto& halfedges = Mesh.GetHalfEdges();
+
+	std::vector<std::shared_ptr<FUSIONCORE::Vertex>> ContructedVertices;
+	std::vector<unsigned int> ContructedIndices;
+
+	std::unordered_map<glm::vec3, unsigned int, FUSIONCORE::Vec3Hash> PositionIndexMap;
+
+	size_t IndexCounter = 0;
+	ContructedVertices.reserve(3 * faces.size());
+	ContructedIndices.reserve(3 * faces.size());
+	for (size_t i = 0; i < faces.size(); i++)
+	{
+		auto& face = faces[i];
+		std::vector<std::shared_ptr<FUSIONCORE::Vertex>> faceVertices;
+		for (size_t y = 0; y < face->Indices.size(); y++)
+		{
+			FUSIONCORE::Vertex newVertex;
+			auto &existingVertex = vertices[face->Indices[y]];
+			newVertex.Position = existingVertex->Position;
+			newVertex.TexCoords = existingVertex->TexCoords;
+
+			faceVertices.push_back(std::make_shared<FUSIONCORE::Vertex>(newVertex));
+			ContructedIndices.push_back(IndexCounter);
+
+			if (PositionIndexMap.find(newVertex.Position) == PositionIndexMap.end())
+			{
+				PositionIndexMap[newVertex.Position] = IndexCounter;
+			}
+			face->Indices[y] = PositionIndexMap[newVertex.Position];
+			IndexCounter++;
+		}
+
+		glm::vec3 VertexOriginDifference = ModelOrigin - faceVertices[0]->Position;
+		glm::vec3 Normal = GetTriangleNormal(*faceVertices[0], *faceVertices[1], *faceVertices[2]);
+
+		for (auto &vertex : faceVertices)
+		{
+			vertex->Normal = Normal;
+		}
+		ContructedVertices.insert(ContructedVertices.end(), faceVertices.begin(), faceVertices.end());
+	}
+	std::swap(ContructedVertices, vertices);
+	std::swap(ContructedIndices, indices);
+
+	halfedges.clear();
+	Mesh.GetEdgeHashMap().clear();
+	Mesh.GetDuplicateVertexMap().clear();
+
+	Mesh.ConstructHalfEdges();
+
+	CalculateSmoothNormals(Mesh);
+	FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(vertices, indices);
+}
+
+void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 {
 	if (level == 0)
 	{
@@ -619,18 +786,28 @@ void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Mesh& Mesh, int lev
 	LOG("BOUNDRY: " << HowManyBoundry);
 	std::swap(ResultantIndices, Indicies);
 	
+	FUSIONCORE::MESHOPERATIONS::SmoothObject(Mesh);
 	if (level > 1)
 	{
-		LoopSubdivision(Mesh, level - 1);
+		LoopMeshSubdivision(Mesh,ModelOrigin,level - 1);
 	}
 	else
 	{
-	    SmoothObject(Mesh);
+		//ContructVerticesFromFaces(Mesh,ModelOrigin);
+		CalculateSmoothNormals(Mesh);
+		FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(Vertices, Indicies);
 		Mesh.ConstructMesh();
 	}
 }
 
-
+void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Model& Model, int level)
+{
+	glm::vec3 ModelPosition = TranslateVertex(Model.GetTransformation().GetModelMat4(), *Model.GetTransformation().OriginPoint);
+	for (auto& mesh : Model.Meshes)
+	{
+		LoopMeshSubdivision(mesh,ModelPosition, level);
+	}
+}
 
 void FUSIONCORE::MESHOPERATIONS::CollapseDecimation(FUSIONCORE::Mesh& Mesh, int level)
 {

@@ -141,7 +141,7 @@ void main()
 
    vec4 PosView = ViewMatrix * vec4(Position,1.0f);
    //Normal = Normal * 0.5f + 0.5f;
-   vec3 NormalView = mat3(ViewMatrix) * Normal;
+   vec3 NormalView = transpose(inverse(mat3(ViewMatrix))) * Normal;
    //vec3 NormalView =  Normal;
 
    //vec4 NormalView = ViewMatrix * vec4(Normal,1.0f);
@@ -150,7 +150,7 @@ void main()
    //NormalView = NormalView * 0.5f + 0.5f;
 
    vec3 Reflected = normalize(reflect(normalize(PosView.xyz),normalize(NormalView.xyz)).xyz);
-   vec3 HitPosition = PosView.xyz;
+   vec3 HitPosition = PosView.xyz + NormalView * 0.005f;
 
    float ReflectionDepth = 0.0f;
 

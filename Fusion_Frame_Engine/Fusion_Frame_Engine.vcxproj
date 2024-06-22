@@ -180,6 +180,13 @@
     <None Include="Shaders\SSR.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Include\Imgui\imgui.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Include\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="FusionCore\Animation.cpp" />
     <ClCompile Include="FusionCore\Animator.cpp" />
@@ -214,6 +221,15 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Include\Imgui\imconfig.h" />
+    <ClInclude Include="..\Include\Imgui\imgui.h" />
+    <ClInclude Include="..\Include\Imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="..\Include\Imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\Include\Imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\Include\Imgui\imgui_internal.h" />
+    <ClInclude Include="..\Include\Imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\Include\Imgui\imstb_textedit.h" />
+    <ClInclude Include="..\Include\Imgui\imstb_truetype.h" />
     <ClInclude Include="Application.hpp" />
     <ClInclude Include="FusionCore\Decal.hpp" />
     <ClInclude Include="FusionCore\Scene.hpp" />

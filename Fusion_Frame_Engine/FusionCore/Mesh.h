@@ -40,6 +40,11 @@ namespace FUSIONCORE
 		}
 	};
 
+	inline void HashCombine(std::size_t& seed, std::size_t value)
+	{
+		seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	}
+
 	struct FUSIONFRAME_EXPORT PairVec3Hash {
 		size_t operator()(const std::pair<glm::vec3, glm::vec3>& p) const
 		{
@@ -47,8 +52,8 @@ namespace FUSIONCORE
 			size_t h2 = Vec3Hash()(p.second);
 
 			size_t seed = 0;
-			seed ^= h1 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-			seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			HashCombine(seed, h1);
+			HashCombine(seed, h2);
 
 			return seed;
 		}

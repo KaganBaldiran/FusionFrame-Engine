@@ -165,6 +165,9 @@
     <Filter Include="Sources\FusionCore">
       <UniqueIdentifier>{cd0dfc98-7c9e-4ac4-9751-08ecf411aca4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Imgui">
+      <UniqueIdentifier>{64be84b4-e818-4abd-9b6e-35b43a9b11a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FusionUtility\Initialize.cpp">
@@ -262,6 +265,27 @@
     </ClCompile>
     <ClCompile Include="FusionFrame.cpp">
       <Filter>Sources\FusionUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_demo.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_draw.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_impl_glfw.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_impl_opengl3.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_tables.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Imgui\imgui_widgets.cpp">
+      <Filter>Imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -381,6 +405,33 @@
     </ClInclude>
     <ClInclude Include="FusionCore\Scene.hpp">
       <Filter>Headers\FusionCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imconfig.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imgui.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imgui_impl_glfw.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imgui_impl_opengl3.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imgui_impl_opengl3_loader.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imgui_internal.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imstb_rectpack.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imstb_textedit.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Imgui\imstb_truetype.h">
+      <Filter>Imgui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

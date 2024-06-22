@@ -151,4 +151,9 @@ unsigned int FUSIONUTIL::GetMaxUniformBlockSize()
 	return maxUniformBlockSize;
 }
 
+void FUSIONUTIL::MakeGLFWcontextCurrent(GLFWwindow* window)
+{
+	glfwMakeContextCurrent(window);
+}
+
 

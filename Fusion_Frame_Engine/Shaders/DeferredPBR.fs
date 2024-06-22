@@ -4,7 +4,6 @@ layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 Depth;
 layout (location = 2) out vec4 ID;
 
-
 in vec2 TexCoords;
 uniform sampler2D AlbedoSpecularPass;
 uniform sampler2D NormalPass;
@@ -142,7 +141,7 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N
      }
 
      vec3 normal = N;
-     float bias = max(0.005 * (1.0f - dot(normal , LightDirection_i)) , 0.005);
+     float bias = max(ShadowBiasMultiplier * (1.0f - dot(normal , LightDirection_i)) , 0.005);
      //float bias = 0.005;
      //const float BiasMultiplier = 0.5f;
      const float BiasMultiplier = PositionAndSize.z;

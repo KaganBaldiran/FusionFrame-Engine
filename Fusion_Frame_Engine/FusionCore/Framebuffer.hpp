@@ -10,6 +10,7 @@
 #include <functional>
 #include "Color.hpp"
 #include "../FusionUtility/FusionDLLExport.h"
+#include "../FusionUtility/Definitions.hpp"
 
 #define FF_FRAMEBUFFER_SCENE_IMAGE_ATTACHMENT 0x8CE0 // GL_COLOR_ATTACHMENT0
 #define FF_FRAMEBUFFER_DEPTH_ATTACHMENT 0x8CE1 // GL_COLOR_ATTACHMENT1
@@ -23,6 +24,38 @@ namespace FUSIONCORE
 	//internal , do not call
 	//Planned to be hidden soon
 	void InitializeFBObuffers();
+
+	enum FBOattachmentType
+	{
+		FBO_ATTACHMENT_COLOR = 0x008923,
+		FBO_ATTACHMENT_DEPTH = 0x008924
+	};
+
+	class Framebuffer
+	{
+	public:
+		Framebuffer(unsigned int width, unsigned int height);
+		void PushFramebufferAttachment2D(FBOattachmentType attachmentType = FBO_ATTACHMENT_COLOR, GLint InternalFormat = FF_INTERNAL_FORMAT_GL_RGB16F, GLenum Format = FF_PIXEL_FORMAT_GL_RGB,
+			                             GLenum type = FF_DATA_TYPE_GL_FLOAT, GLint MinFilter = FF_TEXTURE_FILTER_MODE_GL_NEAREST, GLint MaxFilter = FF_TEXTURE_FILTER_MODE_GL_NEAREST, 
+			                             GLint Wrap_S = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLint Wrap_T = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE);
+		void SetDrawModeDefault();
+
+		void Bind();
+		void Unbind();
+		inline GLuint GetRBO() { return rbo; };
+		inline GLuint& GetFBOattachment(size_t index) { return Attachments[index]; };
+		inline glm::ivec2 GetFBOsize() { return FramebufferSize; };
+		~Framebuffer();
+	private:
+		GLuint fbo, rbo;
+		std::vector<GLuint> Attachments;
+		size_t ColorAttachmentCount;
+
+		glm::ivec2 FramebufferSize;
+		size_t ID;
+	};
+
+
 	 /**
 	 Represents a framebuffer object used in forward rendering pipelines.
 
@@ -47,10 +80,10 @@ namespace FUSIONCORE
 	 myFrameBuffer.Unbind();
 	 @endcode
 	*/
-	class FUSIONFRAME_EXPORT FrameBuffer
+	class FUSIONFRAME_EXPORT ScreenFrameBuffer
 	{
 	public:
-		FrameBuffer(int width, int height);
+		ScreenFrameBuffer(int width, int height);
 		
 		inline GLuint GetFBOimage() { return fboImage; };
 		inline GLuint GetFBO() { return fbo; };

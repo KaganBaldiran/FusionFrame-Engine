@@ -7,7 +7,7 @@
 #include <memory>
 #include <unordered_set>
 
-#define SPEED 24.0f
+#define SPEED 5.0f
 #define CAMERA_CLOSE_PLANE 0.5f
 #define CAMERA_FAR_PLANE 90.0f
 const float BlendAmount = 0.04f;
@@ -48,7 +48,7 @@ int Application::Run()
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::Gbuffer Gbuffer(mode.width, mode.height);
-	FUSIONCORE::FrameBuffer ScreenFrameBuffer(mode.width, mode.height);
+	FUSIONCORE::ScreenFrameBuffer ScreenFrameBuffer(mode.width, mode.height);
 
 	FUSIONCORE::LightIcon = std::make_unique<FUSIONCORE::Model>("Resources/LightIcon.fbx");
 
@@ -103,6 +103,7 @@ int Application::Run()
 	//FUSIONCORE::CascadedDirectionalShadowMap StaticShadowMap(shadowCascadeTextureSizes, shadowCascadeLevels);
 	FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap(shadowCascadeTextureSizes,shadowCascadeLevels);
 	FUSIONCORE::SetCascadedShadowSoftness(*Shaders.DeferredPBRshader,2.0f);
+	FUSIONCORE::SetCascadedShadowBiasMultiplier(*Shaders.DeferredPBRshader);
 	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap3(1024, 1024, shadowCascadeLevels);
 
 	Vec2<int> WindowSize;
@@ -201,7 +202,6 @@ int Application::Run()
 	//FUSIONCORE::Model Isaac("C:\\Users\\kbald\\Desktop\\Isaac\\Isaac_low.obj");
 
 	//Isaac.GetTransformation().ScaleNoTraceBack(glm::vec3(7.0f));
-
 	//grid->GetTransformation().ScaleNoTraceBack({ 8.0f,8.0f ,8.0f });
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 
@@ -214,8 +214,10 @@ int Application::Run()
 
 	auto RockBoxes = FUSIONPHYSICS::GenerateAABBCollisionBoxesFromInstancedModel(Rock->GetTransformation(), RockDistibutedPoints);
 
-	FUSIONCORE::Model subdModel;
-	FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\subDModel.obj", subdModel);
+	FUSIONCORE::Model subdModel("Resources\\subDModel.obj");
+	//FUSIONCORE::Model subdModel("subDModel.obj");
+
+	//FUSIONCORE::MESHOPERATIONS::ImportObj("Resources\\subDModel.obj", subdModel);
 	//subdModel.GetTransformation().ScaleNoTraceBack({ 9.0f,9.0f,9.0f });
 	subdModel.GetTransformation().TranslateNoTraceBack({ 22.0f,6.0f,-9.0f });
 
@@ -234,7 +236,11 @@ int Application::Run()
 	AlpDroneCollisionBox.GetTransformation().Translate(glm::vec3(70.0f,0.0f,0.0f));
 	FUSIONPHYSICS::CollisionBox AlpCollisionBox(AlpDroneCollisionBox.Meshes[0], AlpDroneCollisionBox.GetTransformation());
 
-	////FUSIONCORE::MESHOPERATIONS::ExportObj("TerrainExport.obj", Terrain);
+	//FUSIONCORE::MESHOPERATIONS::LoopSubdivision(Rock->Meshes[0], 1);
+	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel, 2);
+
+	//FUSIONCORE::MESHOPERATIONS::SmoothObject(subdModel.Meshes[0]);
+	FUSIONCORE::MESHOPERATIONS::ExportObj("subdModel.obj", subdModel);
 
 	TerrainCollisionBoxes.reserve(Terrain.Meshes.size());
 	for (size_t i = 0; i < Terrain.Meshes.size(); i++)
@@ -250,7 +256,6 @@ int Application::Run()
 	Tower->PushChild(&TowerBox);
 	Tower->UpdateChildren();
 	//FUSIONPHYSICS::MESHOPERATIONS::TestAssimp("Resources\\subDModel.obj", "C:\\Users\\kbald\\Desktop\\subdOrijinalTestAssimp.obj");
-	FUSIONCORE::MESHOPERATIONS::LoopSubdivision(subdModel.Meshes[0], 1);
 
 	//shrub->GetTransformation().ScaleNoTraceBack(glm::vec3(24.0f));
 	//FUSIONPHYSICS::MESHOPERATIONS::SmoothObject(subdModel.Meshes[0]);
@@ -469,7 +474,7 @@ int Application::Run()
 	FUSIONCORE::Model Capsule("Resources\\Sphere.obj");
 	FUSIONPHYSICS::CollisionBox Capsule0(Capsule.Meshes[0], Capsule.GetTransformation());
 	//Capsule0.GetTransformation().ScaleNoTraceBack(glm::vec3(6.0f, 5.5f, 6.0f));
-	Capsule0.GetTransformation().TranslateNoTraceBack({ 15.0f,5.0f,0.0f });
+	Capsule0.GetTransformation().TranslateNoTraceBack({ 15.0f,2.0f,0.0f });
 	animationModel.PushChild(&Capsule0);
 	Capsule0.GetTransformation().TranslateNoTraceBack({ 0.0f,-3.0f,0.0f });
 	StaticModels.push_back(&animationModel);
@@ -606,7 +611,7 @@ int Application::Run()
 					Collision = true;
 					glm::vec3 ObjectPosition = FUSIONCORE::TranslateVertex(CapsuleModelMat, *Capsule0.GetTransformation().OriginPoint) -
 						FUSIONCORE::TranslateVertex(QuadModel->GetTransformation().GetModelMat4(), *QuadModel->GetTransformation().OriginPoint);
-					direction = glm::normalize(ObjectPosition);
+					direction = glm::normalize(CollisionResponse.second);
 				}
 			}
 		}
@@ -652,7 +657,12 @@ int Application::Run()
 				}
 			}
 
-			//animationModel.GetTransformation().Translate(glm::normalize(glm::vec3(direction.x, 0.0f, direction.z)) * SPEED * 0.5f * deltaTime);
+			if (FirstFloorTouch)
+			{
+				FirstFloorTouch = false;
+			}
+
+			//animationModel.GetTransformation().Translate(glm::normalize(glm::vec3(direction.x, 0.0f, direction.z)) * SPEED * 0.01f * deltaTime);
 			direction = -direction;
 			const float E = 0.0f;
 			/*if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glm::dot(direction, Front) <= E)
@@ -910,8 +920,8 @@ int Application::Run()
 
 		LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
 		//camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
-		//camera3d.SetTarget(&animationModel, 30.0f, { 0.0f,10.0f,0.0f });
-		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON,0.1f);
+		camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
+		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD,0.1f);
 
 		camera2d.UpdateCameraMatrix({ 0.0f,0.0f,0.0f }, 1.0f, WindowSize);
 		//LOG("MAX: " << FUSIONUTIL::GetMaxUniformBlockSize());

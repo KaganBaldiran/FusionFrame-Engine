@@ -58,7 +58,7 @@ void main()
     }
 	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
     //OutColor /= 2.0f;
-    //vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
+    vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
 	
 	//OutColor.xyz *= texture(Viewport, ReflectionUVcoords.xy).xyz;
     
@@ -72,6 +72,6 @@ void main()
 	}
 
 	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
-   // FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
+    //FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
     //FragColor = vec4(vec3(texture(IDtexture, TexCoords).x / 10.0f),1.0f);
 }

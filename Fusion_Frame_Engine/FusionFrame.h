@@ -21,6 +21,7 @@
 #include "FusionCore/Animator.hpp"
 #include "FusionCore/MeshOperations.h"
 #include "FusionCore/Shapes.hpp"
+#include "FusionCore/Scene.hpp"
 #include "FusionCore/Decal.hpp"
 #include "FusionPhysics/ParticleSystem.hpp"
 #include "FusionUtility/Definitions.hpp"
@@ -70,5 +71,7 @@ namespace FUSIONUTIL
 
 	FUSIONFRAME_EXPORT_FUNCTION unsigned int GetMaxTextureUnits();
 	FUSIONFRAME_EXPORT_FUNCTION unsigned int GetMaxUniformBlockSize();
+
+	FUSIONFRAME_EXPORT_FUNCTION void MakeGLFWcontextCurrent(GLFWwindow* window);
 }
 

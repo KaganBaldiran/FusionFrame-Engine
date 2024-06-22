@@ -71,7 +71,7 @@ glm::vec2 FUSIONCORE::CalculateAverage(const glm::vec2& uv1, const glm::vec2& uv
 FUSIONCORE::Vertex FUSIONCORE::GetAveragedVertex(FUSIONCORE::Vertex vertex1, FUSIONCORE::Vertex vertex2)
 {
     Vertex newVertex;
-    newVertex.Normal = CalculateAverage(vertex1.Normal, vertex2.Normal);
+    newVertex.Normal = CalculateAverageNormalized(vertex1.Normal, vertex2.Normal);
     newVertex.Bitangent = CalculateAverage(vertex1.Bitangent, vertex2.Bitangent);
     newVertex.Tangent = CalculateAverage(vertex1.Tangent, vertex2.Tangent);
     newVertex.Position = CalculateAverage(vertex1.Position, vertex2.Position);

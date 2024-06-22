@@ -106,7 +106,7 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> DecalShader;
 	};
 
-    void InitializeEngineBuffers();
+    FUSIONFRAME_EXPORT_FUNCTION void InitializeEngineBuffers();
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
     FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
      /*
@@ -124,6 +124,12 @@ namespace FUSIONUTIL
        A pointer to the GLFW window if initialization is successful, otherwise nullptr.
      */
     FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
+    
+    FUSIONFRAME_EXPORT_FUNCTION void InitializeImguiGLFW(GLFWwindow* window);
+    FUSIONFRAME_EXPORT_FUNCTION void RenderImguiGLFW();
+    FUSIONFRAME_EXPORT_FUNCTION void TerminateRenderImguiGLFW();
+    FUSIONFRAME_EXPORT_FUNCTION void CreateFrameImguiGLFW();
+    
     /*
     Terminates the window and associated resources.
     This function cleans up resources allocated and terminates the window.

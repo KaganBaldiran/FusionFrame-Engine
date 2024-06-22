@@ -8,7 +8,7 @@
 
 namespace FUSIONCORE
 {
-	class Scene
+	class FUSIONFRAME_EXPORT Scene
 	{
 	public:
 		void TranslateScene(glm::vec3 Point);
@@ -17,7 +17,6 @@ namespace FUSIONCORE
 	private:
 		std::vector<Object*> SceneObjects;
 		std::vector<Animation*> SceneAnimations;
-		std::vector<Object*> SceneObjects;
 		size_t ObjectCount;
 		glm::vec3 Origin;
 		glm::vec3 Position;

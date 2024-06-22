@@ -14,7 +14,7 @@ namespace FUSIONCORE
 	  FUSIONFRAME_EXPORT_FUNCTION bool ImportObj(const char* FilePath, FUSIONCORE::Model& model);
 
 	  FUSIONFRAME_EXPORT_FUNCTION void SmoothObject(FUSIONCORE::Mesh& mesh);
-	  FUSIONFRAME_EXPORT_FUNCTION void LoopSubdivision(FUSIONCORE::Mesh& Mesh, int level);
+	  FUSIONFRAME_EXPORT_FUNCTION void LoopSubdivision(FUSIONCORE::Model& Model, int level);
 	  FUSIONFRAME_EXPORT_FUNCTION void CalculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices);
 	  FUSIONFRAME_EXPORT_FUNCTION void CollapseDecimation(FUSIONCORE::Mesh& Mesh, int level);
 

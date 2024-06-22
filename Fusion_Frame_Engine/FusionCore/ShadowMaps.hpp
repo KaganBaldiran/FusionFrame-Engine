@@ -70,7 +70,7 @@ namespace FUSIONCORE
 
 		GLuint GetShadowMap() { return this->ShadowMapId; };
 		Vec2<float> GetShadowMapSize() { return this->ShadowMapSize; };
-		float GetFarPlane() { return far; };
+		float GetFarPlane() { return FarPlane; };
 		unsigned int GetID() { return ID; };
 		int GetBoundLightID() { return BoundLightID; };
 		void BindShadowMapLight(Light& light);
@@ -81,7 +81,7 @@ namespace FUSIONCORE
 		GLuint ShadowMapId, depthMapFBO;
 		Vec2<float> ShadowMapSize;
 		glm::mat4 shadowProj;
-		float far;
+		float FarPlane;
 		unsigned int ID;
 		int BoundLightID;
 	};

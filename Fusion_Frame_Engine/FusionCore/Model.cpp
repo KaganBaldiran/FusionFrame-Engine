@@ -722,6 +722,8 @@ FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* sce
     std::vector<Texture2D> textures;
     std::vector<std::shared_ptr<Face>> Faces;
 
+    std::unordered_map<glm::vec3, unsigned int, Vec3Hash> PositionIndexMap;
+
     vertices.reserve(mesh->mNumVertices);
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
@@ -776,8 +778,16 @@ FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* sce
         Face NewFace;
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
+            if (PositionIndexMap.find(vertices[face.mIndices[j]]->Position) == PositionIndexMap.end())
+            {
+                NewFace.Indices.push_back(face.mIndices[j]);
+                PositionIndexMap[vertices[face.mIndices[j]]->Position] = face.mIndices[j];
+            }
+            else
+            {
+                NewFace.Indices.push_back(PositionIndexMap[vertices[face.mIndices[j]]->Position]);
+            }
             indices.push_back(face.mIndices[j]);
-            NewFace.Indices.push_back(face.mIndices[j]);
         }
         Faces.push_back(std::make_shared<Face>(NewFace));
     }

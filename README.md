@@ -38,16 +38,18 @@ I'll try to demonstrate some of the functionality to get you started
 const int width = 1000;
 const int height = 1000;
 
-GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, 4, 6, "FusionFrame Engine");
+FUSIONCORE::Window ApplicationWindow;
+ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
+
+FUSIONUTIL::InitializeEngineBuffers();
 FUSIONUTIL::DefaultShaders Shaders;
 FUSIONUTIL::InitializeDefaultShaders(Shaders);
-FUSIONCORE::SHAPES::InitializeShapeBuffers();
 ```
 
 - Importing a HDRI
 ```cpp
 FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders.HDRIShader->GetID(), Shaders.ConvolutateCubeMapShader->GetID(), Shaders.PreFilterCubeMapShader->GetID());
+FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders);
 ```
 
 - Engine supports both deferred and forward rendering so you can use a gbuffer to use deferred rendering.

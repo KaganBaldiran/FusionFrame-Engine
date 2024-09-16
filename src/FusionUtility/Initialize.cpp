@@ -15,50 +15,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_internal.h"
 
-void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-
-	const char* sourceStr;
-	switch (source) {
-	case GL_DEBUG_SOURCE_API: sourceStr = "API"; break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM: sourceStr = "Window System"; break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceStr = "Shader Compiler"; break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY: sourceStr = "Third Party"; break;
-	case GL_DEBUG_SOURCE_APPLICATION: sourceStr = "Application"; break;
-	case GL_DEBUG_SOURCE_OTHER: sourceStr = "Other"; break;
-	default: sourceStr = "Unknown"; break;
-	}
-
-	const char* typeStr;
-	switch (type) {
-	case GL_DEBUG_TYPE_ERROR: typeStr = "Error"; break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeStr = "Deprecated Behavior"; break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeStr = "Undefined Behavior"; break;
-	case GL_DEBUG_TYPE_PORTABILITY: typeStr = "Portability"; break;
-	case GL_DEBUG_TYPE_PERFORMANCE: typeStr = "Performance"; break;
-	case GL_DEBUG_TYPE_MARKER: typeStr = "Marker"; break;
-	case GL_DEBUG_TYPE_PUSH_GROUP: typeStr = "Push Group"; break;
-	case GL_DEBUG_TYPE_POP_GROUP: typeStr = "Pop Group"; break;
-	case GL_DEBUG_TYPE_OTHER: typeStr = "Other"; break;
-	default: typeStr = "Unknown"; break;
-	}
-
-	const char* severityStr;
-	switch (severity) {
-	case GL_DEBUG_SEVERITY_HIGH: severityStr = "High"; break;
-	case GL_DEBUG_SEVERITY_MEDIUM: severityStr = "Medium"; break;
-	case GL_DEBUG_SEVERITY_LOW: severityStr = "Low"; break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION: severityStr = "Notification"; break;
-	default: severityStr = "Unknown"; break;
-	}
-
-
-	fprintf(stderr, "OpenGL Debug Message:\n");
-	fprintf(stderr, "    Source: %s\n", sourceStr);
-	fprintf(stderr, "    Type: %s\n", typeStr);
-	fprintf(stderr, "    ID: %u\n", id);
-	fprintf(stderr, "    Severity: %s\n", severityStr);
-	fprintf(stderr, "    Message: %s\n", message);
-}
 
 GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion,bool EnableGLdebug,const char* WindowName)
 {
@@ -71,7 +27,6 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 	LOG_INF("GLFW initialized!");
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
-
 	glEnable(GL_MULTISAMPLE);
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MajorGLversion);
@@ -119,7 +74,7 @@ GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int Majo
 
 	if (EnableGLdebug)
 	{
-		glDebugMessageCallback(debugCallback, nullptr);
+		//glDebugMessageCallback(debugCallback, nullptr);
 	}
 
     return window;
@@ -157,10 +112,10 @@ void FUSIONUTIL::CreateFrameImguiGLFW()
 	ImGui::NewFrame();
 }
 
-void FUSIONUTIL::TerminateWindow()
+void FUSIONUTIL::TerminateGLFW()
 {
 	glfwTerminate();
-	LOG_INF("Window terminated!");
+	LOG_INF("GLFW terminated!");
 }
 
 void FUSIONUTIL::SwapBuffers(GLFWwindow* window)

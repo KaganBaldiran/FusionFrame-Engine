@@ -123,6 +123,7 @@ namespace FUSIONUTIL
      Returns:
        A pointer to the GLFW window if initialization is successful, otherwise nullptr.
      */
+
     FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
     
     FUSIONFRAME_EXPORT_FUNCTION void InitializeImguiGLFW(GLFWwindow* window);
@@ -131,10 +132,9 @@ namespace FUSIONUTIL
     FUSIONFRAME_EXPORT_FUNCTION void CreateFrameImguiGLFW();
     
     /*
-    Terminates the window and associated resources.
-    This function cleans up resources allocated and terminates the window.
+    Terminates GLFW and associated resources.
     */
-    FUSIONFRAME_EXPORT_FUNCTION void TerminateWindow();
+    FUSIONFRAME_EXPORT_FUNCTION void TerminateGLFW();
 
     FUSIONFRAME_EXPORT_FUNCTION void SwapBuffers(GLFWwindow* window);
     FUSIONFRAME_EXPORT_FUNCTION void PollEvents();

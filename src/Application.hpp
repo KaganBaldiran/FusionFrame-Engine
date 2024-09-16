@@ -16,6 +16,7 @@ class Application
 {
 public:
 	int Run();
+	int PathTracer();
 	float RoundNonZeroToOne(float input);
 
 private:

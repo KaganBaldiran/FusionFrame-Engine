@@ -452,6 +452,8 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
     float minZ = std::numeric_limits<float>::max();
     float maxZ = std::numeric_limits<float>::lowest();
 
+    Vertex vertex;
+
     std::vector<glm::vec3> originPoints;
 	for (size_t j = 0; j < Meshes.size(); j++)
 	{
@@ -467,7 +469,6 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
 
 		for (unsigned int k = 0; k < VertexArray.size(); k++) 
         {
-			Vertex vertex;
 			vertex.Position.x = VertexArray[k]->Position.x;
 			vertex.Position.y = VertexArray[k]->Position.y;
 			vertex.Position.z = VertexArray[k]->Position.z;
@@ -489,9 +490,9 @@ void FUSIONCORE::Model::FindGlobalMeshScales()
         minY = std::min(MeshminY, minY);
         minZ = std::min(MeshminZ, minZ);
 
-        float MeshCenterX = (MeshminX + MeshmaxX) / 2.0f;
-        float MeshCenterY = (MeshminY + MeshmaxY) / 2.0f;
-        float MeshCenterZ = (MeshminZ + MeshmaxZ) / 2.0f;
+        float MeshCenterX = (MeshminX + MeshmaxX) * 0.5f;
+        float MeshCenterY = (MeshminY + MeshmaxY) * 0.5f;
+        float MeshCenterZ = (MeshminZ + MeshmaxZ) * 0.5f;
 
         Mesh.SetMeshOriginPoint({ MeshCenterX,MeshCenterY ,MeshCenterZ });
 	}

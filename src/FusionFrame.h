@@ -21,11 +21,13 @@
 #include "FusionCore/Animator.hpp"
 #include "FusionCore/MeshOperations.h"
 #include "FusionCore/Shapes.hpp"
-#include "FusionCore/Scene.hpp"
+#include "FusionEngine/Scene.hpp"
 #include "FusionCore/Decal.hpp"
 #include "FusionPhysics/ParticleSystem.hpp"
 #include "FusionUtility/Definitions.hpp"
 #include "FusionUtility/FusionGL.hpp"
+#include "FusionCore/Window.hpp"
+#include "FusionCore/EventManager.hpp"
 #include <stdio.h>
 
 struct GLFWmonitor;

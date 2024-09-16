@@ -2,6 +2,8 @@
 #include "Light.hpp"
 #include <glew.h>
 #include <glfw3.h>
+#include "Model.hpp"
+#include <queue>
 
 void FUSIONCORE::WorldTransform::SetModelMatrixUniformLocation(GLuint shader, const char* uniform)
 {
@@ -20,6 +22,8 @@ void FUSIONCORE::WorldTransform::Translate(glm::vec3 v)
 	Position.z = TranslationMatrix[3][2];
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 void FUSIONCORE::WorldTransform::Scale(glm::vec3 v)
@@ -34,6 +38,8 @@ void FUSIONCORE::WorldTransform::Scale(glm::vec3 v)
 	this->LastScales.push_back(action);
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 void FUSIONCORE::WorldTransform::Rotate(glm::vec3 v, float angle)
@@ -45,6 +51,8 @@ void FUSIONCORE::WorldTransform::Rotate(glm::vec3 v, float angle)
 	this->LastRotations.push_back(action);
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 void FUSIONCORE::WorldTransform::TranslateNoTraceBack(glm::vec3 v)
@@ -56,6 +64,8 @@ void FUSIONCORE::WorldTransform::TranslateNoTraceBack(glm::vec3 v)
 	Position.z = TranslationMatrix[3][2];
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 void FUSIONCORE::WorldTransform::ScaleNoTraceBack(glm::vec3 v)
@@ -66,6 +76,8 @@ void FUSIONCORE::WorldTransform::ScaleNoTraceBack(glm::vec3 v)
 	scale_avg = (ObjectScales.x + ObjectScales.y + ObjectScales.z) / 3.0f;
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 void FUSIONCORE::WorldTransform::RotateNoTraceBack(glm::vec3 v, float angle)
@@ -73,6 +85,8 @@ void FUSIONCORE::WorldTransform::RotateNoTraceBack(glm::vec3 v, float angle)
 	RotationMatrix = glm::rotate(RotationMatrix, glm::radians(angle), v);
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }
 
 FUSIONCORE::WorldTransformForLights::WorldTransformForLights(LightData* Light, int LightID)
@@ -97,4 +111,6 @@ void FUSIONCORE::WorldTransformForLights::Translate(glm::vec3 v)
 	*LightPosition = glm::vec4(Position,1.0f);
 	IsTransformedQuadTree = true;
 	IsTransformedCollisionBox = true;
+
+	IsTransformed = true;
 }

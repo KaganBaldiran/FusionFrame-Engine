@@ -372,9 +372,9 @@ void FUSIONCORE::Mesh::ConstructHalfEdges()
 		edge2Ptr->PrevHalfEdge = edge1Ptr.get();
 		edge3Ptr->PrevHalfEdge = edge2Ptr.get();
 
-		edge1Ptr->Face = face.get();
-		edge2Ptr->Face = face.get();
-		edge3Ptr->Face = face.get();
+		edge1Ptr->face = face.get();
+		edge2Ptr->face = face.get();
+		edge3Ptr->face = face.get();
 
 		face->halfEdge = edge1Ptr.get();
 	}

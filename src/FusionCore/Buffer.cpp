@@ -148,6 +148,11 @@ void FUSIONCORE::BindSSBONull()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void FUSIONCORE::BindTBONull()
+{
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
+}
+
 void FUSIONCORE::BindIndirectCommandBufferNull()
 {
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
@@ -259,4 +264,39 @@ GLuint FUSIONCORE::IndirectCommandBuffer::GetBufferID()
 FUSIONCORE::IndirectCommandBuffer::~IndirectCommandBuffer()
 {
 	glDeleteBuffers(1, &icb);
+}
+
+void FUSIONCORE::TBO::TexBuffer(GLenum InternalFormat)
+{
+	glTexBuffer(GL_TEXTURE_BUFFER, InternalFormat, this->tbo);
+}
+
+FUSIONCORE::TBO::TBO()
+{
+	glGenBuffers(1, &this->tbo);
+}
+
+FUSIONCORE::TBO::~TBO()
+{
+	clean();
+}
+
+void FUSIONCORE::TBO::clean()
+{
+	glDeleteBuffers(1, &tbo);
+}
+
+void FUSIONCORE::TBO::Bind()
+{
+	glBindBuffer(GL_TEXTURE_BUFFER, tbo);
+}
+
+void FUSIONCORE::TBO::Unbind()
+{
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
+}
+
+void FUSIONCORE::TBO::BufferDataFill(GLsizeiptr size, const void* data, GLenum usage)
+{
+	glBufferData(GL_TEXTURE_BUFFER, size, data, usage);
 }

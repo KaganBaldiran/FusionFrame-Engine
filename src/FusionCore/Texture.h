@@ -6,6 +6,7 @@
 #include "../FusionUtility/Definitions.hpp"
 #define FF_TEXTURE_SUCCESS 1
 #define FF_TEXTURE_ERROR -1
+#define FF_TEXTURE_UNINITIALIZED 0
 
 namespace FUSIONCORE
 {
@@ -37,18 +38,32 @@ namespace FUSIONCORE
 	class FUSIONFRAME_EXPORT Texture2D
 	{
 	public:
-		Texture2D() = default;
+		Texture2D();
 		Texture2D(const char* filePath, GLuint Wrap_S_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLuint Wrap_T_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE,GLenum TextureType = FF_TEXTURE_TARGET_GL_TEXTURE_2D, 
 			     GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_BYTE,GLuint Mag_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR, GLuint Min_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR,bool Flip = true);
 		Texture2D(const GLuint SourceTexture, const GLenum SourceTextureInternalFormat, const glm::vec2 SourceTextureSize, 
 			      const char* SourceTextureFilePath,GLenum texturetype, GLenum pixeltype, GLenum MAG_FILTER, GLenum MIN_FILTER);
 		
 		void Clear();
+		void Bind(GLuint slot, GLuint shader, const char* uniform);
+		void Bind(GLenum target);
+		//Used to recieve handle for the texture in order to make it bindless.
+		//Requires ARB bindless texture extention. 
+		//For more information: https://registry.khronos.org/OpenGL/extensions/ARB/ARB_bindless_texture.txt
+		void MakeBindless();
+		//Makes a bindless texture resident to prepare for rendering.
+		//If a texture is already resident , no need to make it resident unless you explicitly made it non-resident afterwards.
+		//All altering operations on the texture must be done before the texture is made resident.
+		void MakeResident();
+		//Makes a bindless texture non-resident to allow altering operations.
+		void MakeNonResident();
+		//Sends the bindless texture to a shader sampler.
+		void SendBindlessHandle(GLuint Shader, std::string Uniform);
+		void Unbind();
+
 		GLuint GetTexture();
 		int GetWidth();
 		int GetHeight();
-		void Bind(GLuint slot, GLuint shader, const char* uniform);
-		void Unbind();
 		std::string GetFilePath();
 		int GetChannelCount();
 		GLenum GetInternalFormat();
@@ -64,5 +79,6 @@ namespace FUSIONCORE
 		std::string PathData;
 		int TextureState;
 		GLenum PixelType , InternalFormat , TextureType;
+		GLuint64 TextureHandle;
 	};
 }

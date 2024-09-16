@@ -59,9 +59,8 @@ namespace FUSIONPHYSICS
 	FUSIONFRAME_EXPORT_FUNCTION void DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode);
 	//Internal use
 	FUSIONFRAME_EXPORT_FUNCTION void SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node, std::deque<QuadNode*>& NodesToProcess);
-	FUSIONFRAME_EXPORT_FUNCTION std::pair<glm::vec3, glm::vec3> GetGridSize();
 	//Internal use
-	FUSIONFRAME_EXPORT_FUNCTION void CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox> &BoundingBoxes , std::vector<FUSIONCORE::Object*> &ObjectInstances);
+	FUSIONFRAME_EXPORT_FUNCTION void CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox> &BoundingBoxes , std::vector<FUSIONCORE::Object*> &ObjectInstances,glm::vec3& WorldSizeMin,glm::vec3& WorldSizeMax);
 	FUSIONFRAME_EXPORT_FUNCTION FUSIONCORE::WorldTransform NodeToWorldTransform(FUSIONPHYSICS::QuadNode& Node);
 	//Be aware that visualizing quad trees can be quite costly and demanding since the tree is dynamically changing.
 	FUSIONFRAME_EXPORT_FUNCTION void VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode, FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);

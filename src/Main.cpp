@@ -4,6 +4,7 @@
 int main()
 {
 	Application app;
-	return app.Run();
-	return 0;
+	//return app.Run();
+	return app.PathTracer();
+	//return 0;
 }

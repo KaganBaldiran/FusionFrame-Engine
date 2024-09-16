@@ -13,10 +13,10 @@ extern std::vector<std::string> logTraceBack;
 #define FF_WARNING_CODE -0x100013
 #define FF_INITIAL_CODE -0x130032
 
-#define LOG(message) std::cout<< "LOG:: " __FUNCTION__ " :: "<< message << std::endl
-#define LOG_INF(message) std::cout<< "INFO:: " __FUNCTION__ " :: "<< message << std::endl
-#define LOG_ERR(message) std::cerr<<"ERROR:: " __FUNCTION__ " :: " << message << std::endl
-#define LOG_WARN(message) std::cerr<<"WARNING:: "  __FUNCTION__ " :: " << message << std::endl
+#define LOG(message) std::cout<< "LOG:: " << __FUNCTION__ <<" :: "<< message << std::endl
+#define LOG_INF(message) std::cout<< "INFO:: " << __FUNCTION__<< " :: "<< message << std::endl
+#define LOG_ERR(message) std::cerr<<"ERROR:: " << __FUNCTION__ <<" :: " << message << std::endl
+#define LOG_WARN(message) std::cerr<<"WARNING:: " <<  __FUNCTION__<< " :: " << message << std::endl
 #define LOG_TRACE(message) std::cout << "TRACE:: " << __FUNCTION__ << " :: " << message << std::endl
 #define LOG_CRITICAL(message) std::cerr << "CRITICAL:: " << __FUNCTION__ << " :: " << message << std::endl
 #define LOG_NOTICE(message) std::cout << "NOTICE:: " << __FUNCTION__ << " :: " << message << std::endl

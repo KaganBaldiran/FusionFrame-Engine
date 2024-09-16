@@ -129,10 +129,10 @@ namespace FUSIONCORE
 	 // Unbind the G-buffer after rendering
 	 myGBuffer.Unbind();
 	*/
-	class FUSIONFRAME_EXPORT Gbuffer
+	class FUSIONFRAME_EXPORT GeometryBuffer
 	{
 	public:
-		Gbuffer(int width, int height, bool EnableHighPrecisionPositionBuffer = true);
+		GeometryBuffer(int width, int height, bool EnableHighPrecisionPositionBuffer = true);
 		
 		GLuint GetAlbedoSpecularPass() { return AlbedoSpecularPass; };
 		GLuint GetFBO() { return fbo; };

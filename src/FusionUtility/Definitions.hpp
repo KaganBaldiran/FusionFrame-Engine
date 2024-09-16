@@ -1,5 +1,9 @@
 #pragma once
 #include <iostream>
+#include <cstdint>
+
+typedef uint64_t GLuint64;
+typedef char GLchar;
 
 #define FF_TEXTURE_TARGET_GL_TEXTURE_1D 0x0DE0
 #define FF_TEXTURE_TARGET_GL_TEXTURE_2D 0x0DE1

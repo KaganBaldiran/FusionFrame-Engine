@@ -54,7 +54,7 @@ void FUSIONCORE::InitializeDecalUnitBox()
     UnitBoxBuffer->Unbind();
 }
 
-void FUSIONCORE::DecalDeferred::Draw(Gbuffer& GeometryBuffer, Material Material, Camera3D& camera,glm::ivec2 WindowSize, FUSIONUTIL::DefaultShaders& shaders)
+void FUSIONCORE::DecalDeferred::Draw(GeometryBuffer& GeometryBuffer, Material Material, Camera3D& camera,glm::ivec2 WindowSize, FUSIONUTIL::DefaultShaders& shaders)
 {
     auto& shader = shaders.DecalShader;
     shader->use();

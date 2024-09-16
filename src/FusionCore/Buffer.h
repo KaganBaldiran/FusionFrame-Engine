@@ -23,12 +23,10 @@ namespace FUSIONCORE
 	class FUSIONFRAME_EXPORT Buffer3D : public Buffer
 	{
 	public:
-
 		Buffer3D();
 		void clean();
 		void BindEBO();
 		void Unbind();
-
 	private:
 
 		GLuint ebo;
@@ -104,6 +102,21 @@ namespace FUSIONCORE
 		GLuint ssbo;
 	};
 
+	class FUSIONFRAME_EXPORT TBO
+	{
+	public:
+		void TexBuffer(GLenum InternalFormat);
+		TBO();
+		~TBO();
+		void clean();
+
+		void Bind();
+		void Unbind();
+		void BufferDataFill(GLsizeiptr size, const void* data, GLenum usage);
+	private:
+		GLuint tbo;
+	};
+
 	struct FUSIONFRAME_EXPORT DrawArraysIndirectCommand {
 		GLuint Count;
 		GLuint InstanceCount;
@@ -135,5 +148,6 @@ namespace FUSIONCORE
 	FUSIONFRAME_EXPORT_FUNCTION void BindEBONull();
 	FUSIONFRAME_EXPORT_FUNCTION void BindUBONull();
 	FUSIONFRAME_EXPORT_FUNCTION void BindSSBONull();
+	FUSIONFRAME_EXPORT_FUNCTION void BindTBONull();
 	FUSIONFRAME_EXPORT_FUNCTION void BindIndirectCommandBufferNull();
 }

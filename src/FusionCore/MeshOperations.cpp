@@ -4,9 +4,9 @@
 #include <glew.h>
 #include <glfw3.h>
 
-FUSIONCORE::HalfEdge* CreateNewEdge(FUSIONCORE::Vertex* vertex1 , FUSIONCORE::Vertex* vertex2 , 
-	                                std::vector<std::shared_ptr<FUSIONCORE::HalfEdge>> &HalfEdges , 
-	                                std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, FUSIONCORE::PairVec3Hash> &EdgeMap)
+FUSIONCORE::HalfEdge* CreateNewEdge(FUSIONCORE::Vertex* vertex1, FUSIONCORE::Vertex* vertex2,
+	std::vector<std::shared_ptr<FUSIONCORE::HalfEdge>>& HalfEdges,
+	std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, FUSIONCORE::PairVec3Hash>& EdgeMap)
 {
 	HalfEdges.emplace_back(std::make_shared<FUSIONCORE::HalfEdge>());
 	EdgeMap[{vertex1->Position, vertex2->Position}] = HalfEdges.size() - 1;
@@ -91,7 +91,7 @@ void CalculateTangentBitangentApproximation(FUSIONCORE::Mesh Mesh)
 	{
 		if (face->Indices.size() < 3)
 		{
-			continue; 
+			continue;
 		}
 
 		auto v0 = vertices[face->Indices[0]]->Position;
@@ -115,9 +115,9 @@ void CalculateTangentBitangentApproximation(FUSIONCORE::Mesh Mesh)
 	}
 }
 
-void FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices) 
+void FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(std::vector<std::shared_ptr<FUSIONCORE::Vertex>>& vertices, std::vector<unsigned int>& indices)
 {
-	for (size_t i = 0; i < indices.size(); i += 3) {
+	for (int i = 0; i < indices.size(); i += 3) {
 		unsigned int i0 = indices[i];
 		unsigned int i1 = indices[i + 1];
 		unsigned int i2 = indices[i + 2];
@@ -149,7 +149,7 @@ void FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(std::vector<std::shar
 		vertices[i2]->Bitangent += bitangent;
 	}
 
-	for (size_t i = 0; i < vertices.size(); ++i) 
+	for (size_t i = 0; i < vertices.size(); ++i)
 	{
 		vertices[i]->Tangent = glm::normalize(vertices[i]->Tangent);
 		vertices[i]->Bitangent = glm::normalize(vertices[i]->Bitangent);
@@ -210,7 +210,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 
 					if (!MeshVertecies.empty())
 					{
-					  IndexOffset += MeshVertecies.back().size();
+						IndexOffset += MeshVertecies.back().size();
 					}
 					MeshVertecies.emplace_back();
 					MeshIndicies.emplace_back();
@@ -326,7 +326,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 								{
 									if (line[i + 1] != ' ' && line[i + 1] != '/')
 									{
-									  Vertices.emplace_back();
+										Vertices.emplace_back();
 									}
 								}
 							}
@@ -385,7 +385,7 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 	auto& HalfEdges = mesh.GetHalfEdges();
 	std::vector<std::pair<glm::vec3, int>> SmoothedVertices;
 	SmoothedVertices.reserve(Vertices.size());
-	for (size_t i = 0; i < Vertices.size(); i++)
+	for (int i = 0; i < Vertices.size(); i++)
 	{
 		auto vertex = Vertices[i];
 
@@ -398,7 +398,7 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 		int EdgeIterationCount = 0;
 		auto RelatedEdge = vertex->halfEdge;
 		AveragedPosition += RelatedEdge->StartingVertex->Position;
-		EdgeIterationCount++;		
+		EdgeIterationCount++;
 		do
 		{
 			if (RelatedEdge == nullptr) {
@@ -412,13 +412,13 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 				{
 					break;
 				}
-				
+
 				RelatedEdge = RelatedEdge->PrevHalfEdge->TwinHalfEdge;
-				
+
 			}
 			else
 			{
-				break;	
+				break;
 			}
 		} while (RelatedEdge != vertex->halfEdge);
 
@@ -443,7 +443,7 @@ void FUSIONCORE::MESHOPERATIONS::SmoothObject(FUSIONCORE::Mesh& mesh)
 }
 
 
-glm::vec3 GetTriangleNormal(FUSIONCORE::Vertex Vertex0,FUSIONCORE::Vertex Vertex1,FUSIONCORE::Vertex Vertex2)
+glm::vec3 GetTriangleNormal(FUSIONCORE::Vertex Vertex0, FUSIONCORE::Vertex Vertex1, FUSIONCORE::Vertex Vertex2)
 {
 	glm::vec3 Normal = glm::cross((Vertex1.Position - Vertex0.Position), (Vertex2.Position - Vertex0.Position));
 	if (glm::length(Normal) <= 0.0f)
@@ -464,7 +464,7 @@ void CalculateSmoothNormals(FUSIONCORE::Mesh& mesh)
 
 	std::vector<std::pair<glm::vec3, int>> SmoothedVertices;
 	SmoothedVertices.reserve(Vertices.size());
-	for (size_t i = 0; i < Vertices.size(); i++)
+	for (int i = 0; i < Vertices.size(); i++)
 	{
 		auto vertex = Vertices[i];
 
@@ -519,7 +519,7 @@ void CalculateNormals(FUSIONCORE::Mesh& Mesh)
 	auto& faces = Mesh.GetFaces();
 	auto& vertices = Mesh.GetVertices();
 
-	for (size_t i = 0; i < faces.size(); i++)
+	for (int i = 0; i < faces.size(); i++)
 	{
 		auto& faceindices = faces[i]->Indices;
 		glm::vec3 Normal = GetTriangleNormal(*vertices[faceindices[0]], *vertices[faceindices[1]], *vertices[faceindices[2]]);
@@ -550,14 +550,14 @@ void ContructVerticesFromFaces(FUSIONCORE::Mesh& Mesh, glm::vec3 ModelOrigin)
 	size_t IndexCounter = 0;
 	ContructedVertices.reserve(3 * faces.size());
 	ContructedIndices.reserve(3 * faces.size());
-	for (size_t i = 0; i < faces.size(); i++)
+	for (int i = 0; i < faces.size(); i++)
 	{
 		auto& face = faces[i];
 		std::vector<std::shared_ptr<FUSIONCORE::Vertex>> faceVertices;
 		for (size_t y = 0; y < face->Indices.size(); y++)
 		{
 			FUSIONCORE::Vertex newVertex;
-			auto &existingVertex = vertices[face->Indices[y]];
+			auto& existingVertex = vertices[face->Indices[y]];
 			newVertex.Position = existingVertex->Position;
 			newVertex.TexCoords = existingVertex->TexCoords;
 			newVertex.Normal = existingVertex->Normal;
@@ -586,7 +586,7 @@ void ContructVerticesFromFaces(FUSIONCORE::Mesh& Mesh, glm::vec3 ModelOrigin)
 	Mesh.ConstructHalfEdges();
 }
 
-void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
+void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh, glm::vec3 ModelOrigin, int level)
 {
 	if (level == 0)
 	{
@@ -601,8 +601,8 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 	std::unordered_map<glm::vec3, unsigned int, FUSIONCORE::Vec3Hash> VertexIndexMap;
 	std::vector<unsigned int> ResultantIndices;
 
-	size_t FacesCount = Faces.size();
-	for (size_t FaceIndex = 0; FaceIndex < FacesCount; FaceIndex++)
+	int FacesCount = Faces.size();
+	for (int FaceIndex = 0; FaceIndex < FacesCount; FaceIndex++)
 	{
 		FUSIONCORE::Face* face = Faces[FaceIndex].get();
 
@@ -630,7 +630,7 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 			auto midpoint = FUSIONCORE::GetAveragedVertex(*edge->StartingVertex, *edge->EndingVertex);
 
 			FUSIONCORE::Vertex* midVertexptr;
-			if (EdgeMap.find({ midpoint.Position ,edge->StartingVertex->Position}) == EdgeMap.end() &&
+			if (EdgeMap.find({ midpoint.Position ,edge->StartingVertex->Position }) == EdgeMap.end() &&
 				EdgeMap.find({ edge->EndingVertex->Position , midpoint.Position }) == EdgeMap.end())
 			{
 				Vertices.push_back(std::make_shared<FUSIONCORE::Vertex>(midpoint));
@@ -684,6 +684,7 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 		BoundryEdges.push_back(ConnectedSubEdgePtrs[2].get());
 		BoundryEdges.push_back(InputEdges[2]);
 
+
 		Faces.emplace_back(std::make_shared<FUSIONCORE::Face>());
 		FUSIONCORE::Face* newFace1 = Faces.back().get();
 
@@ -696,7 +697,7 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 		//EDGE CONNECTING
 		BoundryEdges[0]->NextHalfEdge = looseEdgeTwinPtr3;
 		BoundryEdges[0]->PrevHalfEdge = BoundryEdges[5];
-		
+
 		looseEdgeTwinPtr3->NextHalfEdge = BoundryEdges[5];
 		looseEdgeTwinPtr3->PrevHalfEdge = BoundryEdges[0];
 
@@ -735,21 +736,21 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 
 
 		//FACE CONNECTING
-		BoundryEdges[0]->Face = newFace1;
-		looseEdgeTwinPtr3->Face = newFace1;
-		BoundryEdges[5]->Face = newFace1;
+		BoundryEdges[0]->face = newFace1;
+		looseEdgeTwinPtr3->face = newFace1;
+		BoundryEdges[5]->face = newFace1;
 
-		looseEdgePtr1->Face = newFace2;
-		looseEdgePtr2->Face = newFace2;
-		looseEdgePtr3->Face = newFace2;
+		looseEdgePtr1->face = newFace2;
+		looseEdgePtr2->face = newFace2;
+		looseEdgePtr3->face = newFace2;
 
-		BoundryEdges[1]->Face = newFace3;
-		looseEdgeTwinPtr1->Face = newFace3;
-		BoundryEdges[2]->Face = newFace3;
+		BoundryEdges[1]->face = newFace3;
+		looseEdgeTwinPtr1->face = newFace3;
+		BoundryEdges[2]->face = newFace3;
 
-		looseEdgeTwinPtr2->Face = face;
-		BoundryEdges[3]->Face = face;
-		BoundryEdges[4]->Face = face;
+		looseEdgeTwinPtr2->face = face;
+		BoundryEdges[3]->face = face;
+		BoundryEdges[4]->face = face;
 
 		newFace1->halfEdge = BoundryEdges[0];
 		newFace2->halfEdge = looseEdgePtr1;
@@ -776,7 +777,7 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 		ResultantIndices.insert(ResultantIndices.end(), newFace2->Indices.begin(), newFace2->Indices.end());
 		ResultantIndices.insert(ResultantIndices.end(), newFace3->Indices.begin(), newFace3->Indices.end());
 		ResultantIndices.insert(ResultantIndices.end(), face->Indices.begin(), face->Indices.end());
-    }
+	}
 
 	int HowManyBoundry = 0;
 	std::unordered_map<std::pair<glm::vec3, glm::vec3>, int, FUSIONCORE::PairVec3Hash>::iterator itr;
@@ -796,15 +797,15 @@ void LoopMeshSubdivision(FUSIONCORE::Mesh& Mesh,glm::vec3 ModelOrigin,int level)
 	}
 	LOG("BOUNDRY: " << HowManyBoundry);
 	std::swap(ResultantIndices, Indicies);
-	
+
 	FUSIONCORE::MESHOPERATIONS::SmoothObject(Mesh);
 	if (level > 1)
 	{
-		LoopMeshSubdivision(Mesh,ModelOrigin,level - 1);
+		LoopMeshSubdivision(Mesh, ModelOrigin, level - 1);
 	}
 	else
 	{
-		ContructVerticesFromFaces(Mesh,ModelOrigin);
+		ContructVerticesFromFaces(Mesh, ModelOrigin);
 		//CalculateSmoothNormals(Mesh);
 		//FUSIONCORE::MESHOPERATIONS::CalculateTangentBitangent(Vertices, Indicies);
 		Mesh.ConstructMesh();
@@ -816,7 +817,7 @@ void FUSIONCORE::MESHOPERATIONS::LoopSubdivision(FUSIONCORE::Model& Model, int l
 	glm::vec3 ModelPosition = TranslateVertex(Model.GetTransformation().GetModelMat4(), *Model.GetTransformation().OriginPoint);
 	for (auto& mesh : Model.Meshes)
 	{
-		LoopMeshSubdivision(mesh,ModelPosition, level);
+		LoopMeshSubdivision(mesh, ModelPosition, level);
 	}
 }
 
@@ -826,7 +827,7 @@ void FUSIONCORE::MESHOPERATIONS::CollapseDecimation(FUSIONCORE::Mesh& Mesh, int 
 
 std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface(FUSIONCORE::Mesh& Mesh, unsigned int PointCount, unsigned int seed)
 {
-	auto &MeshFaces = Mesh.GetFaces();
+	auto& MeshFaces = Mesh.GetFaces();
 	auto& MeshVertices = Mesh.GetVertices();
 	size_t CastedPointCount = 0;
 	std::vector<glm::vec3> Points;
@@ -851,19 +852,19 @@ std::vector<glm::vec3> FUSIONCORE::MESHOPERATIONS::DistributePointsOnMeshSurface
 			glm::vec3 v = vertex2->Position;
 			glm::vec3 w = vertex3->Position;
 
-			if (s + t <= 1) 
+			if (s + t <= 1)
 			{
 				Points.push_back(glm::vec3(u.x + s * (v.x - u.x) + t * (w.x - u.x),
-					                       u.y + s * (v.y - u.y) + t * (w.y - u.y),
-					                       u.z + s * (v.z - u.z) + t * (w.z - u.z)));
+					u.y + s * (v.y - u.y) + t * (w.y - u.y),
+					u.z + s * (v.z - u.z) + t * (w.z - u.z)));
 			}
-			else 
+			else
 			{
 				s = 1 - s;
 				t = 1 - t;
 				Points.push_back(glm::vec3(u.x + s * (w.x - u.x) + t * (v.x - u.x),
-					                       u.y + s * (w.y - u.y) + t * (v.y - u.y),
-					                       u.z + s * (w.z - u.z) + t * (v.z - u.z)));
+					u.y + s * (w.y - u.y) + t * (v.y - u.y),
+					u.z + s * (w.z - u.z) + t * (v.z - u.z)));
 			}
 
 			CastedPointCount++;
@@ -997,7 +998,7 @@ std::vector<FUSIONPHYSICS::CollisionBox> FUSIONCORE::MESHOPERATIONS::GridSubdivi
 	return std::vector<FUSIONPHYSICS::CollisionBox>();
 }
 
-void FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO, std::vector<glm::vec3> &InstanceData)
+void FUSIONCORE::MESHOPERATIONS::FillInstanceDataVBO(FUSIONCORE::VBO& DestVBO, std::vector<glm::vec3>& InstanceData)
 {
 	size_t InstanceCount = InstanceData.size();
 

@@ -72,5 +72,7 @@ namespace FUSIONCORE
         }
     };
 
+    void ClearObjectUpToDateBoundingBoxes();
+    std::unordered_map<int, std::pair<glm::vec3, glm::vec3>>& GetCalculatedObjectBoundingBoxes();
     FUSIONFRAME_EXPORT_FUNCTION Object* GetObject(size_t ObjectID);
 }

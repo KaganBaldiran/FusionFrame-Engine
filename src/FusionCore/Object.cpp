@@ -5,6 +5,7 @@
 #include "Buffer.h"
 
 std::unordered_map<size_t, FUSIONCORE::Object*> IDobjectMap;
+std::unordered_map<int, std::pair<glm::vec3, glm::vec3>> CalculatedObjectBoundingBoxes;
 
 FUSIONCORE::Object::Object()
 {
@@ -121,4 +122,27 @@ FUSIONCORE::Object* FUSIONCORE::GetObject(size_t ObjectID)
 		return IDobjectMap[ObjectID];
 	}
 	return nullptr;
+}
+
+void FUSIONCORE::ClearObjectUpToDateBoundingBoxes()
+{
+	for (auto& [id, objectPtr] : IDobjectMap)
+	{
+		auto& transformation = objectPtr->GetTransformation();
+		if (transformation.IsTransformed)
+		{
+			unsigned int ObjectID = objectPtr->GetObjectID();
+			auto it = CalculatedObjectBoundingBoxes.find(ObjectID);
+			if (it != CalculatedObjectBoundingBoxes.end())
+			{
+				CalculatedObjectBoundingBoxes.erase(it);
+				transformation.IsTransformed = false;
+			}
+		}
+	}
+}
+
+std::unordered_map<int, std::pair<glm::vec3, glm::vec3>>& FUSIONCORE::GetCalculatedObjectBoundingBoxes()
+{
+	return CalculatedObjectBoundingBoxes;
 }

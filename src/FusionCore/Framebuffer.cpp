@@ -186,7 +186,7 @@ void FUSIONCORE::ScreenFrameBuffer::clean()
 	LOG_INF("Cleaned frameBuffer[ID:" << ID << "]!");
 };
 
-FUSIONCORE::Gbuffer::Gbuffer(int width, int height,bool EnableHighPrecisionPositionBuffer)
+FUSIONCORE::GeometryBuffer::GeometryBuffer(int width, int height,bool EnableHighPrecisionPositionBuffer)
 {
 	static int itr = 0;
 	ID = itr;
@@ -266,34 +266,34 @@ FUSIONCORE::Gbuffer::Gbuffer(int width, int height,bool EnableHighPrecisionPosit
 }
 
 
-void FUSIONCORE::Gbuffer::SetDrawModeDefault()
+void FUSIONCORE::GeometryBuffer::SetDrawModeDefault()
 {
 	unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 , GL_COLOR_ATTACHMENT3 , GL_COLOR_ATTACHMENT4 };
 	glDrawBuffers(5, attachments);
 }
 
-void FUSIONCORE::Gbuffer::SetDrawModeDecalPass()
+void FUSIONCORE::GeometryBuffer::SetDrawModeDecalPass()
 {
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4 };
 	glDrawBuffers(3, attachments);
 }
 
-void FUSIONCORE::Gbuffer::SetDrawModeDefaultRestricted()
+void FUSIONCORE::GeometryBuffer::SetDrawModeDefaultRestricted()
 {
 	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 ,GL_COLOR_ATTACHMENT2 , GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(4, attachments);
 }
 
-void FUSIONCORE::Gbuffer::Bind()
+void FUSIONCORE::GeometryBuffer::Bind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
-void FUSIONCORE::Gbuffer::Unbind()
+void FUSIONCORE::GeometryBuffer::Unbind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps,CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
+void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps,CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
 {
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(3, attachments);
@@ -374,7 +374,7 @@ void FUSIONCORE::Gbuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, st
 	glEnable(GL_DEPTH_TEST);
 }
 
-void FUSIONCORE::Gbuffer::DrawSSR(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize)
+void FUSIONCORE::GeometryBuffer::DrawSSR(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize)
 {
 	unsigned int attachments[1] = { GL_COLOR_ATTACHMENT2 };
 	glDrawBuffers(1, attachments);
@@ -423,7 +423,7 @@ void FUSIONCORE::Gbuffer::DrawSSR(Camera3D& camera, Shader& shader, std::functio
 	glEnable(GL_DEPTH_TEST);
 }
 
-void FUSIONCORE::Gbuffer::clean()
+void FUSIONCORE::GeometryBuffer::clean()
 {
 	glDeleteTextures(1, &AlbedoSpecularPass);
 	glDeleteTextures(1, &NormalMetalicPass);

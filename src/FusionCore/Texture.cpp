@@ -4,11 +4,22 @@
 #include <glew.h>
 #include <glfw3.h>
 
+FUSIONCORE::Texture2D::Texture2D()
+{
+	width = 0;
+	height = 0;
+	TextureHandle = 0;
+	TextureState = FF_TEXTURE_UNINITIALIZED;  
+	channels = 0;
+	glGenTextures(1, &id);
+}
+
 FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuint Wrap_T_filter,GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter, bool Flip)
 {
 	PathData = std::string(filePath);
 	this->PixelType = PixelType;
 	this->TextureType = TextureType;
+	TextureHandle = 0;
 
 	glGenTextures(1, &id);
 	glBindTexture(TextureType, id);
@@ -92,6 +103,7 @@ FUSIONCORE::Texture2D::Texture2D(const GLuint SourceTexture, const GLenum Source
 
 	LOG_INF("Texture was copied from texture[ID:" << SourceTexture << "] to texture[ID:" << this->id << "]");
 	TextureState = FF_TEXTURE_SUCCESS;
+	TextureHandle = 0;
 }
 
 
@@ -123,6 +135,34 @@ void FUSIONCORE::Texture2D::Bind(GLuint slot , GLuint shader , const char* unifo
 	glUniform1i(glGetUniformLocation(shader, uniform), slot);
 }
 
+void FUSIONCORE::Texture2D::MakeBindless()
+{
+	if (TextureHandle > 0) return; 
+	if (!this->id) throw FFexception("Uninitialized textures cannot be altered!"); 
+
+	TextureHandle = glGetTextureHandleARB(this->id);
+}
+
+void FUSIONCORE::Texture2D::MakeResident()
+{
+	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be made resident");
+	glMakeTextureHandleResidentARB(this->TextureHandle);
+}
+
+void FUSIONCORE::Texture2D::MakeNonResident()
+{
+	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be made non-resident");
+	glMakeTextureHandleNonResidentARB(this->TextureHandle);
+}
+
+void FUSIONCORE::Texture2D::SendBindlessHandle(GLuint Shader, std::string Uniform)
+{
+	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be sent to shaders");
+
+	GLint location = glGetUniformLocation(Shader, Uniform.c_str());
+	glUniformHandleui64ARB(location, this->TextureHandle);
+}
+
 void FUSIONCORE::Texture2D::Unbind()
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -152,4 +192,9 @@ GLenum FUSIONCORE::Texture2D::GetPixelType()
 GLenum FUSIONCORE::Texture2D::GetTextureType()
 {
 	return TextureType;
+}
+
+void FUSIONCORE::Texture2D::Bind(GLenum target)
+{
+	glBindTexture(target, id);
 }

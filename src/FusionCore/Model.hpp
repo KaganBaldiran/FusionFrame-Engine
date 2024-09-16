@@ -40,7 +40,7 @@ namespace FUSIONCORE
     };
 
     FUSIONFRAME_EXPORT_FUNCTION glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
-   
+    
      /*
      Represents a 3D model loaded from a file.
 

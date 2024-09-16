@@ -76,7 +76,7 @@ namespace FUSIONCORE
 		HalfEdge* PrevHalfEdge;
 		HalfEdge* TwinHalfEdge;
 		bool BoundryEdge;
-		Face* Face;
+		Face* face;
 
 		glm::vec3 GetMiddlePoint();
 		glm::vec3 GetEdgeVector();

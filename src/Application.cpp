@@ -7,6 +7,8 @@
 #include <memory>
 #include <unordered_set>
 
+#include "FusionCore/PathTracer/PathTracer.hpp"
+
 #define SPEED 5.0f
 #define CAMERA_CLOSE_PLANE 0.5f
 #define CAMERA_FAR_PLANE 90.0f
@@ -29,7 +31,9 @@ int Application::Run()
 	const int width = 1000;
 	const int height = 1000;
 
-	GLFWwindow* window = FUSIONUTIL::InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
+	FUSIONCORE::Window ApplicationWindow;
+	ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
+	auto window = ApplicationWindow.GetWindow();
 
 	FUSIONUTIL::InitializeEngineBuffers();
 	FUSIONCORE::InitializeCascadedShadowMapTextureArray(4096, 1, 1024);
@@ -47,7 +51,7 @@ int Application::Run()
 	FUSIONCORE::ImportCubeMap("Resources/kloppenheim_02_puresky_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
-	FUSIONCORE::Gbuffer Gbuffer(mode.width, mode.height);
+	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
 	FUSIONCORE::ScreenFrameBuffer ScreenFrameBuffer(mode.width, mode.height);
 
 	FUSIONCORE::LightIcon = std::make_unique<FUSIONCORE::Model>("Resources/LightIcon.fbx");
@@ -918,7 +922,7 @@ int Application::Run()
 		threads.enqueue(CameraSetTarget);
 		threads.wait();
 
-		LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
+		//LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
 		//camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD,0.1f);
@@ -1040,7 +1044,6 @@ int Application::Run()
 
 		//glViewport(0, 0, WindowSize.x, WindowSize.y);
 		FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
-
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
@@ -1133,9 +1136,9 @@ int Application::Run()
 		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, DebugFbo, WindowSize, true, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
 
 		//glfwPollEvents();
-		FUSIONUTIL::PollEvents();
-		FUSIONUTIL::SwapBuffers(window);
-
+		ApplicationWindow.SwapBuffers();
+		ApplicationWindow.PollEvents();
+		//FUSIONCORE::ClearObjectUpToDateBoundingBoxes();
 
 
 		auto end_time = std::chrono::high_resolution_clock::now();
@@ -1180,7 +1183,160 @@ int Application::Run()
 	FalloutPosterMaterial.Clean();
 	//IslandMaterial.Clean();
 
-	FUSIONUTIL::TerminateWindow();
+
+	ApplicationWindow.TerminateWindow();
+	FUSIONUTIL::TerminateGLFW();
+	return 0;
+}
+
+class NewEvent : public FUSIONCORE::Event
+{
+public:
+	NewEvent() :data(1) {};
+	int data;
+};
+
+int Application::PathTracer()
+{
+	const int width = 1000;
+	const int height = 1000;
+
+	FUSIONCORE::Window ApplicationWindow;
+	ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
+
+	FUSIONUTIL::InitializeEngineBuffers();
+	FUSIONCORE::InitializeCascadedShadowMapTextureArray(4096, 1, 1024);
+	FUSIONUTIL::DefaultShaders Shaders;
+	FUSIONUTIL::InitializeDefaultShaders(Shaders);
+
+	FUSIONCORE::Shader PathTraceComputeShader("Shaders/PathTracer.comp.glsl");
+	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
+
+	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
+	FUSIONCORE::ImportCubeMap("Resources/kloppenheim_02_puresky_2k.hdr", 512, cubemap, Shaders);
+
+	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
+	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
+	FUSIONCORE::ScreenFrameBuffer ScreenFrameBuffer(mode.width, mode.height);
+
+	FUSIONCORE::LightIcon = std::make_unique<FUSIONCORE::Model>("Resources/LightIcon.fbx");
+
+	FUSIONCORE::Camera3D camera3d;
+	//FUSIONCORE::Camera2D camera2d;
+
+	camera3d.SetMinMaxZoom(true, -15.0f, 15.0f);
+	camera3d.SetZoomSensitivity(3.0f);
+	camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
+	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
+
+	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
+	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
+	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
+	std::uniform_real_distribution<float> RandomIntensity(400.0f, 600.0f);
+	std::default_random_engine engine(seed);
+
+	std::vector<FUSIONCORE::Light> Lights;
+	float LightIntensity;
+	for (size_t i = 0; i < 2; i++)
+	{
+		LightIntensity = RandomIntensity(engine);
+		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	}
+	FUSIONCORE::UploadLightsShaderUniformBuffer(*Shaders.DeferredPBRshader);
+
+	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
+	//std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
+	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\taunt\\Catwalk.fbx");
+
+	grid->GetTransformation().Scale(glm::vec3(0.1f));
+
+	Stove->GetTransformation().Translate({ 50.0f,1.0f,4.0f });
+	Stove->GetTransformation().Scale(glm::vec3(10.0f));
+	Shaders.DeferredPBRshader->use();
+
+	FUSIONCORE::Color FogColor(FF_COLOR_CORNFLOWER_BLUE);
+	FogColor.Darker(0.3f);
+	FUSIONCORE::SetEnvironment(*Shaders.DeferredPBRshader, 1.0f, FogColor.GetRGB(), FogColor.GetRGB());
+	//FUSIONCORE::SetEnvironmentIBL(*Shaders.DeferredPBRshader, 2.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
+	FUSIONCORE::UseShaderProgram(0);
+
+	Vec2<int> WindowSize;
+	std::vector<FUSIONCORE::OmniShadowMap*> shadowMaps;
+	std::function<void()> shaderPrep = []() {};
+
+	FUSIONCORE::EventManager eventmanager;
+	NewEvent event;
+
+	eventmanager.Subscribe<NewEvent>([](NewEvent& event) {
+		LOG(event.data);
+	});
+
+	std::vector<FUSIONCORE::Model*> models;
+	//models.push_back(Stove.get());
+	models.push_back(grid.get());
+
+	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
+	
+	while (!ApplicationWindow.ShouldClose())
+	{
+		//eventmanager.Publish<NewEvent>(event);
+
+		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
+
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
+		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f);
+
+		/*
+		Gbuffer.Bind();
+		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
+
+		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+		//Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+
+		Gbuffer.Unbind();
+		
+		ScreenFrameBuffer.Bind();
+		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_BLACK);
+		Gbuffer.DrawSceneDeferred(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, FF_COLOR_VOID, 0.3f);
+
+		FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
+		auto gbufferSize = Gbuffer.GetFBOSize();
+		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
+		ScreenFrameBuffer.Bind();
+		
+		pathtracer.VisualizeBVH(camera3d, *Shaders.LightShader, FF_COLOR_RED);
+		
+		*/
+		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
+		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
+
+		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader,camera3d);
+
+		auto PathTracerImage = [&]() {
+			glActiveTexture(GL_TEXTURE5);
+			glBindTexture(GL_TEXTURE_2D, pathtracer.GetTracedImage());
+			Shaders.FBOShader->setInt("TracedImage", 5);
+		};
+
+	    ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, PathTracerImage, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
+
+		ApplicationWindow.SwapBuffers();
+		ApplicationWindow.PollEvents();
+	}
+
+	FUSIONUTIL::DisposeDefaultShaders(Shaders);
+	FUSIONCORE::TerminateCascadedShadowMapTextureArray();
+
+	ScreenFrameBuffer.clean();
+	Gbuffer.clean();
+	glDeleteProgram(PathTraceComputeShader.GetID());
+	glDeleteProgram(PathTracerGeometryPassComputeShader.GetID());
+
+	ApplicationWindow.TerminateWindow();
+	FUSIONUTIL::TerminateGLFW();
 	return 0;
 }
 

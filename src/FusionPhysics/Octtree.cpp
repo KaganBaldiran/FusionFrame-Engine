@@ -4,8 +4,6 @@
 #include <glew.h>
 #include <glfw3.h>
 
-glm::vec3 WorldSizeMin;
-glm::vec3 WorldSizeMax;
 std::vector<FUSIONPHYSICS::ObjectBoundingBox> BoundingBoxes;
 
 FUSIONPHYSICS::ObjectBoundingBox::ObjectBoundingBox()
@@ -18,7 +16,7 @@ FUSIONPHYSICS::ObjectBoundingBox::ObjectBoundingBox()
 	Max.z = std::numeric_limits<float>::lowest();
 }
 
-void FUSIONPHYSICS::ObjectBoundingBox::CompareVec3MinMax(glm::vec3 &v)
+inline void FUSIONPHYSICS::ObjectBoundingBox::CompareVec3MinMax(glm::vec3& v)
 {
 	Min.x = glm::min(v.x, Min.x);
 	Min.y = glm::min(v.y, Min.y);
@@ -29,7 +27,7 @@ void FUSIONPHYSICS::ObjectBoundingBox::CompareVec3MinMax(glm::vec3 &v)
 	Max.z = glm::max(v.z, Max.z);
 }
 
-int FastStringToInt(const char* str)
+inline int FastStringToInt(const char* str)
 {
 	int val = 0;
 	while (*str)
@@ -39,35 +37,35 @@ int FastStringToInt(const char* str)
 	return val;
 }
 
-void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox>& BoundingBoxes, std::vector<FUSIONCORE::Object*> &ObjectInstances)
+void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingBox>& BoundingBoxes, 
+	                                                 std::vector<FUSIONCORE::Object*>& ObjectInstances, 
+													 glm::vec3 &WorldSizeMin,
+													 glm::vec3 &WorldSizeMax)
 {
-	float minX = std::numeric_limits<float>::max();
-	float maxX = std::numeric_limits<float>::lowest();
-	float minY = std::numeric_limits<float>::max();
-	float maxY = std::numeric_limits<float>::lowest();
-	float minZ = std::numeric_limits<float>::max();
-	float maxZ = std::numeric_limits<float>::lowest();
+	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
 
-	for (size_t i = 0; i < ObjectInstances.size(); i++)
+	auto& CalculatedBoundingBoxes = FUSIONCORE::GetCalculatedObjectBoundingBoxes();
+
+	for (int i = 0; i < static_cast<int>(ObjectInstances.size()); ++i)
 	{
-		bool ReCalculateBoundingBox = false;
+		auto& object = ObjectInstances[i];
+		FUSIONCORE::WorldTransform& objectTransform = object->GetTransformation();
 		ObjectBoundingBox BoundingBox;
-		BoundingBox.Object = ObjectInstances[i];
-		FUSIONCORE::WorldTransform& objectTransformation = ObjectInstances[i]->GetTransformation();
+		BoundingBox.Object = object;
 
-		if (BoundingBoxes.size() < i + 1 ||
-			!BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) ||
-			objectTransformation.IsTransformedQuadTree) 
+		if (BoundingBoxes.size() <= i + 1 || !BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) || objectTransform.IsTransformedQuadTree)
 		{
-			auto& ModelScales = objectTransformation.InitialObjectScales;
-			auto ModelMatrix = objectTransformation.GetModelMat4();
-			auto& ModelPosition = *objectTransformation.OriginPoint;
+			auto& ModelScales = objectTransform.InitialObjectScales;
+			auto ModelMatrix = objectTransform.GetModelMat4();
+			auto& ModelPosition = *objectTransform.OriginPoint;
 			auto HalfScales = (ModelScales * 0.5f);
-			for (size_t x = 0; x < 2; x++)
+
+			for (size_t x = 0; x < 2; ++x)
 			{
-				for (size_t y = 0; y < 2; y++)
+				for (size_t y = 0; y < 2; ++y)
 				{
-					for (size_t z = 0; z < 2; z++)
+					for (size_t z = 0; z < 2; ++z)
 					{
 						glm::vec3 Vertex(ModelPosition.x + ((2.0f * x - 1.0f) * HalfScales.x),
 							ModelPosition.y + ((2.0f * y - 1.0f) * HalfScales.y),
@@ -78,7 +76,8 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 					}
 				}
 			}
-			if (BoundingBoxes.size() >= i + 1)
+
+			if (BoundingBoxes.size() > i + 1)
 			{
 				std::swap(BoundingBox, BoundingBoxes[i]);
 			}
@@ -86,26 +85,21 @@ void FUSIONPHYSICS::CalculateInitialQuadTreeGridSize(std::vector<ObjectBoundingB
 			{
 				BoundingBoxes.push_back(BoundingBox);
 			}
-			objectTransformation.IsTransformedQuadTree = false;
+			objectTransform.IsTransformedQuadTree = false;
 		}
+
+		auto& box = BoundingBoxes[i];
+		min.x = glm::min(min.x, box.Min.x);
+		min.y = glm::min(min.y, box.Min.y);
+		min.z = glm::min(min.z, box.Min.z);
+
+		max.x = glm::max(max.x, box.Max.x);
+		max.y = glm::max(max.y, box.Max.y);
+		max.z = glm::max(max.z, box.Max.z);
 	}
 
-	for (const auto& BoundingBoxTemp : BoundingBoxes)
-	{
-		const auto& BoxMin = BoundingBoxTemp.Min;
-		const auto& BoxMax = BoundingBoxTemp.Max;
-
-		minX = glm::min(BoxMin.x, minX);
-		minY = glm::min(BoxMin.y, minY);
-		minZ = glm::min(BoxMin.z, minZ);
-
-		maxX = glm::max(BoxMax.x, maxX);
-		maxY = glm::max(BoxMax.y, maxY);
-		maxZ = glm::max(BoxMax.z, maxZ);
-	}
-
-	WorldSizeMin = glm::vec3(minX, minY, minZ);
-	WorldSizeMax = glm::vec3(maxX, maxY, maxZ);
+	WorldSizeMin = min;
+	WorldSizeMax = max;
 }
 
 FUSIONCORE::WorldTransform FUSIONPHYSICS::NodeToWorldTransform(FUSIONPHYSICS::QuadNode& Node)
@@ -116,7 +110,7 @@ FUSIONCORE::WorldTransform FUSIONPHYSICS::NodeToWorldTransform(FUSIONPHYSICS::Qu
 	return newTranform;
 }
 
-void FUSIONPHYSICS::VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode,FUSIONCORE::Camera3D& Camera,FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)
+void FUSIONPHYSICS::VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode, FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)
 {
 	std::deque<FUSIONPHYSICS::QuadNode*> nodes;
 	nodes.push_back(&HeadNode);
@@ -138,11 +132,11 @@ void FUSIONPHYSICS::VisualizeQuadTree(FUSIONPHYSICS::QuadNode& HeadNode,FUSIONCO
 	}
 }
 
-void FUSIONPHYSICS::SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node , std::deque<QuadNode*> &NodesToProcess)
+void FUSIONPHYSICS::SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node, std::deque<QuadNode*>& NodesToProcess)
 {
 	glm::vec3 QuarterSize = Node.Size * 0.25f;
 	glm::vec3 HalfSize = Node.Size * 0.5f;
-	glm::vec3 &ParentCenter = Node.Center;
+	glm::vec3& ParentCenter = Node.Center;
 	for (size_t x = 0; x < 2; x++)
 	{
 		for (size_t z = 0; z < 2; z++)
@@ -150,8 +144,8 @@ void FUSIONPHYSICS::SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node , std::deque
 			QuadNode newChildNode;
 			newChildNode.Center = { ParentCenter.x + (QuarterSize.x * (2.0f * x - 1.0f)),
 									ParentCenter.y,
-									ParentCenter.z + (QuarterSize.z * (2.0f * z - 1.0f))};
-			newChildNode.Size = { HalfSize.x ,Node.Size.y,HalfSize.z};
+									ParentCenter.z + (QuarterSize.z * (2.0f * z - 1.0f)) };
+			newChildNode.Size = { HalfSize.x ,Node.Size.y,HalfSize.z };
 			newChildNode.SubdivisionCount = Node.SubdivisionCount;
 			Node.ChildrenNode.push_back(std::make_shared<QuadNode>(newChildNode));
 			NodesToProcess.push_back(Node.ChildrenNode.back().get());
@@ -159,13 +153,8 @@ void FUSIONPHYSICS::SubdivideQuadNode(FUSIONPHYSICS::QuadNode& Node , std::deque
 	}
 }
 
-std::pair<glm::vec3, glm::vec3> FUSIONPHYSICS::GetGridSize()
-{
-	return {WorldSizeMin,WorldSizeMax};
-}
 
-
-bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, const FUSIONPHYSICS::QuadNode* node) 
+bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, const FUSIONPHYSICS::QuadNode* node)
 {
 	const auto& nodeCenter = node->Center;
 	const auto& nodeHalfSize = node->Size * 0.5f;
@@ -177,23 +166,25 @@ bool IsObjectInsideQuadNode(const FUSIONPHYSICS::ObjectBoundingBox& object, cons
 	const glm::vec3 nodeMax = nodeCenter + nodeHalfSize;
 
 	return MaxObject.x >= nodeMin.x && MinObject.x <= nodeMax.x &&
-		  //MaxObject.y >= nodeMin.y && MinObject.y <= nodeMax.y &&
-		   MaxObject.z >= nodeMin.z && MinObject.z <= nodeMax.z;
+		//MaxObject.y >= nodeMin.y && MinObject.y <= nodeMax.y &&
+		MaxObject.z >= nodeMin.z && MinObject.z <= nodeMax.z;
 }
 
-void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode, std::vector<FUSIONCORE::Object*> &ObjectInstances, unsigned int SingleQuadObjectCountLimit, unsigned int SubdivisionLimit)
+void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& HeadNode, std::vector<FUSIONCORE::Object*>& ObjectInstances, unsigned int SingleQuadObjectCountLimit, unsigned int SubdivisionLimit)
 {
 	DisposeQuadNodes(HeadNode);
 	//BoundingBoxes.clear();
 	std::deque<QuadNode*> NodesToProcess;
-	CalculateInitialQuadTreeGridSize(BoundingBoxes,ObjectInstances);
+	glm::vec3 WorldSizeMin(0.0f);
+	glm::vec3 WorldSizeMax(0.0f);
+	CalculateInitialQuadTreeGridSize(BoundingBoxes, ObjectInstances,WorldSizeMin,WorldSizeMax);
 
 	HeadNode.Center = { (WorldSizeMin.x + WorldSizeMax.x) * 0.5f,
-					    (WorldSizeMin.y + WorldSizeMax.y) * 0.5f,
-					    (WorldSizeMin.z + WorldSizeMax.z) * 0.5f };
-	HeadNode.Size = glm::abs(glm::vec3(WorldSizeMax.x - WorldSizeMin.x ,
-					                   WorldSizeMax.y - WorldSizeMin.y ,
-					                   WorldSizeMax.z - WorldSizeMin.z));
+						(WorldSizeMin.y + WorldSizeMax.y) * 0.5f,
+						(WorldSizeMin.z + WorldSizeMax.z) * 0.5f };
+	HeadNode.Size = glm::abs(glm::vec3(WorldSizeMax.x - WorldSizeMin.x,
+		WorldSizeMax.y - WorldSizeMin.y,
+		WorldSizeMax.z - WorldSizeMin.z));
 	HeadNode.Objects.reserve(BoundingBoxes.size());
 	for (size_t i = 0; i < BoundingBoxes.size(); i++)
 	{
@@ -227,7 +218,7 @@ void FUSIONPHYSICS::UpdateQuadTreeWorldPartitioning(FUSIONPHYSICS::QuadNode& Hea
 			}
 			Node->Objects.clear();
 		}
-	}	
+	}
 }
 
 void FUSIONPHYSICS::DisposeQuadNodes(FUSIONPHYSICS::QuadNode& HeadNode)

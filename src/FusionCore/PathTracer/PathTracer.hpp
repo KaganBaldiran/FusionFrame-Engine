@@ -7,7 +7,7 @@
 #include "../../FusionPhysics/Physics.hpp"
 #include "../Texture.h"
 
-struct Node;
+struct TopDownNode;
 
 namespace FUSIONCORE
 {
@@ -22,7 +22,7 @@ namespace FUSIONCORE
 		void Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera);
 	private:
 		GLuint image;
-		//SSBO TracerMetaDataBuffer;
+
 		TBO MinBoundData;
 		Texture2D MinBoundTexture;
 
@@ -41,8 +41,11 @@ namespace FUSIONCORE
 		SSBO TracerTriangleDataBuffer;
 		int TriangleCount;
 		int NodeCount;
-		std::vector<Node> PreviouslyBoundingBoxes;
-		std::vector<Node> BVHnodes;
+
+		bool IsInitialized;
+
+		std::vector<TopDownNode> PreviouslyBoundingBoxes;
+		std::vector<TopDownNode> BVHnodes;
 	};
 
 }

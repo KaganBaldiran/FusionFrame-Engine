@@ -1245,14 +1245,14 @@ int Application::PathTracer()
 	}
 	FUSIONCORE::UploadLightsShaderUniformBuffer(*Shaders.DeferredPBRshader);
 
-	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
+	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
 	//std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
 	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\taunt\\Catwalk.fbx");
 
 	grid->GetTransformation().Scale(glm::vec3(0.1f));
 
 	Stove->GetTransformation().Translate({ 50.0f,1.0f,4.0f });
-	Stove->GetTransformation().Scale(glm::vec3(10.0f));
+	Stove->GetTransformation().Scale(glm::vec3(1.0f));
 	Shaders.DeferredPBRshader->use();
 
 	FUSIONCORE::Color FogColor(FF_COLOR_CORNFLOWER_BLUE);
@@ -1273,7 +1273,7 @@ int Application::PathTracer()
 	});
 
 	std::vector<FUSIONCORE::Model*> models;
-	//models.push_back(Stove.get());
+	models.push_back(Stove.get());
 	models.push_back(grid.get());
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
@@ -1284,7 +1284,7 @@ int Application::PathTracer()
 
 		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
 
-		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f);
 
 		/*

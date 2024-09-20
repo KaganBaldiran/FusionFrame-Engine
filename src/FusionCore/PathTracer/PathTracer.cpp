@@ -22,8 +22,6 @@ public:
 	glm::vec3 Max;
 	glm::vec3 Origin;
 	int ChildIndex;
-	int TriangleIndex;
-	int TriangleCount;
 	int Depth;
 
 	template<typename T>
@@ -39,14 +37,39 @@ public:
 	}
 
 	Node() : Min(glm::vec3(std::numeric_limits<float>::max())),
-		     Max(glm::vec3(std::numeric_limits<float>::lowest())),
-	         ChildIndex(-1), 
-		     TriangleCount(0),
-		     TriangleIndex(std::numeric_limits<int>::max()),
-		     Depth(0)
+		Max(glm::vec3(std::numeric_limits<float>::lowest())),
+		ChildIndex(-1),
+		Depth(0)
 	{}
 
-	bool IsLeaf() const
+	virtual bool IsLeaf() const;
+};
+
+class BottomUpNode : public Node
+{
+public:
+	FUSIONCORE::Model* model;
+
+	BottomUpNode() : model(nullptr)
+	{}
+
+	bool IsLeaf() const override
+	{
+		return model != nullptr && ChildIndex == -1;
+	}
+};
+
+class TopDownNode : public Node
+{
+public:
+	int TriangleIndex;
+	int TriangleCount;
+
+	TopDownNode() : TriangleCount(0),
+		     TriangleIndex(std::numeric_limits<int>::max())
+	{}
+
+	bool IsLeaf() const override
 	{
 		return TriangleCount > 0 && ChildIndex == -1;
 	}
@@ -67,13 +90,13 @@ void SetTBObindlessTextureData(FUSIONCORE::TBO& tbo,FUSIONCORE::Texture2D &textu
 
 void CalculateModelBoundingBox(FUSIONCORE::Model*& Model, 
 	                            glm::mat4& ModelMatrix,
-	                            std::vector<std::pair<Node,unsigned int>>& BoundingBoxes,
+	                            std::vector<std::pair<BottomUpNode,unsigned int>>& ModelBoundingBoxes,
 								glm::vec3 &min,
 								glm::vec3 &max,
 	                            int Iterator)
 {
 	FUSIONCORE::WorldTransform& objectTransform = Model->GetTransformation();
-	Node newNode;
+	BottomUpNode newNode;
 
 	//if (BoundingBoxes.size() <= i + 1 || !BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) || objectTransform.IsTransformed)
 	//if (objectTransform.IsTransformed)
@@ -98,7 +121,8 @@ void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
 			}
 		}
 
-		BoundingBoxes.push_back({ newNode , Iterator });
+		newNode.Origin = (newNode.Min + newNode.Max) * 0.5f;
+		ModelBoundingBoxes.push_back({ newNode , Iterator });
 		//}
 		min.x = glm::min(min.x, newNode.Min.x);
 		min.y = glm::min(min.y, newNode.Min.y);
@@ -113,7 +137,7 @@ void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
 }
 
 
-FUSIONCORE::WorldTransform NodeToWorldTransform(Node& Node)
+FUSIONCORE::WorldTransform NodeToWorldTransform(TopDownNode& Node)
 {
 	FUSIONCORE::WorldTransform newTranform;
 	newTranform.InitialObjectScales = Node.Max - Node.Min;
@@ -134,9 +158,9 @@ void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCO
 	}
 }
 
-void ConstructBVHNodes(std::vector<Node> &BVHNodes,
+void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
                         std::vector<FUSIONCORE::Model*>& ModelsToTrace,
-						std::vector<std::pair<Node, unsigned int>>& BoundingBoxes,
+						std::vector<std::pair<BottomUpNode, unsigned int>>& ModelBoundingBoxes,
 						AlignedBuffer<glm::vec4>& TrianglePositions,
 						AlignedBuffer<glm::vec3> &TriangleCenters,
 	                    const glm::vec3 &InitialMin,
@@ -160,7 +184,7 @@ void ConstructBVHNodes(std::vector<Node> &BVHNodes,
 		NodesToProcess.pop_front();
 
 		node.Depth++;
-		if (node.Depth >= MaxDepth || node.TriangleCount <= 1)
+		if (node.Depth >= MaxDepth || node.TriangleCount <= 5)
 		{
 			continue;
 		}
@@ -171,8 +195,8 @@ void ConstructBVHNodes(std::vector<Node> &BVHNodes,
 
 		float SplitPosition = AxisCenters[SplitAxis];
 
-		Node Child0;
-		Node Child1;
+		TopDownNode Child0;
+		TopDownNode Child1;
 	
 		Child0.Depth = node.Depth;
 		Child1.Depth = node.Depth;
@@ -184,7 +208,7 @@ void ConstructBVHNodes(std::vector<Node> &BVHNodes,
 			glm::vec3 TriangleCenter = TriangleCenters[i];
 
 			bool IsChild0 = (SplitPosition > TriangleCenter[SplitAxis]);
-			Node* ChosenChild = IsChild0 ? &Child0 : &Child1;
+			TopDownNode* ChosenChild = IsChild0 ? &Child0 : &Child1;
 			
 			ChosenChild->CompareVec3MinMax(TrianglePositions[i * 3]);
 			ChosenChild->CompareVec3MinMax(TrianglePositions[i * 3 + 1]);
@@ -218,7 +242,6 @@ void ConstructBVHNodes(std::vector<Node> &BVHNodes,
 
 }
 
-
 FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::vector<Model*>& ModelsToTrace,Shader& shader)
 {
 	glGenTextures(1, &image);
@@ -240,7 +263,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 	AlignedBuffer<glm::vec4> TrianglePositions;
 	AlignedBuffer<glm::vec3> TriangleCenters;
 
-	std::vector<std::pair<Node, unsigned int>> BoundingBoxes;
+	std::vector<std::pair<BottomUpNode, unsigned int>> BoundingBoxes;
 
 	size_t ModelCount = ModelsToTrace.size();
 
@@ -324,8 +347,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 		}
 	}
 
-	
-	ConstructBVHNodes(BVHnodes, ModelsToTrace, BoundingBoxes, TrianglePositions, TriangleCenters, min, max, 12);
+	ConstructTopDownBVH(BVHnodes, ModelsToTrace, BoundingBoxes, TrianglePositions, TriangleCenters, min, max, 17);
 
 	NodeCount = BVHnodes.size();
 	std::vector<glm::vec3> MinBounds;
@@ -397,6 +419,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 	TracerTriangleDataBuffer.Unbind();
 
 	TriangleCount = TrianglePositions.size();
+	IsInitialized = false;
 
 	LOG("Process took: " << timer.GetMiliseconds());
 	/*shader.use();
@@ -431,11 +454,15 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 	shader.setInt("TriangleCount", TriangleCount);
 	shader.setInt("NodeCount", NodeCount);
 
-	this->MinBoundTexture.SendBindlessHandle(shader.GetID(),"MinBounds");
-	this->MaxBoundTexture.SendBindlessHandle(shader.GetID(),"MaxBounds");
-	this->ChildIndexTexture.SendBindlessHandle(shader.GetID(),"ChildIndicies");
-	this->TriangleIndexTexture.SendBindlessHandle(shader.GetID(), "TriangleIndicies");
-	this->TriangleCountTexture.SendBindlessHandle(shader.GetID(), "TriangleCounts");
+	if (!IsInitialized)
+	{
+		this->MinBoundTexture.SendBindlessHandle(shader.GetID(), "MinBounds");
+		this->MaxBoundTexture.SendBindlessHandle(shader.GetID(), "MaxBounds");
+		this->ChildIndexTexture.SendBindlessHandle(shader.GetID(), "ChildIndicies");
+		this->TriangleIndexTexture.SendBindlessHandle(shader.GetID(), "TriangleIndicies");
+		this->TriangleCountTexture.SendBindlessHandle(shader.GetID(), "TriangleCounts");
+		IsInitialized = true;
+	}
 
 	GLuint workGroupSizeX = 32;
 	GLuint workGroupSizeY = 32;

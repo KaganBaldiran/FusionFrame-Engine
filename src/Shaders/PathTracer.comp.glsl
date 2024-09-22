@@ -15,6 +15,7 @@ layout (location = 8) uniform mat4 ProjectionViewMat;
 layout (location = 9) uniform float Time;
 layout (location = 10) uniform int TriangleCount;
 layout (location = 11) uniform int NodeCount;
+layout (location = 12) uniform int ModelNodeCount;
 
 
 readonly layout(std430,binding=7) restrict buffer TriangleData
@@ -127,18 +128,16 @@ vec4 RayTraceSphere(in vec3 ro,in vec3 rd,float sphereRadius)
 }
 
 
-vec3 TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection)
+vec4 TraverseTopDownBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirection,in int InitialIndex,inout float ClosestDistance)
 {
-     int NodesToProcess[32];
+     int NodesToProcess[50];
      int StackIndex = 0; 
-     NodesToProcess[StackIndex] = 0;
+     NodesToProcess[StackIndex] = InitialIndex;
      StackIndex++;
 
      int CurrentIndex;
-     vec3 InvRayDirection = 1.0f / (rayDirection + vec3(0.00001f));
-
-     vec3 ClosestTriangleData = vec3(1.0f);
-     float ClosestDistance = pos_infinity;
+     
+     vec4 ClosestTriangleData = vec4(0.0f);
 
      int NearChildIndex = -1;
      int FarChildIndex = -1;
@@ -171,12 +170,13 @@ vec3 TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection)
                         if(result.t < ClosestDistance)
                         {
                             ClosestDistance = result.t;
-                            ClosestTriangleData = N;
+                            ClosestTriangleData = vec4(N,1.0f);
                             //StackIndex = -1;
+                            //break;
                         }
                     }
-                    }
-                }
+                 }
+            }
         }
         else
         {
@@ -214,6 +214,25 @@ vec3 TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection)
      return ClosestTriangleData;
 }
 
+vec3 TraverseBottomUpBVH(in vec3 rayOrigin,in vec3 rayDirection)
+{
+    vec3 InvRayDirection = 1.0f / (rayDirection + vec3(0.00001f));
+    float ClosestDistance = pos_infinity;
+    vec3 Color = vec3(1.0f);
+    for(int i = 0 ; i < ModelNodeCount;i++)
+    {
+       float t = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,i).xyz,texelFetch(MaxBounds,i).xyz);
+       if(t < ClosestDistance)
+       {
+           vec4 result = TraverseTopDownBVH(rayOrigin,rayDirection,InvRayDirection,i,ClosestDistance);
+           if(result.w == 1.0f)
+           {
+             Color = result.xyz;
+           }
+       }
+    }
+    return Color;
+}
 
 void main()
 {
@@ -236,5 +255,5 @@ void main()
     //imageStore( image, pos,RayTraceSphere(rayOrigin,rayDirection.xyz,SphereRadius));
     //imageStore( image, pos,vec4(ClosestTriangleData,1.0f));
    //imageStore( image, pos,vec4(result,1.0f));
-   imageStore( image, pos,vec4(TraverseBVH(rayOrigin,rayDirection.xyz).xyz,1.0f));
+   imageStore( image, pos,vec4(TraverseBottomUpBVH(rayOrigin,rayDirection.xyz).xyz,1.0f));
 }

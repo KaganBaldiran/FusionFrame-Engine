@@ -8,6 +8,7 @@
 #include "../Texture.h"
 
 struct TopDownNode;
+struct BottomUpNode;
 
 namespace FUSIONCORE
 {
@@ -42,10 +43,14 @@ namespace FUSIONCORE
 		int TriangleCount;
 		int NodeCount;
 
+		int ModelNodeCount;
+
 		bool IsInitialized;
 
 		std::vector<TopDownNode> PreviouslyBoundingBoxes;
-		std::vector<TopDownNode> BVHnodes;
+
+		std::vector<TopDownNode> TopDownBVHnodes;
+		std::vector<BottomUpNode> BottomUpBVHNodes;
 	};
 
 }

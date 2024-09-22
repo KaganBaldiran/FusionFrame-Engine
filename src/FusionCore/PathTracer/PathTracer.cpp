@@ -15,6 +15,18 @@
 template <typename T>
 using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T,16>>;
 
+template<typename T>
+void CompareVec3MinMax(T&& Min, T&& Max,T&& v)
+{
+	Min.x = glm::min(v.x, Min.x);
+	Min.y = glm::min(v.y, Min.y);
+	Min.z = glm::min(v.z, Min.z);
+
+	Max.x = glm::max(v.x, Max.x);
+	Max.y = glm::max(v.y, Max.y);
+	Max.z = glm::max(v.z, Max.z);
+}
+
 class Node
 {
 public:
@@ -36,26 +48,47 @@ public:
 		Max.z = glm::max(v.z, Max.z);
 	}
 
+	template<typename T>
+	void CompareVec3MinMax(T&& min, T&& max)
+	{
+		Min.x = glm::min(min.x, Min.x);
+		Min.y = glm::min(min.y, Min.y);
+		Min.z = glm::min(min.z, Min.z);
+
+		Max.x = glm::max(max.x, Max.x);
+		Max.y = glm::max(max.y, Max.y);
+		Max.z = glm::max(max.z, Max.z);
+	}
+
 	Node() : Min(glm::vec3(std::numeric_limits<float>::max())),
 		Max(glm::vec3(std::numeric_limits<float>::lowest())),
 		ChildIndex(-1),
 		Depth(0)
 	{}
 
-	virtual bool IsLeaf() const;
+	virtual bool IsLeaf() { return false; };
 };
 
 class BottomUpNode : public Node
 {
 public:
-	FUSIONCORE::Model* model;
+	int ModelIndex;
+	int BoxIndex;
+	int BoxCount;
+	int ID;
 
-	BottomUpNode() : model(nullptr)
-	{}
-
-	bool IsLeaf() const override
+	BottomUpNode() : ModelIndex(-1),
+					 BoxCount(0),
+					 BoxIndex(std::numeric_limits<int>::max())
 	{
-		return model != nullptr && ChildIndex == -1;
+		static unsigned int IDiterator = 0;
+		ID = IDiterator;
+		IDiterator++;
+	}
+
+	bool IsLeaf() override
+	{
+		return ModelIndex > -1 && ChildIndex == -1;
 	}
 };
 
@@ -69,13 +102,13 @@ public:
 		     TriangleIndex(std::numeric_limits<int>::max())
 	{}
 
-	bool IsLeaf() const override
+	bool IsLeaf() override
 	{
 		return TriangleCount > 0 && ChildIndex == -1;
 	}
 };
 
-void SetTBObindlessTextureData(FUSIONCORE::TBO& tbo,FUSIONCORE::Texture2D &texture,GLenum internalUsage,GLsizeiptr size,const void* data,GLenum usage)
+inline void SetTBObindlessTextureData(FUSIONCORE::TBO& tbo,FUSIONCORE::Texture2D &texture,GLenum internalUsage,GLsizeiptr size,const void* data,GLenum usage)
 {
 	tbo.Bind();
 	tbo.BufferDataFill(size, data, usage);
@@ -88,15 +121,14 @@ void SetTBObindlessTextureData(FUSIONCORE::TBO& tbo,FUSIONCORE::Texture2D &textu
 	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
 
-void CalculateModelBoundingBox(FUSIONCORE::Model*& Model, 
+inline void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
 	                            glm::mat4& ModelMatrix,
-	                            std::vector<std::pair<BottomUpNode,unsigned int>>& ModelBoundingBoxes,
+	                            std::vector<TopDownNode>& ModelBoundingBoxes,
 								glm::vec3 &min,
-								glm::vec3 &max,
-	                            int Iterator)
+								glm::vec3 &max)
 {
 	FUSIONCORE::WorldTransform& objectTransform = Model->GetTransformation();
-	BottomUpNode newNode;
+	TopDownNode newNode;
 
 	//if (BoundingBoxes.size() <= i + 1 || !BoundingBoxes[i].Object->IsSameObject(BoundingBox.Object) || objectTransform.IsTransformed)
 	//if (objectTransform.IsTransformed)
@@ -122,7 +154,7 @@ void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
 		}
 
 		newNode.Origin = (newNode.Min + newNode.Max) * 0.5f;
-		ModelBoundingBoxes.push_back({ newNode , Iterator });
+		ModelBoundingBoxes.push_back(newNode);
 		//}
 		min.x = glm::min(min.x, newNode.Min.x);
 		min.y = glm::min(min.y, newNode.Min.y);
@@ -136,47 +168,91 @@ void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
 	}
 }
 
-
-FUSIONCORE::WorldTransform NodeToWorldTransform(TopDownNode& Node)
+template<typename VEC3>
+inline float ComputeBoundingBoxArea(VEC3&& Min, VEC3&& Max)
 {
-	FUSIONCORE::WorldTransform newTranform;
-	newTranform.InitialObjectScales = Node.Max - Node.Min;
-	newTranform.OriginPoint = &Node.Origin;
-	return newTranform;
+	glm::vec3 Dimension = Max - Min;
+	return 2.0f * (Dimension.x * Dimension.y + Dimension.x * Dimension.z + Dimension.z * Dimension.y);
 }
 
-void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)
+template<typename FLOAT,typename INT>
+inline float ComputeSAHcost(FLOAT&& LeftNodeArea, FLOAT&& RightNodeArea, FLOAT&& ParentNodeArea,
+	                 INT&& NumLeft, INT&& NumRight, FLOAT&& TraversalCost = 1.0f, FLOAT&& IntersectionCost = 4.0f)
 {
-	for(auto& node : this->BVHnodes)
-	{
-		if (node.TriangleCount <= 0) continue;
+	return TraversalCost + (LeftNodeArea / ParentNodeArea) * NumLeft * IntersectionCost + (RightNodeArea / ParentNodeArea) * NumRight * IntersectionCost;
+}
 
-		auto NodeTranform = NodeToWorldTransform(node);
-		FUSIONPHYSICS::CollisionBoxAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
-		HeadNodeBox.SetMeshColor(FF_COLOR_RED);
-		HeadNodeBox.DrawBoxMesh(Camera, Shader);
+inline float EstimateSplit(TopDownNode& Node, int Axis, float SplitPosition,
+					AlignedBuffer<glm::vec3>& TriangleCenters,
+					std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
+{
+	TopDownNode Child0;
+	TopDownNode Child1;
+	int NumberIn0 = 0;
+	int NumberIn1 = 0;
+
+	for (int i = Node.TriangleIndex; i < Node.TriangleIndex + Node.TriangleCount; i++)
+	{
+		auto& MinMax = TriangleMinMax[i];
+		if (TriangleCenters[i][Axis] < SplitPosition)
+		{
+			Child0.CompareVec3MinMax(MinMax.first, MinMax.second);
+			NumberIn0++;
+		}
+		else
+		{
+			Child1.CompareVec3MinMax(MinMax.first, MinMax.second);
+			NumberIn1++;
+		}
+	}
+
+	return ComputeSAHcost(ComputeBoundingBoxArea(Child0.Min, Child0.Max), ComputeBoundingBoxArea(Child1.Min, Child1.Max),
+		                  ComputeBoundingBoxArea(Node.Min, Node.Max), NumberIn0, NumberIn1);
+}
+
+inline void Split(int &BestAxis,float& BestPos,float& BestCost,TopDownNode& Node,
+	              AlignedBuffer<glm::vec3>& TriangleCenters,
+	              std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
+{
+	constexpr int TestCountPerAXis = 6;
+	
+	float BoundMin = 0;
+	float BoundMax = 0;
+	float SplitFract = 0.0f;
+	float Position = 0.0f;
+	float Cost = 0.0f;
+
+	for (size_t i = 0; i < 3; i++)
+	{
+		BoundMin = Node.Min[i];
+		BoundMax = Node.Max[i];
+		for (size_t y = 0; y < TestCountPerAXis; y++)
+		{
+			SplitFract = static_cast<float>(i + 1) / static_cast<float>(TestCountPerAXis + 1);
+
+			Position = BoundMin + (BoundMax - BoundMin) * SplitFract;
+			Cost = EstimateSplit(Node, i, Position, TriangleCenters, TriangleMinMax);
+
+			if (Cost <= BestCost)
+			{
+				BestCost = Cost;
+				BestPos = Position;
+				BestAxis = i;
+			}
+		}
 	}
 }
 
-void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
+inline void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
                         std::vector<FUSIONCORE::Model*>& ModelsToTrace,
-						std::vector<std::pair<BottomUpNode, unsigned int>>& ModelBoundingBoxes,
+						int ModelBoundingBoxIndex,
 						AlignedBuffer<glm::vec4>& TrianglePositions,
 						AlignedBuffer<glm::vec3> &TriangleCenters,
-	                    const glm::vec3 &InitialMin,
-	                    const glm::vec3 &InitialMax,
+						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
 {
-
 	std::deque<int> NodesToProcess;
-	//NodesToProcess.insert(NodesToProcess.end(), BoundingBoxes.begin(), BoundingBoxes.end());
-	auto& InitialNode = BVHNodes.emplace_back();
-	InitialNode.Min = InitialMin;
-	InitialNode.Max = InitialMax;
-	InitialNode.TriangleCount = int(TrianglePositions.size() / 3);
-	InitialNode.TriangleIndex = 0;
-	InitialNode.Origin = (InitialNode.Max + InitialNode.Min) * 0.5f;
-	NodesToProcess.push_back(0);
+	NodesToProcess.push_back(ModelBoundingBoxIndex);
 
 	while (!NodesToProcess.empty())
 	{
@@ -184,16 +260,16 @@ void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
 		NodesToProcess.pop_front();
 
 		node.Depth++;
-		if (node.Depth >= MaxDepth || node.TriangleCount <= 5)
+		if (node.Depth >= MaxDepth || node.TriangleCount <= 3)
 		{
 			continue;
 		}
+		
+		float SplitPosition = 0;
+		int SplitAxis = 0;
+		float Cost = std::numeric_limits<float>::max();
 
-		glm::vec3 AxisSizes = node.Max - node.Min;
-		glm::vec3 AxisCenters = (node.Max + node.Min) * 0.5f;
-		int SplitAxis = AxisSizes.x > glm::max(AxisSizes.y, AxisSizes.z) ? 0 : AxisSizes.y > AxisSizes.z ? 1 : 2;
-
-		float SplitPosition = AxisCenters[SplitAxis];
+		Split(SplitAxis, SplitPosition, Cost, node, TriangleCenters, TriangleMinMax);
 
 		TopDownNode Child0;
 		TopDownNode Child1;
@@ -210,9 +286,8 @@ void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
 			bool IsChild0 = (SplitPosition > TriangleCenter[SplitAxis]);
 			TopDownNode* ChosenChild = IsChild0 ? &Child0 : &Child1;
 			
-			ChosenChild->CompareVec3MinMax(TrianglePositions[i * 3]);
-			ChosenChild->CompareVec3MinMax(TrianglePositions[i * 3 + 1]);
-			ChosenChild->CompareVec3MinMax(TrianglePositions[i * 3 + 2]);
+			auto& PreCalculatedMinMax = TriangleMinMax[i];
+			ChosenChild->CompareVec3MinMax(PreCalculatedMinMax.first, PreCalculatedMinMax.second);
 			ChosenChild->TriangleCount++;
 
 			if (IsChild0)
@@ -222,6 +297,7 @@ void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
 				std::swap(TrianglePositions[i * 3 + 1], TrianglePositions[swap * 3 + 1]);
 				std::swap(TrianglePositions[i * 3 + 2], TrianglePositions[swap * 3 + 2]);
 				std::swap(TriangleCenters[i], TriangleCenters[swap]);
+				std::swap(TriangleMinMax[i], TriangleMinMax[swap]);
 				Child1.TriangleIndex++;
 			}
 		}
@@ -239,7 +315,6 @@ void ConstructTopDownBVH(std::vector<TopDownNode> &BVHNodes,
 		BVHNodes.push_back(std::move(Child1));
 		NodesToProcess.push_back(BVHNodes.size() - 1);
 	}
-
 }
 
 FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::vector<Model*>& ModelsToTrace,Shader& shader)
@@ -258,51 +333,57 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 	{
 		return;
 	}
+	FUSIONUTIL::Timer timer;
+	timer.Set();
 
 	AlignedBuffer<glm::mat4> ModelMatrixes;
 	AlignedBuffer<glm::vec4> TrianglePositions;
 	AlignedBuffer<glm::vec3> TriangleCenters;
 
-	std::vector<std::pair<BottomUpNode, unsigned int>> BoundingBoxes;
+	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
+	std::vector<TopDownNode> BoundingBoxes;
 
 	size_t ModelCount = ModelsToTrace.size();
-
 	ModelMatrixes.reserve(ModelCount);
-	TriangleCenters.reserve(ModelCount);
+	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
-	
+
+	glm::vec3 TriangleMin = min;
+	glm::vec3 TriangleMax = max;
+
+	glm::vec3 TriangleCenter = glm::vec3(0.0f);
 	glm::mat4 ModelMatrix(1.0f);
-    
-	FUSIONUTIL::Timer timer;
-	timer.Set();
+	glm::vec3 TempPosition;
+	float inv_three = 1.0f / 3.0f;
+	int CurrentModelTriangleCount = 0;
+
+	int ReserveCount = 0;
+	for (auto& model : ModelsToTrace)
+	{
+		for (auto& mesh : model->Meshes)
+		{
+			ReserveCount += mesh.GetFaces().size();
+		}
+	}
+
+	TrianglePositions.reserve(ReserveCount * 3);
+	TriangleCenters.reserve(ReserveCount);
+	TriangleMinMax.reserve(ReserveCount);
 	
-    //#pragma omp parallel for 
 	for (int i = 0; i < ModelCount; i++)
 	{
-		glm::vec3 TriangleCenter = glm::vec3(0.0f);
-		glm::vec3 TempPosition;
-
 		auto& model = ModelsToTrace[i];
-		glm::mat4 ModelMatrix = model->GetTransformation().GetModelMat4();
+		ModelMatrix = model->GetTransformation().GetModelMat4();
 
-        //#pragma omp critical
-		{
-			ModelMatrixes.push_back(ModelMatrix);  
-		}
-
-		size_t TriangleCount = 0;
-
+		ModelMatrixes.push_back(ModelMatrix);
+		
 		for (auto& mesh : model->Meshes)
 		{
 			auto& faces = mesh.GetFaces();
 			auto& vertices = mesh.GetVertices();
-
-            //#pragma omp critical
-			{
-				TrianglePositions.reserve((faces.size() * 3) + TrianglePositions.size());
-			}
-
+			CurrentModelTriangleCount += faces.size();
+			
 			for (auto& face : faces)
 			{
 				auto& indices = face->Indices;
@@ -311,45 +392,51 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 				}
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(vertices[indices[0]]->Position, 1.0f));
+				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
-                //#pragma omp critical
-				{
-					TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				}
-
+				
+				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(vertices[indices[1]]->Position, 1.0f));
+				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
-               // #pragma omp critical
-				{
-					TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				}
-
+				
+				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(vertices[indices[2]]->Position, 1.0f));
+				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
-               // #pragma omp critical
-				{
-					TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				}
+				
+				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				
+				TriangleCenter *= inv_three;
 
-				TriangleCenter /= 3;
+				TriangleCenters.push_back(TriangleCenter);
+				
+				TriangleMinMax.push_back({ TriangleMin,TriangleMax });
 
-               // #pragma omp critical
-				{
-					TriangleCenters.push_back(TriangleCenter);
-				}
-
+				TriangleMin = glm::vec3(std::numeric_limits<float>::max());
+				TriangleMax = glm::vec3(std::numeric_limits<float>::lowest());
 				TriangleCenter = glm::vec3(0.0f);
 			}
 		}
-        //#pragma omp critical
-		{
-			CalculateModelBoundingBox(model, ModelMatrix, BoundingBoxes, min, max, i);
-		}
+		
+		CalculateModelBoundingBox(model, ModelMatrix, BoundingBoxes, min, max);
+		
+		auto& CurrentBoundingBox = BoundingBoxes.back();
+		CurrentBoundingBox.TriangleCount = CurrentModelTriangleCount;
+		CurrentBoundingBox.TriangleIndex = TriangleCenters.size() - CurrentModelTriangleCount;
+		CurrentModelTriangleCount = 0;
 	}
 
-	ConstructTopDownBVH(BVHnodes, ModelsToTrace, BoundingBoxes, TrianglePositions, TriangleCenters, min, max, 17);
-
-	NodeCount = BVHnodes.size();
+	TopDownBVHnodes.insert(TopDownBVHnodes.end(), BoundingBoxes.begin(), BoundingBoxes.end());
+	for (int i = 0; i < BoundingBoxes.size(); i++)
+	{
+		ConstructTopDownBVH(TopDownBVHnodes, ModelsToTrace, i, TrianglePositions, TriangleCenters, TriangleMinMax, 20);
+	}
+	ModelNodeCount = BoundingBoxes.size();
+	
+	NodeCount = TopDownBVHnodes.size();
 	std::vector<glm::vec3> MinBounds;
 	std::vector<glm::vec3> MaxBounds;
 	std::vector<float> ChildIndicies;
@@ -368,7 +455,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 	TriangleIndicies.reserve(NodeCount);
 	TriangleCounts.reserve(NodeCount);
 	for (int i = 0; i < NodeCount; i++) {
-		auto& node = BVHnodes[i];
+		auto& node = TopDownBVHnodes[i];
 
 		MinBounds.push_back(node.Min);
 		MaxBounds.push_back(node.Max);
@@ -412,7 +499,6 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height,std::v
 		TriangleIndicies.data(),
 		GL_STATIC_DRAW);
 
-	
 	TracerTriangleDataBuffer.Bind();
 	TracerTriangleDataBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * TrianglePositions.size(), TrianglePositions.data(), GL_STREAM_DRAW);
 	TracerTriangleDataBuffer.BindSSBO(7);
@@ -453,6 +539,7 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 	shader.setFloat("Time",glfwGetTime());
 	shader.setInt("TriangleCount", TriangleCount);
 	shader.setInt("NodeCount", NodeCount);
+	shader.setInt("ModelNodeCount", ModelNodeCount);
 
 	if (!IsInitialized)
 	{
@@ -476,4 +563,24 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 	UseShaderProgram(0);
 }
 
+inline FUSIONCORE::WorldTransform NodeToWorldTransform(Node& Node)
+{
+	FUSIONCORE::WorldTransform newTranform;
+	newTranform.InitialObjectScales = Node.Max - Node.Min;
+	newTranform.OriginPoint = &Node.Origin;
+	return newTranform;
+}
+
+void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)
+{
+	for(auto& node : this->TopDownBVHnodes)
+	{
+		if (node.TriangleCount <= 0) continue;
+
+		auto NodeTranform = NodeToWorldTransform(node);
+		FUSIONPHYSICS::CollisionBoxAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
+		HeadNodeBox.SetMeshColor(FF_COLOR_RED);
+		HeadNodeBox.DrawBoxMesh(Camera, Shader);
+	}
+}
 

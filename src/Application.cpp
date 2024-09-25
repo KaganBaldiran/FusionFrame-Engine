@@ -1292,7 +1292,7 @@ int Application::PathTracer()
 	});
 
 	std::vector<FUSIONCORE::Model*> models;
-	models.push_back(Stove.get());
+	//models.push_back(Stove.get());
 	models.push_back(grid.get());
 	models.push_back(MainCharac.get());
 	models.push_back(model1.get());
@@ -1302,14 +1302,18 @@ int Application::PathTracer()
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
 	
+	double DeltaTime = 0.0;
+	FUSIONUTIL::Timer timer;
 	while (!ApplicationWindow.ShouldClose())
 	{
+		timer.Set();
+
 		//eventmanager.Publish<NewEvent>(event);
 
 		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
 
 		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
-		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f);
+		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
 
 		/*
 		Gbuffer.Bind();
@@ -1349,6 +1353,7 @@ int Application::PathTracer()
 
 		ApplicationWindow.SwapBuffers();
 		ApplicationWindow.PollEvents();
+		DeltaTime = timer.GetMiliseconds();
 	}
 
 	FUSIONUTIL::DisposeDefaultShaders(Shaders);

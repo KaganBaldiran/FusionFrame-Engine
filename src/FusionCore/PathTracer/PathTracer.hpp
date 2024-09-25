@@ -7,12 +7,11 @@
 #include "../../FusionPhysics/Physics.hpp"
 #include "../Texture.h"
 
-struct TopDownNode;
+struct BVHnode;
 struct BottomUpNode;
 
 namespace FUSIONCORE
 {
-
 	class PathTracer
 	{
 	public:
@@ -39,6 +38,9 @@ namespace FUSIONCORE
 		TBO TriangleCountData;
 		Texture2D TriangleCountTexture;
 
+		TBO TriangleNormalsData;
+		Texture2D TriangleNormalsTexture;
+
 		SSBO TracerTriangleDataBuffer;
 		int TriangleCount;
 		int NodeCount;
@@ -47,10 +49,10 @@ namespace FUSIONCORE
 
 		bool IsInitialized;
 
-		std::vector<TopDownNode> PreviouslyBoundingBoxes;
+		std::vector<BVHnode> PreviouslyBoundingBoxes;
 
-		std::vector<TopDownNode> TopDownBVHnodes;
-		std::vector<BottomUpNode> BottomUpBVHNodes;
+		std::vector<BVHnode> TopDownBVHnodes;
+		std::vector<BVHnode> BottomUpBVHNodes;
 	};
 
 }

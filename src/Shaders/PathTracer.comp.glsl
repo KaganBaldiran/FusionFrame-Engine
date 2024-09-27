@@ -13,15 +13,36 @@ layout (location = 6) uniform vec2 WindowSize;
 layout (location = 7) uniform vec3 CameraPosition;
 layout (location = 8) uniform mat4 ProjectionViewMat;
 layout (location = 9) uniform float Time;
-layout (location = 10) uniform int TriangleCount;
-layout (location = 11) uniform int NodeCount;
-layout (location = 12) uniform int ModelNodeCount;
 
-layout (location = 13) uniform samplerBuffer TriangleNormals;
+layout (location = 10) uniform samplerBuffer ModelAlbedos;
 
-readonly layout(std430,binding=7) restrict buffer TriangleData
+
+readonly layout(std430,binding=6) restrict buffer TriangleDataNormals
+{
+  vec4 TriangleNormals[]; 
+};
+
+readonly layout(std430,binding=7) restrict buffer TriangleDataPositions
 {
   vec4 TrianglePositions[]; 
+};
+
+
+struct Light
+{
+  vec4 Position;
+  vec4 Color;
+  int Type;
+  float Intensity;
+  float Radius;
+  int ShadowMapIndex;
+};
+
+layout (location = 14) uniform int LightCount;
+
+layout(std430 , binding = 4) restrict buffer LightsDatas
+{
+    Light Lights[];
 };
 
 #define BACKGROUND_COLOR vec4(1.0f)
@@ -38,6 +59,8 @@ struct RayData
 {
    vec3 Position;
    vec3 Normal;
+   vec4 Albedo;
+   vec2 uv;
 };
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
@@ -145,6 +168,10 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      int CurrentIndex;
      
      RayData data;
+     data.Normal = vec3(0.0f);
+     data.Position = vec3(0.0f);
+     data.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
+     data.uv = vec2(0.0f);
 
      int NearChildIndex = -1;
      int FarChildIndex = -1;
@@ -161,35 +188,31 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
 	        int TriCount = int(texelFetch(TriangleCounts,CurrentIndex).r);
             for(int i = TriangleIndex;i < TriangleIndex + TriCount;i++)
             {
-                vec3 v0 = TrianglePositions[i * 3].xyz;
+                vec4 v0 = TrianglePositions[i * 3].xyzw;
                 vec3 v1 = TrianglePositions[i * 3 + 1].xyz;
                 vec3 v2 = TrianglePositions[i * 3 + 2].xyz;
 
-                IntersectionData result = RayTriangleIntersection(rayOrigin,rayDirection.xyz,v0,v1,v2);
+                IntersectionData result = RayTriangleIntersection(rayOrigin,rayDirection.xyz,v0.xyz,v1,v2);
 
                 if(result.t > 0.0f)
                 {
-                    
-                    vec3 e1 = v1 - v0;
-                    vec3 e2 = v2 - v0;
-                    vec3 N = normalize(cross(e1,e2));
-                    
-                    //if(dot(N,rayDirection) < 0.0f)
+                    if(result.t < ClosestDistance)
                     {
-                        if(result.t < ClosestDistance)
-                        {
-                            vec2 uv = result.uv;
-
-                            vec3 n0 = texelFetch(TriangleNormals,i * 3).xyz;
-                            vec3 n1 = texelFetch(TriangleNormals,i * 3 + 1).xyz;
-                            vec3 n2 = texelFetch(TriangleNormals,i * 3 + 2).xyz;
-                            vec3 Position = normalize((1.0f - uv.x - uv.y) * v0 + uv.x * v1 + uv.y * v2);
-
-                            ClosestDistance = result.t;
-                            data.Position = Position;
-                            data.Normal = N;
-                        }
-                    }
+                        vec2 TriangleUV = result.uv;
+                            
+                        vec3 n0 = TriangleNormals[i * 3].xyz;
+                        vec3 n1 = TriangleNormals[i * 3 + 1].xyz;
+                        vec3 n2 = TriangleNormals[i * 3 + 2].xyz;
+                        vec3 Normal = normalize((1.0f - TriangleUV.x - TriangleUV.y) * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+                            
+                        ClosestDistance = result.t;
+                        data.Position = rayOrigin + rayDirection * result.t;
+                        data.Normal = Normal;
+                        vec4 temp = ProjectionViewMat * vec4(data.Position,1.0f);
+                        temp.xyz = temp.xyz / temp.w;
+                        data.uv = temp.xy * 0.5f + 0.5f;
+                        data.Albedo = texelFetch(ModelAlbedos,int(v0.w));
+                    }  
                  }
             }
         }
@@ -231,26 +254,38 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
 
 vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
 {
-   const float Epsilon = 0.001f;
+   const float Epsilon = 0.0001f;
    float ClosestDistance = pos_infinity;
-   vec3 InvRayDirection = 1.0f / (rayDirection + vec3(0.00001f));
+   vec3 InvRayDirection = 1.0f / (rayDirection);
    RayData data = TraverseBVH(rayOrigin,rayDirection,InvRayDirection,ClosestDistance);
-   if(ClosestDistance == pos_infinity)
+   
+   vec3 Color = vec3(data.Albedo);
+   vec3 ReflectedRay;
+   vec3 NewRayOrigin;
+   int MaxBounces = 2;
+   for(int i = 0;i < MaxBounces;i++)
    {
-     return vec3(0.0f);
+       if(ClosestDistance == pos_infinity)
+       {
+         break;
+       }
+       ClosestDistance = pos_infinity;
+       ReflectedRay = reflect(rayDirection,data.Normal);
+       NewRayOrigin = data.Position + ReflectedRay * Epsilon;
+       InvRayDirection = 1.0f / (ReflectedRay);
+       data = TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance);
+
+       Color += vec3(data.Albedo);
    }
-   vec3 ReflectedRay = reflect(rayDirection,data.Normal);
-   vec3 NewRayOrigin = data.Position + data.Normal * Epsilon;
-   ClosestDistance = pos_infinity;
-   InvRayDirection = 1.0f / (ReflectedRay);
-   return TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance).Normal;
-   //return NewRayOrigin;
+   Color = Color / int(MaxBounces);
+   return vec3(Color);
+   //return vec3(data.Normal);
 }
 
 void main()
 {
     ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
-    vec2 uv = (vec2(pos)+0.5)/WindowSize;
+    vec2 uv = (vec2(pos)+0.5f)/WindowSize;
 
     vec2 uvND = uv * 2.0f - 1.0f;
 
@@ -259,11 +294,9 @@ void main()
     rayDir4 = vec4(rayDir4.xyz / rayDir4.w,1.0f);
     vec3 rayDirection = normalize(rayDir4.xyz);
 
-    float SphereRadius = 2.0f;
+    vec4 in_val = imageLoad( image, pos ).rgba;
 
-    //vec4 in_val = imageLoad( image, pos ).rgba;
-
-   vec3 result = vec3(0.0f);
-
-   imageStore( image, pos,vec4(RayTrace(rayOrigin,rayDirection.xyz).xyz,1.0f));
+    vec3 result = RayTrace(rayOrigin,rayDirection.xyz);
+    //vec3 Color = vec3(1.0f,0.0f,0.0f) * dot(result,vec3(0.5f,0.4f,-0.7f));
+    imageStore( image, pos,vec4(result,1.0f));
 }

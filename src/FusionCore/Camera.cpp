@@ -99,7 +99,7 @@ FUSIONCORE::Camera3D::Camera3D()
 	targetPosition = glm::vec3(0.0f);
 }
 
-void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, float near, float far, Vec2<int> windowSize)
+void FUSIONCORE::Camera3D::UpdateCameraMatrix(const float& fovDegree, const float& aspect, const float& near, const float& far, const Vec2<int>& windowSize)
 {
 	this->FarPlane = far;
 	this->NearPlane = near;
@@ -116,7 +116,7 @@ void FUSIONCORE::Camera3D::UpdateCameraMatrix(float fovDegree, float aspect, flo
 	this->ProjectionViewMat = CameraMat;
 }
 
-void FUSIONCORE::Camera3D::Matrix(GLuint shaderprogram, const char* uniform)
+void FUSIONCORE::Camera3D::Matrix(const GLuint& shaderprogram, const char* uniform)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, uniform), 1, GL_FALSE, glm::value_ptr(CameraMat));
 	glUniformMatrix4fv(glGetUniformLocation(shaderprogram, "proj"), 1, GL_FALSE, glm::value_ptr(projMat));
@@ -168,7 +168,7 @@ void FUSIONCORE::Camera3D::SetZoomSensitivity(float Speed)
 }
 #endif
 
-void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, Vec2<int> WindowSize, int CameraLayout, float speed)
+void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const Vec2<int>& WindowSize, const int& CameraLayout,float speed)
 {
 	this->CameraLayout = CameraLayout;
 	if (CameraLayout == FF_CAMERA_LAYOUT_FIRST_PERSON)

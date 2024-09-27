@@ -464,7 +464,7 @@ int Application::Run()
 	//cascadedShadowMaps.push_back(&sunShadowMap2);
 	//cascadedShadowMaps.push_back(&sunShadowMap3);
 
-	FUSIONCORE::UploadLightsShaderUniformBuffer(*Shaders.DeferredPBRshader);
+	FUSIONCORE::UploadLightsShader(*Shaders.DeferredPBRshader);
 	
 	FUSIONCORE::Model animationModel("Resources\\taunt\\Jumping.fbx", false, true);
 	animationModel.GetTransformation().ScaleNoTraceBack({ 0.01f,0.01f,0.01f });
@@ -1242,7 +1242,7 @@ int Application::PathTracer()
 		LightIntensity = RandomIntensity(engine);
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	}
-	FUSIONCORE::UploadLightsShaderUniformBuffer(*Shaders.DeferredPBRshader);
+	FUSIONCORE::UploadLightsShader(*Shaders.DeferredPBRshader);
 
 	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
 	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
@@ -1251,14 +1251,16 @@ int Application::PathTracer()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> Rock = std::make_unique<FUSIONCORE::Model>("Resources\\models\\RockFormation\\RockFormation.obj");
+	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 	Rock->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
+	Cliff->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
+	Cliff->GetTransformation().TranslateNoTraceBack({ 6.0f,0.0f,0.0f });
 
 	grid->GetTransformation().Scale(glm::vec3(0.1f));
 
-	Stove->GetTransformation().Translate({ 100.0f,1.0f,4.0f });
-	Stove->GetTransformation().Scale(glm::vec3(1.0f));
+	Stove->GetTransformation().Scale(glm::vec3(3.0f));
 
 	model1->GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 	model1->GetTransformation().ScaleNoTraceBack(glm::vec3(0.1f, 0.1f, 0.1f));
@@ -1266,8 +1268,8 @@ int Application::PathTracer()
 	MainCharac->GetTransformation().ScaleNoTraceBack(glm::vec3(0.1f, 0.1f, 0.1f));
 	MainCharac->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
 	MainCharac->GetTransformation().TranslateNoTraceBack({ 4.0f,1.0f,-10.0f });
-	Stove->GetTransformation().TranslateNoTraceBack({ 0.0f,4.0f,30.0f });
-	wall->GetTransformation().TranslateNoTraceBack({ -60.0f,10.0f,0.0f });
+	Stove->GetTransformation().TranslateNoTraceBack({ -3.0f,4.0f,-8.0f });
+	wall->GetTransformation().TranslateNoTraceBack({ -20.0f,10.0f,0.0f });
 	wall->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f);
 	sofa->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 300.0f);
 	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-20.0f });
@@ -1291,23 +1293,58 @@ int Application::PathTracer()
 		LOG(event.data);
 	});
 
-	std::vector<FUSIONCORE::Model*> models;
+	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
+
+	FUSIONCORE::Material material0(0.5f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material1(0.5f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
+	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
+	FUSIONCORE::Material material3(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	//models.push_back(Stove.get());
-	models.push_back(grid.get());
-	models.push_back(MainCharac.get());
-	models.push_back(model1.get());
-	models.push_back(Rock.get());
-	models.push_back(wall.get());
-	models.push_back(sofa.get());
+	models.push_back({ grid.get(),&material2 });
+	models.push_back({MainCharac.get(),&material0 });
+	models.push_back({model1.get(),&material3 });
+	models.push_back({Rock.get(),&material2 });
+	models.push_back({wall.get(),&material0 });
+	models.push_back({sofa.get(),&material1 });
+	models.push_back({Stove.get(),&material3 });
+	models.push_back({Cliff.get(),&material2 });
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
 	
+	Vec2<int> PrevWindowSize;
+	Vec2<int> PrevWindowPos;
+	bool IsFullScreen = false;
+
+	auto window = ApplicationWindow.GetWindow();
+
 	double DeltaTime = 0.0;
 	FUSIONUTIL::Timer timer;
 	while (!ApplicationWindow.ShouldClose())
 	{
 		timer.Set();
 
+		static bool AllowPressF = true;
+		if (!AllowPressF && FUSIONUTIL::GetKey(window, FF_KEY_F) == FF_GLFW_RELEASE)
+		{
+			AllowPressF = true;
+		}
+		if (FUSIONUTIL::GetKey(window, FF_KEY_F) == FF_GLFW_PRESS && AllowPressF)
+		{
+			AllowPressF = false;
+			IsFullScreen = !IsFullScreen;
+			if (!IsFullScreen)
+			{
+				glfwGetWindowPos(window, &PrevWindowPos.x, &PrevWindowPos.y);
+				PrevWindowSize(WindowSize);
+				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+				glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+			}
+			else
+			{
+				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+				glfwSetWindowMonitor(window, NULL, PrevWindowPos.x, PrevWindowPos.y, PrevWindowSize.x, PrevWindowSize.y, mode->refreshRate);
+			}
+		}
 		//eventmanager.Publish<NewEvent>(event);
 
 		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
@@ -1319,10 +1356,16 @@ int Application::PathTracer()
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 
-		FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		model1->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		Rock->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		//grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+		Cliff->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
 
 		Gbuffer.Unbind();
 		
@@ -1334,14 +1377,14 @@ int Application::PathTracer()
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
-		
-		pathtracer.VisualizeBVH(camera3d, *Shaders.LightShader, FF_COLOR_RED);
 		*/
+		//pathtracer.VisualizeBVH(camera3d, *Shaders.LightShader, FF_COLOR_RED);
+		
 		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 
-		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader,camera3d);
+		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
 
 		auto PathTracerImage = [&]() {
 			glActiveTexture(GL_TEXTURE5);

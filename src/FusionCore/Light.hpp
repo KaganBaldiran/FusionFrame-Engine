@@ -37,7 +37,7 @@ namespace FUSIONCORE
 
 	//Uploads all the light datas avaliable to the light SSBO. Might turn to be kind of an expensive operation.
 	//Better to operate on lights as a batch before calling this function since lights themselves don't modify shader buffers. 
-	FUSIONFRAME_EXPORT_FUNCTION void UploadLightsShaderUniformBuffer(FUSIONCORE::Shader& DestShader);
+	FUSIONFRAME_EXPORT_FUNCTION void UploadLightsShader(FUSIONCORE::Shader& DestShader);
 	//Sets light data SSBO in a given shader.
 	FUSIONFRAME_EXPORT_FUNCTION void SendLightsShader(Shader& shader);
 	//Uploads the given light data to the light SSBO.

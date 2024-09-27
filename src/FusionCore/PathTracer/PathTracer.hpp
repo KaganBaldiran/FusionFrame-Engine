@@ -8,14 +8,13 @@
 #include "../Texture.h"
 
 struct BVHnode;
-struct BottomUpNode;
 
 namespace FUSIONCORE
 {
 	class PathTracer
 	{
 	public:
-		PathTracer(unsigned int width, unsigned int height,std::vector<Model*>& ModelsToTrace, Shader& shader);
+		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, Shader& shader);
 		inline GLuint GetTracedImage() { return image; };
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
@@ -38,18 +37,16 @@ namespace FUSIONCORE
 		TBO TriangleCountData;
 		Texture2D TriangleCountTexture;
 
-		TBO TriangleNormalsData;
-		Texture2D TriangleNormalsTexture;
+		TBO AlbedoData;
+		Texture2D AlbedoTexture;
 
-		SSBO TracerTriangleDataBuffer;
+		SSBO TracerTriangleDataPositionsBuffer;
+		SSBO TracerTriangleDataNormalsBuffer;
+
 		int TriangleCount;
 		int NodeCount;
-
 		int ModelNodeCount;
-
 		bool IsInitialized;
-
-		std::vector<BVHnode> PreviouslyBoundingBoxes;
 
 		std::vector<BVHnode> TopDownBVHnodes;
 		std::vector<BVHnode> BottomUpBVHNodes;

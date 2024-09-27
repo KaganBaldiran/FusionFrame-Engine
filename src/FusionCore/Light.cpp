@@ -124,7 +124,7 @@ void FUSIONCORE::InitializeLightsShaderStorageBufferObject()
 	BindUBONull();
 }
 
-void FUSIONCORE::UploadLightsShaderUniformBuffer(FUSIONCORE::Shader& DestShader)
+void FUSIONCORE::UploadLightsShader(FUSIONCORE::Shader& DestShader)
 {
 	std::vector<LightData> TempLightDatas;
 	TempLightDatas.reserve(LightCount);

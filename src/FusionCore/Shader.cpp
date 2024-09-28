@@ -215,6 +215,11 @@ FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* geosourcepath
 	shaderID = CompileShaderProgram(vertexshader, geoshader, fragmentshader);
 }
 
+void FUSIONCORE::Shader::Clear()
+{
+	DeleteShaderProgram(this->shaderID);
+}
+
 void FUSIONCORE::Shader::Compile(const char* ComputeShaderSourcePath)
 {
 	std::string ComputeSource = ReadTextFile(ComputeShaderSourcePath);

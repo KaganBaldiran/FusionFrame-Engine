@@ -1209,6 +1209,7 @@ int Application::PathTracer()
 	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::Shader PathTraceComputeShader("Shaders/PathTracer.comp.glsl");
+	FUSIONCORE::Shader BVHvisualizeShader("Shaders/BVHvisualizeShader.vs", "Shaders/BVHvisualizeShader.fs");
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
@@ -1295,10 +1296,10 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.5f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
-	FUSIONCORE::Material material1(0.5f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
-	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
-	FUSIONCORE::Material material3(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+	FUSIONCORE::Material material0(0.4f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material1(0.2f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
+	FUSIONCORE::Material material2(0.3f, 0.0f, FF_COLOR_MINT_GREEN);
+	FUSIONCORE::Material material3(0.1f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	//models.push_back(Stove.get());
 	models.push_back({ grid.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });
@@ -1352,10 +1353,11 @@ int Application::PathTracer()
 		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
 
-		/*
+		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 
+		/*
 		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
 		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
@@ -1366,7 +1368,7 @@ int Application::PathTracer()
 		Cliff->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
-
+		*/
 		Gbuffer.Unbind();
 		
 		ScreenFrameBuffer.Bind();
@@ -1377,14 +1379,14 @@ int Application::PathTracer()
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
-		*/
-		//pathtracer.VisualizeBVH(camera3d, *Shaders.LightShader, FF_COLOR_RED);
+		
+		pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
 		
 		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
-
-		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
+		
+		//pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
 
 		auto PathTracerImage = [&]() {
 			glActiveTexture(GL_TEXTURE5);
@@ -1406,6 +1408,7 @@ int Application::PathTracer()
 	Gbuffer.clean();
 	glDeleteProgram(PathTraceComputeShader.GetID());
 	glDeleteProgram(PathTracerGeometryPassComputeShader.GetID());
+	BVHvisualizeShader.Clear();
 
 	ApplicationWindow.TerminateWindow();
 	FUSIONUTIL::TerminateGLFW();

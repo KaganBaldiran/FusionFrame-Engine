@@ -22,6 +22,7 @@ void FUSIONCORE::InitializeDecalUnitBox()
         -0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f,  0.0f, 1.0f   // Top-left
     };
 
+    /*
     GLuint indices[] = {
         // Back face
         0, 1, 2,
@@ -42,6 +43,22 @@ void FUSIONCORE::InitializeDecalUnitBox()
         3, 2, 6,
         6, 7, 3
     };
+    */
+
+    GLuint indices[] = {
+        // Back face
+        0, 1, 1, 2, 2, 3, 3, 0,
+        // Front face
+        4, 5, 5, 6, 6, 7, 7, 4,
+        // Left face
+        0, 4, 3, 7,
+        // Right face
+        1, 5, 2, 6,
+        // Bottom face
+        0, 1, 4, 5,
+        // Top face
+        3, 2, 7, 6
+    };
 
 
 	UnitBoxBuffer->BufferDataFill(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
@@ -52,6 +69,11 @@ void FUSIONCORE::InitializeDecalUnitBox()
     UnitBoxBuffer->BindEBO();
     UnitBoxBuffer->BufferDataFill(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     UnitBoxBuffer->Unbind();
+}
+
+FUSIONCORE::Buffer3D* FUSIONCORE::GetUnitBoxBuffer()
+{
+    return UnitBoxBuffer.get();
 }
 
 void FUSIONCORE::DecalDeferred::Draw(GeometryBuffer& GeometryBuffer, Material Material, Camera3D& camera,glm::ivec2 WindowSize, FUSIONUTIL::DefaultShaders& shaders)

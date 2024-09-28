@@ -75,7 +75,7 @@ void main()
 	{
       FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
 	}
-    FragColor = vec4(texture(TracedImage, TexCoords.xy).xyz,1.0f);
+    //FragColor = vec4(texture(TracedImage, TexCoords.xy).xyz,1.0f);
 
 	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
     //FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);

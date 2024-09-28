@@ -71,6 +71,8 @@ namespace FUSIONCORE
         Shader(const char* vertsourcepath, const char* fragsourcepath);
         Shader(const char* vertsourcepath, const char* geosourcepath, const char* fragsourcepath);
 
+        void Clear();
+
         void Compile(const char* ComputeShaderSourcePath);
         void Compile(const char* vertsourcepath, const char* fragsourcepath);
         void Compile(const char* vertsourcepath, const char* geosourcepath, const char* fragsourcepath);

@@ -40,8 +40,12 @@ namespace FUSIONCORE
 		TBO AlbedoData;
 		Texture2D AlbedoTexture;
 
+		TBO RoughnessData;
+		Texture2D RoughnessTexture;
+
 		SSBO TracerTriangleDataPositionsBuffer;
 		SSBO TracerTriangleDataNormalsBuffer;
+		SSBO ModelMatricesData;
 
 		int TriangleCount;
 		int NodeCount;

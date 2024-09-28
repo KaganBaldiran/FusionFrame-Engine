@@ -12,6 +12,7 @@
 #include <algorithm>
 #include "../../FusionCore/Color.hpp"
 #include "../../FusionCore/Light.hpp"
+#include "../../FusionCore/Decal.hpp"
 
 template <typename T>
 using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T,16>>;
@@ -295,7 +296,7 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 		NodesToProcess.pop_front();
 
 		node.Depth++;
-		if (node.Depth >= MaxDepth || node.TriangleCount <= 3)
+		if (node.Depth >= MaxDepth || node.TriangleCount <= 2)
 		{
 			continue;
 		}
@@ -446,10 +447,12 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	timer.Set();
 
 	AlignedBuffer<glm::mat4> ModelMatrixes;
+	AlignedBuffer<glm::vec3> TriangleCenters;
 	AlignedBuffer<glm::vec4> TrianglePositions;
 	AlignedBuffer<glm::vec4> TriangleNormals;
+
 	AlignedBuffer<glm::vec4> ModelAlbedos;
-	AlignedBuffer<glm::vec3> TriangleCenters;
+	AlignedBuffer<float> ModelRoughness;
 
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
 	std::vector<BVHnode> BoundingBoxes;
@@ -457,6 +460,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	size_t ModelCount = ModelsToTrace.size();
 	ModelMatrixes.reserve(ModelCount);
 	ModelAlbedos.reserve(ModelCount);
+	ModelRoughness.reserve(ModelCount);
 	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
@@ -496,6 +500,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 		ModelMatrixes.push_back(ModelMatrix);
 		ModelAlbedos.push_back(material->Albedo);
+		ModelRoughness.push_back(material->roughness);
 		
 		for (auto& mesh : model->Meshes)
 		{
@@ -637,15 +642,27 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		ModelAlbedos.data(),
 		GL_STATIC_DRAW);
 
+	SetTBObindlessTextureData(RoughnessData,
+		RoughnessTexture,
+		GL_R32F,
+		ModelCount * sizeof(float),
+		ModelRoughness.data(),
+		GL_STATIC_DRAW);
+
 	TracerTriangleDataPositionsBuffer.Bind();
-	TracerTriangleDataPositionsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * TrianglePositions.size(), TrianglePositions.data(), GL_STREAM_DRAW);
+	TracerTriangleDataPositionsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * TrianglePositions.size(), TrianglePositions.data(), GL_STATIC_DRAW);
 	TracerTriangleDataPositionsBuffer.BindSSBO(7);
 	TracerTriangleDataPositionsBuffer.Unbind();
 
 	TracerTriangleDataNormalsBuffer.Bind();
-	TracerTriangleDataNormalsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)* TriangleNormals.size(), TriangleNormals.data(), GL_STREAM_DRAW);
+	TracerTriangleDataNormalsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)* TriangleNormals.size(), TriangleNormals.data(), GL_STATIC_DRAW);
 	TracerTriangleDataNormalsBuffer.BindSSBO(6);
 	TracerTriangleDataNormalsBuffer.Unbind();
+
+	ModelMatricesData.Bind();
+	ModelMatricesData.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * ModelMatrixes.size(), ModelMatrixes.data(), GL_STREAM_DRAW);
+	ModelMatricesData.BindSSBO(8);
+	ModelMatricesData.Unbind();
 
 	TriangleCount = TrianglePositions.size();
 	IsInitialized = false;
@@ -662,6 +679,7 @@ FUSIONCORE::PathTracer::~PathTracer()
 	this->TriangleCountTexture.Clear();
 	this->TriangleIndexTexture.Clear();
 	this->AlbedoTexture.Clear();
+	this->RoughnessTexture.Clear();
 }
 
 void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera)
@@ -680,6 +698,7 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 		this->TriangleIndexTexture.SendBindlessHandle(shader.GetID(), "TriangleIndicies");
 		this->TriangleCountTexture.SendBindlessHandle(shader.GetID(), "TriangleCounts");
 		this->AlbedoTexture.SendBindlessHandle(shader.GetID(), "ModelAlbedos");
+		this->RoughnessTexture.SendBindlessHandle(shader.GetID(), "ModelRoughness");
 		SendLightsShader(shader);
 		IsInitialized = true;
 	}
@@ -697,24 +716,26 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 	UseShaderProgram(0);
 }
 
-inline FUSIONCORE::WorldTransform NodeToWorldTransform(BVHnode& Node)
-{
-	FUSIONCORE::WorldTransform newTranform;
-	newTranform.InitialObjectScales = Node.Max - Node.Min;
-	newTranform.OriginPoint = &Node.Origin;
-	return newTranform;
-}
-
 void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)
 {
-	for(auto& node : this->TopDownBVHnodes)
-	{
-		//if (node.TriangleCount <= 0) continue;
+	static bool initialized = false;
+	auto UnitBoxBuffer = GetUnitBoxBuffer();
+	
+	Shader.use();
+	UnitBoxBuffer->BindVAO();
 
-		auto NodeTranform = NodeToWorldTransform(node);
-		FUSIONPHYSICS::CollisionBoxAABB HeadNodeBox(NodeTranform, glm::vec3(1.0f));
-		HeadNodeBox.SetMeshColor(FF_COLOR_RED);
-		HeadNodeBox.DrawBoxMesh(Camera, Shader);
+	Shader.setMat4("ProjView", Camera.ProjectionViewMat);
+	Shader.setVec3("LightColor", NodeColor);
+	if (!initialized)
+	{
+		this->MinBoundTexture.SendBindlessHandle(Shader.GetID(), "MinBounds");
+		this->MaxBoundTexture.SendBindlessHandle(Shader.GetID(), "MaxBounds");
+		initialized = true;
 	}
+
+	glDrawElementsInstanced(GL_LINES, 32, GL_UNSIGNED_INT, 0, TopDownBVHnodes.size());
+
+	BindVAONull();
+	UseShaderProgram(0);
 }
 

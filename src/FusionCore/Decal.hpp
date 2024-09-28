@@ -6,6 +6,7 @@
 namespace FUSIONCORE
 {
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDecalUnitBox();
+	FUSIONFRAME_EXPORT_FUNCTION Buffer3D* GetUnitBoxBuffer();
 
 	class DecalDeferred : public Object
 	{

@@ -15,6 +15,7 @@ layout (location = 8) uniform mat4 ProjectionViewMat;
 layout (location = 9) uniform float Time;
 
 layout (location = 10) uniform samplerBuffer ModelAlbedos;
+layout (location = 11) uniform samplerBuffer ModelRoughness;
 
 
 readonly layout(std430,binding=6) restrict buffer TriangleDataNormals
@@ -25,6 +26,11 @@ readonly layout(std430,binding=6) restrict buffer TriangleDataNormals
 readonly layout(std430,binding=7) restrict buffer TriangleDataPositions
 {
   vec4 TrianglePositions[]; 
+};
+
+readonly layout(std430,binding=8) restrict buffer ModelMatricesData
+{
+  mat4 ModelMatrices[]; 
 };
 
 
@@ -61,6 +67,7 @@ struct RayData
    vec3 Normal;
    vec4 Albedo;
    vec2 uv;
+   float Roughness;
 };
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
@@ -172,6 +179,7 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      data.Position = vec3(0.0f);
      data.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
      data.uv = vec2(0.0f);
+     data.Roughness = 0.0f;
 
      int NearChildIndex = -1;
      int FarChildIndex = -1;
@@ -208,12 +216,13 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                         ClosestDistance = result.t;
                         data.Position = rayOrigin + rayDirection * result.t;
                         data.Normal = Normal;
-                        vec4 temp = ProjectionViewMat * vec4(data.Position,1.0f);
-                        temp.xyz = temp.xyz / temp.w;
-                        data.uv = temp.xy * 0.5f + 0.5f;
+                        //vec4 temp = ProjectionViewMat * vec4(data.Position,1.0f);
+                        //temp.xyz = temp.xyz / temp.w;
+                        //data.uv = temp.xy * 0.5f + 0.5f;
                         data.Albedo = texelFetch(ModelAlbedos,int(v0.w));
+                        data.Roughness = texelFetch(ModelRoughness,int(v0.w)).x;
                     }  
-                 }
+                }
             }
         }
         else
@@ -252,6 +261,13 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      return data;
 }
 
+vec3 SampleSemiSphere()
+{
+   
+
+   return vec3(0.0f);
+}
+
 vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
 {
    const float Epsilon = 0.0001f;
@@ -260,6 +276,8 @@ vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
    RayData data = TraverseBVH(rayOrigin,rayDirection,InvRayDirection,ClosestDistance);
    
    vec3 Color = vec3(data.Albedo);
+   vec3 Normal = data.Normal;
+   float Roughness = data.Roughness;
    vec3 ReflectedRay;
    vec3 NewRayOrigin;
    int MaxBounces = 2;
@@ -275,10 +293,14 @@ vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
        InvRayDirection = 1.0f / (ReflectedRay);
        data = TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance);
 
-       Color += vec3(data.Albedo);
+       Color += Roughness * vec3(data.Albedo);
+       Normal += Roughness * data.Normal;
+       Roughness = data.Roughness;
    }
    Color = Color / int(MaxBounces);
-   return vec3(Color);
+   Normal = Normal / int(MaxBounces);
+   vec3 Result = vec3(0.1f) + Color * dot(Normal,vec3(0.5f,0.4f,-0.7f));
+   return vec3(Result);
    //return vec3(data.Normal);
 }
 

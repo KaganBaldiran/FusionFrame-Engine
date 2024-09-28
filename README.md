@@ -29,7 +29,7 @@ Also planning to implement a voxel based GI soon.
 Also using half-edge data structure , wrote couple of premature mesh algorithms like subdivision for triangular meshes. 
 Mesh utility algorithms like quickhull to create collision boxes are also in the TO-DO list
 
-#Ray/Path Tracing
+# Ray/Path Tracing
 
 Currently has a ray tracer with reflections and shadows but will also implement path tracing.
 

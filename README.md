@@ -31,11 +31,11 @@ Mesh utility algorithms like quickhull to create collision boxes are also in the
 
 # Ray/Path Tracing
 
-Currently has a ray tracer with reflections and shadows but will also implement path tracing.
+Currently has a ray/path tracer with reflections , indirect lighting and shadows.
 Ray tracing is done on a compute shader using a hybrid BVH(top and bottom) for acceleration. 
 
-Here is a quick demo scene with basic phong lighting and visualization of the BVH structure.
-![image](https://github.com/user-attachments/assets/83ecb310-14d3-40ec-9e68-88ec4c52a81a)
+Here is a quick demo scene with basic pbr shading and visualization of the BVH structure.
+![image](https://github.com/user-attachments/assets/1b863aaa-c8b9-42ff-b1d3-76c0504e3c21)
 ![image](https://github.com/user-attachments/assets/53d02e6c-c67b-4080-bbd4-05c459aed2ca)
 
 ## Documentation

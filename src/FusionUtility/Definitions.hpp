@@ -4,6 +4,7 @@
 
 typedef uint64_t GLuint64;
 typedef char GLchar;
+typedef ptrdiff_t GLintptr;
 
 #define FF_TEXTURE_TARGET_GL_TEXTURE_1D 0x0DE0
 #define FF_TEXTURE_TARGET_GL_TEXTURE_2D 0x0DE1

@@ -33,7 +33,7 @@ readonly layout(std430,binding=8) restrict buffer ModelMatricesData
   mat4 ModelMatrices[]; 
 };
 
-
+/*
 struct Light
 {
   vec4 Position;
@@ -50,10 +50,14 @@ layout(std430 , binding = 4) restrict buffer LightsDatas
 {
     Light Lights[];
 };
+*/
 
 #define BACKGROUND_COLOR vec4(1.0f)
 const float pos_infinity = uintBitsToFloat(0x7F800000);
 const float neg_infinity = uintBitsToFloat(0xFF800000);
+const float PI = 3.14159265359;
+const vec3 UP_VECTOR = vec3(0.0f,1.0f,0.0f);
+const float Epsilon = 0.0001f;
 
 struct IntersectionData
 {
@@ -68,7 +72,11 @@ struct RayData
    vec4 Albedo;
    vec2 uv;
    float Roughness;
+   float Light;
 };
+
+int NodesToProcess[28];
+const vec3 LIGHT_DIRECTION = vec3(0.5f,0.4f,-0.7f);
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
 {
@@ -125,8 +133,7 @@ float RayAABBIntersection(in vec3 rayOrigin,in vec3 rayDirectionInv,in vec3 BoxM
    float NearDistance = max(max(t1.x,t1.y),t1.z);
    float FarDistance = min(min(t2.x,t2.y),t2.z);
 
-   bool DoesIntersect = FarDistance >= NearDistance && FarDistance > 0;
-   return DoesIntersect ? NearDistance : pos_infinity;
+   return (FarDistance >= NearDistance && FarDistance > 0) ? NearDistance : pos_infinity;
 }
 
 vec4 RayTraceSphere(in vec3 ro,in vec3 rd,float sphereRadius)
@@ -167,7 +174,6 @@ vec4 RayTraceSphere(in vec3 ro,in vec3 rd,float sphereRadius)
 
 RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirection,inout float ClosestDistance)
 {
-     int NodesToProcess[50];
      int StackIndex = 0; 
      NodesToProcess[StackIndex] = 0;
      StackIndex++;
@@ -180,15 +186,38 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      data.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
      data.uv = vec2(0.0f);
      data.Roughness = 0.0f;
+     data.Light = 0.0f;
+
+     vec4 v0 = vec4(0.0f);
+     vec3 v1 = vec3(0.0f);
+     vec3 v2 = vec3(0.0f);
+
+     vec3 n0 = vec3(0.0f);
+     vec3 n1 = vec3(0.0f);
+     vec3 n2 = vec3(0.0f);
+
+     vec3 Normal = vec3(0.0f);
+     vec2 TriangleUV = vec2(0.0f);
+
+     float DistanceChild0 = 0.0f;
+     float DistanceChild1 = 0.0f;  
+     
+     int CurrentModelID = -1;
+     int ChildIndex = -1;
 
      int NearChildIndex = -1;
      int FarChildIndex = -1;
+
+     vec3 TransformedRayOrigin = vec3(-1);
+     vec3 TransformedRayDirection = vec3(-1);
+     vec3 TransformedInvRayDirection = vec3(-1);
+     int LastHitModelID = -1;
      while(StackIndex > 0)
      {
         StackIndex--;
         CurrentIndex = NodesToProcess[StackIndex];
         
-        int ChildIndex = int(texelFetch(ChildIndicies,CurrentIndex).r);
+        ChildIndex = int(texelFetch(ChildIndicies,CurrentIndex).r);
         if(ChildIndex == -1)
         {
             //ClosestTriangleData = vec3(1.0,0.0f,0.0f);
@@ -196,39 +225,50 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
 	        int TriCount = int(texelFetch(TriangleCounts,CurrentIndex).r);
             for(int i = TriangleIndex;i < TriangleIndex + TriCount;i++)
             {
-                vec4 v0 = TrianglePositions[i * 3].xyzw;
-                vec3 v1 = TrianglePositions[i * 3 + 1].xyz;
-                vec3 v2 = TrianglePositions[i * 3 + 2].xyz;
+                v0 = TrianglePositions[i * 3].xyzw;
+                v1 = TrianglePositions[i * 3 + 1].xyz;
+                v2 = TrianglePositions[i * 3 + 2].xyz;
 
+                CurrentModelID = int(v0.w);
+                /*
+
+                if(LastHitModelID != CurrentModelID)
+                {
+                    mat4 InvModelMat = inverse(ModelMatrices[CurrentModelID]);
+                    TransformedRayOrigin = vec3(InvModelMat * vec4(rayOrigin,1.0f));
+                    TransformedRayDirection = vec3(InvModelMat * vec4(rayDirection,1.0f));
+                    TransformedInvRayDirection = 1.0f / rayDirection;
+                    LastHitModelID = CurrentModelID;
+                }
+                */
                 IntersectionData result = RayTriangleIntersection(rayOrigin,rayDirection.xyz,v0.xyz,v1,v2);
+                //IntersectionData result = RayTriangleIntersection(TransformedRayOrigin,TransformedRayDirection.xyz,v0.xyz,v1,v2);
 
                 if(result.t > 0.0f)
                 {
                     if(result.t < ClosestDistance)
                     {
-                        vec2 TriangleUV = result.uv;
+                        TriangleUV = result.uv;
                             
-                        vec3 n0 = TriangleNormals[i * 3].xyz;
-                        vec3 n1 = TriangleNormals[i * 3 + 1].xyz;
-                        vec3 n2 = TriangleNormals[i * 3 + 2].xyz;
-                        vec3 Normal = normalize((1.0f - TriangleUV.x - TriangleUV.y) * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+                        n0 = TriangleNormals[i * 3].xyz;
+                        n1 = TriangleNormals[i * 3 + 1].xyz;
+                        n2 = TriangleNormals[i * 3 + 2].xyz;
+                        Normal = normalize((1.0f - TriangleUV.x - TriangleUV.y) * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
                             
                         ClosestDistance = result.t;
                         data.Position = rayOrigin + rayDirection * result.t;
                         data.Normal = Normal;
-                        //vec4 temp = ProjectionViewMat * vec4(data.Position,1.0f);
-                        //temp.xyz = temp.xyz / temp.w;
-                        //data.uv = temp.xy * 0.5f + 0.5f;
-                        data.Albedo = texelFetch(ModelAlbedos,int(v0.w));
-                        data.Roughness = texelFetch(ModelRoughness,int(v0.w)).x;
+                        data.Albedo = texelFetch(ModelAlbedos,CurrentModelID);
+                        data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
+                        data.Light = max(0.0f,dot(LIGHT_DIRECTION,Normal));
                     }  
                 }
             }
         }
         else
         {
-            float DistanceChild0 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex).xyz,texelFetch(MaxBounds,ChildIndex).xyz);
-            float DistanceChild1 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex + 1).xyz,texelFetch(MaxBounds,ChildIndex + 1).xyz);
+            DistanceChild0 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex).xyz,texelFetch(MaxBounds,ChildIndex).xyz);
+            DistanceChild1 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex + 1).xyz,texelFetch(MaxBounds,ChildIndex + 1).xyz);
            
             if(DistanceChild0 >= DistanceChild1)
             {
@@ -261,25 +301,173 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      return data;
 }
 
-vec3 SampleSemiSphere()
+float DistributionGGX(vec3 N , vec3 H, float roughness)
 {
-   
+    float a = roughness * roughness;
+    float a2 = a*a;
+    float NdotH = max(dot(N,H),0.0);
+    float NdotH2 = NdotH * NdotH;
 
-   return vec3(0.0f);
+    float num = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return num / denom;
 }
 
-vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
+float GeometrySchlickGGX(float NdotV , float roughness)
 {
-   const float Epsilon = 0.0001f;
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float num = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return num / denom;
+}
+
+float GeometrySmith(vec3 N , vec3 V , vec3 L , float roughness)
+{
+    float NdotV = max(dot(N,V),0.0);
+    float NdotL = max(dot(N,L),0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV,roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL,roughness);
+
+    return ggx1 * ggx2;
+}
+
+vec3 FresnelSchlick(float cosTheta , vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta,0.0,1.0),5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+} 
+
+
+vec3 PBRshade(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPos, vec3 Position, float shadow,inout vec3 F) {
+    vec3 V = normalize(CameraPos - Position);
+    float NdotV = max(dot(N, V), 0.0);
+
+    vec3 F0 = mix(vec3(0.04), Albedo, Metalic);
+    vec3 L = normalize(LIGHT_DIRECTION);
+    vec3 H = normalize(V + L);
+
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 kS = F;
+    vec3 kD = (1.0 - kS) * (1.0 - Metalic);
+
+    vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+    vec3 radiance = vec3(1.0);
+
+    return (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * 4.0 * NdotL;
+}
+
+float Hash(inout int x)
+{
+	x ^= x >> 16;
+    x *= 0x7feb352dU;
+    x ^= x >> 15;
+    x *= 0x846ca68bU;
+    x ^= x >> 16;
+    return float(x & 0xFFFFFF) / float(0x1000000); 
+}
+
+vec3 SampleSemiSphere(vec2 seed,vec3 Normal)
+{
+   float phi = 2.0f * PI * seed.x;
+   float cosTheta = sqrt(1.0f - seed.y);
+   float sinTheta = sqrt(seed.y);
+
+   vec3 SampledVector = vec3(cos(phi) * sinTheta,
+                             sin(phi) * sinTheta,
+                             cosTheta);
+
+   vec3 Tangent = abs(Normal.z) < 0.999 ? normalize(cross(vec3(0.0, 0.0, 1.0), Normal)) 
+                                          : normalize(cross(vec3(1.0, 0.0, 0.0), Normal));   
+   vec3 Bitangent = normalize(cross(Tangent,Normal));
+                              
+   return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
+}
+
+bool RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection)
+{
+     float ClosestDistance = pos_infinity;
+     vec3 InvRayDirection = 1.0f / (LightDirection);
+     TraverseBVH(CurrentPosition + Epsilon * LightDirection,LightDirection,InvRayDirection,ClosestDistance);
+
+     return ClosestDistance != pos_infinity;
+}
+
+RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in bool Shadow,inout uint seed)
+{
+
+   RayData ResultData;
+   ResultData.Normal = vec3(0.0f);
+   ResultData.Position = vec3(0.0f);
+   ResultData.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
+   ResultData.uv = vec2(0.0f);
+   ResultData.Roughness = 0.0f;
+   ResultData.Light = 0.0f;
+
+   RayData data;
+   vec3 SampleVector = vec3(0.0f);
+
+   float ClosestDistance = pos_infinity;
+   vec3 InvRayDirection = vec3(0.0f);
+
+   const int SampleCount = 50;
+   float invSampleCount = 1.0f / float(SampleCount);
+   for(int i = 0;i < SampleCount;i++)
+   {
+      SampleVector = SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection);
+      InvRayDirection = 1.0f / (SampleVector);
+      data = TraverseBVH(rayOrigin + Epsilon * SampleVector,SampleVector,InvRayDirection,ClosestDistance);
+      ResultData.Light += data.Light * (1.0f - ResultData.Roughness);
+      ResultData.Albedo += data.Albedo;
+
+      ClosestDistance = pos_infinity;
+   }
+   ResultData.Light *= invSampleCount;
+   ResultData.Albedo *= invSampleCount;
+   ResultData.Roughness *= invSampleCount;
+   ResultData.Albedo.xyz *= ResultData.Light;
+
+   return ResultData;
+}
+
+
+vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
+{
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = 1.0f / (rayDirection);
    RayData data = TraverseBVH(rayOrigin,rayDirection,InvRayDirection,ClosestDistance);
    
-   vec3 Color = vec3(data.Albedo);
-   vec3 Normal = data.Normal;
-   float Roughness = data.Roughness;
+   if(ClosestDistance == pos_infinity)
+   {
+      return vec3(0.0f);
+   }
+
+   vec3 Color = vec3(0.0f);
+   bool IsShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
+
+   vec3 Normal = vec3(0.0f);
+   float Roughness = 0.0f;
+   float CurrentRoughness = data.Roughness;
+   vec3 CurrentNormal = data.Normal;
+   vec3 Position = vec3(0.0f);
    vec3 ReflectedRay;
    vec3 NewRayOrigin;
+   RayData SecondaryData;
+
+   uint seed = pixelPos.x * pixelPos.y;
+
    int MaxBounces = 2;
    for(int i = 0;i < MaxBounces;i++)
    {
@@ -288,20 +476,37 @@ vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection)
          break;
        }
        ClosestDistance = pos_infinity;
-       ReflectedRay = reflect(rayDirection,data.Normal);
+       //ReflectedRay = mix(reflect(rayDirection,CurrentNormal),SampleSemiSphere(vec2(Hash(seed),Hash(seed)),CurrentNormal),data.Roughness);
+       ReflectedRay = reflect(rayDirection,CurrentNormal);
+       ReflectedRay = normalize(ReflectedRay);
        NewRayOrigin = data.Position + ReflectedRay * Epsilon;
        InvRayDirection = 1.0f / (ReflectedRay);
-       data = TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance);
+       SecondaryData = TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance);
 
-       Color += Roughness * vec3(data.Albedo);
-       Normal += Roughness * data.Normal;
-       Roughness = data.Roughness;
+       Color += (1.0f - CurrentRoughness) * SecondaryData.Albedo.xyz;
+       Normal += (1.0f - CurrentRoughness) * SecondaryData.Normal;
+       Roughness += SecondaryData.Roughness;
+       CurrentRoughness = SecondaryData.Roughness;
+       CurrentNormal = SecondaryData.Normal;
    }
-   Color = Color / int(MaxBounces);
-   Normal = Normal / int(MaxBounces);
-   vec3 Result = vec3(0.1f) + Color * dot(Normal,vec3(0.5f,0.4f,-0.7f));
-   return vec3(Result);
-   //return vec3(data.Normal);
+   float invMaxBounces = 1.0f / (MaxBounces);
+   Color = Color * invMaxBounces;
+   Roughness = Roughness * invMaxBounces;
+   Normal = normalize(Normal * invMaxBounces);
+
+   vec3 F = vec3(0.0f);
+
+   vec3 CombinedColor = (data.Albedo.xyz + Color) * 0.5f;
+   float CombinedRoughness = (Roughness + data.Roughness) * 0.5f;
+
+   vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(IsShadow), F);
+   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal, IsShadow, seed).Albedo.xyz;
+   vec3 reflectionContribution = PBRshade(Normal, Color, Roughness, 0.0f, -rayOrigin, Position, float(0.0f), F);
+
+   vec3 finalColor = directLight;
+   finalColor += mix(reflectionContribution, indirectLight, CombinedRoughness);
+
+   return finalColor * 0.5f + float(IsShadow) * vec3(0.05f) * CombinedColor;
 }
 
 void main()
@@ -314,11 +519,10 @@ void main()
     vec3 rayOrigin = CameraPosition;
     vec4 rayDir4 = inverse(ProjectionViewMat) * vec4(uvND, 1.0, 1.0);
     rayDir4 = vec4(rayDir4.xyz / rayDir4.w,1.0f);
-    vec3 rayDirection = normalize(rayDir4.xyz);
+    vec3 rayDirection = normalize(rayDir4.xyz - rayOrigin.xyz);
 
-    vec4 in_val = imageLoad( image, pos ).rgba;
+   // vec4 in_val = imageLoad( image, pos ).rgba;
 
-    vec3 result = RayTrace(rayOrigin,rayDirection.xyz);
-    //vec3 Color = vec3(1.0f,0.0f,0.0f) * dot(result,vec3(0.5f,0.4f,-0.7f));
+    vec3 result = RayTrace(rayOrigin,rayDirection.xyz,pos);
     imageStore( image, pos,vec4(result,1.0f));
 }

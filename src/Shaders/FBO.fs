@@ -60,22 +60,17 @@ void main()
 	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
     //OutColor /= 2.0f;
    // vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
-	//vec2 TracedUV = vec4(texture(TracedImage, TexCoords.xy).xyz,1.0f).xy;
-
-
-	
-	//OutColor.xyz = texture(Viewport, TexCoords.xy).xyz + vec3(TracedUV,0.0f);
+	vec3 TracedUV = texture(TracedImage, TexCoords.xy).xyz;
+	OutColor.xyz =  TracedUV;
+	if(Debug)
+	{
+      //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
+	  OutColor.xyz =  mix(texture(Viewport, TexCoords.xy).xyz,TracedUV,0.8f);
+	}
     
 	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);
     FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
 	//vec2 Coords = TexCoords * 0.5f + vec2(0.5f,0.0f);
-
-
-	if(Debug)
-	{
-      FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
-	}
-    //FragColor = vec4(texture(TracedImage, TexCoords.xy).xyz,1.0f);
 
 	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
     //FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);

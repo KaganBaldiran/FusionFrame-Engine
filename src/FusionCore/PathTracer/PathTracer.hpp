@@ -6,6 +6,7 @@
 #include "../Model.hpp"
 #include "../../FusionPhysics/Physics.hpp"
 #include "../Texture.h"
+#include "../../FusionUtility/Hashing.hpp"
 
 struct BVHnode;
 
@@ -54,6 +55,8 @@ namespace FUSIONCORE
 
 		std::vector<BVHnode> TopDownBVHnodes;
 		std::vector<BVHnode> BottomUpBVHNodes;
+
+		std::vector<Model*> Models;
 	};
 
 }

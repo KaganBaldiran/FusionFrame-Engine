@@ -1270,10 +1270,12 @@ int Application::PathTracer()
 	MainCharac->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
 	MainCharac->GetTransformation().TranslateNoTraceBack({ 4.0f,1.0f,-10.0f });
 	Stove->GetTransformation().TranslateNoTraceBack({ -3.0f,4.0f,-8.0f });
-	wall->GetTransformation().TranslateNoTraceBack({ -20.0f,10.0f,0.0f });
-	wall->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f);
+	wall->GetTransformation().TranslateNoTraceBack({ 0.0f,-4.0f,0.0f });
+	wall->GetTransformation().ScaleNoTraceBack({ 2.0f,2.0f,2.0f });
+	//wall->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f);
 	sofa->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 300.0f);
 	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-20.0f });
+	sofa->GetTransformation().ScaleNoTraceBack({ 4.0f,4.0f,4.0f });
 
 	Shaders.DeferredPBRshader->use();
 
@@ -1296,11 +1298,11 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.4f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
-	FUSIONCORE::Material material1(0.2f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
-	FUSIONCORE::Material material2(0.3f, 0.0f, FF_COLOR_MINT_GREEN);
-	FUSIONCORE::Material material3(0.1f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
-	//models.push_back(Stove.get());
+	FUSIONCORE::Material material0(0.2f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
+	FUSIONCORE::Material material2(1.0f, 0.0f, FF_COLOR_MINT_GREEN);
+	FUSIONCORE::Material material3(0.7f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+	
 	models.push_back({ grid.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });
 	models.push_back({model1.get(),&material3 });
@@ -1320,18 +1322,23 @@ int Application::PathTracer()
 
 	double DeltaTime = 0.0;
 	FUSIONUTIL::Timer timer;
+	bool Debug = false;
+
+	FUSIONCORE::Model* PixelModel = nullptr;
+	glm::dvec2 CurrentMousePos(0.0f);
+	glm::dvec2 PrevMousePos(0.0f);
 	while (!ApplicationWindow.ShouldClose())
 	{
 		timer.Set();
 
+		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
+
+		PrevMousePos = CurrentMousePos;
+		FUSIONUTIL::GetCursorPosition(window, CurrentMousePos.x, CurrentMousePos.y);
+
 		static bool AllowPressF = true;
-		if (!AllowPressF && FUSIONUTIL::GetKey(window, FF_KEY_F) == FF_GLFW_RELEASE)
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_F, AllowPressF))
 		{
-			AllowPressF = true;
-		}
-		if (FUSIONUTIL::GetKey(window, FF_KEY_F) == FF_GLFW_PRESS && AllowPressF)
-		{
-			AllowPressF = false;
 			IsFullScreen = !IsFullScreen;
 			if (!IsFullScreen)
 			{
@@ -1346,9 +1353,14 @@ int Application::PathTracer()
 				glfwSetWindowMonitor(window, NULL, PrevWindowPos.x, PrevWindowPos.y, PrevWindowSize.x, PrevWindowSize.y, mode->refreshRate);
 			}
 		}
+
+		static bool AllowG = true;
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_G, AllowG))
+		{
+			Debug = !Debug;
+		}
 		//eventmanager.Publish<NewEvent>(event);
 
-		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
 
 		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
@@ -1357,41 +1369,71 @@ int Application::PathTracer()
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 
-		/*
+		
 		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
-		grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		/*grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		model1->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		Rock->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
 		Cliff->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());*/
 		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
-		*/
+		
+
 		Gbuffer.Unbind();
 		
 		ScreenFrameBuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_BLACK);
 		Gbuffer.DrawSceneDeferred(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, FF_COLOR_VOID, 0.3f);
+		
+	
+		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
+		{
+			auto Pixel = FUSIONCORE::ReadFrameBufferPixel(CurrentMousePos.x, CurrentMousePos.y, FF_FRAMEBUFFER_MODEL_ID_IMAGE_ATTACHMENT, FF_PIXEL_FORMAT_GL_RED, { WindowSize.x, WindowSize.y });
+			PixelModel = FUSIONCORE::GetModel(Pixel.GetRed());
+		}
+		
 
 		FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
 		
-		pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
 		
+		if (PixelModel)
+		{
+			if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_LEFT) == FF_GLFW_PRESS)
+			{
+				glm::vec4 PrevMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(PrevMousePos.x, PrevMousePos.y, 0.0f, 1.0f);
+				glm::vec4 CurrentMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(CurrentMousePos.x, CurrentMousePos.y, 0.0f, 1.0f);
+				glm::vec3 DeltaMouse = CurrentMouseWorldPos - PrevMouseWorldPos;
+				PixelModel->GetTransformation().Translate(glm::vec3(DeltaMouse.x, -DeltaMouse.y, DeltaMouse.z) / 10.0f);
+				PixelModel->GetTransformation().IsTransformed = true;
+			}
+
+			FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+			PixelModel->DrawDeferred(camera3d, *Shaders.LightShader, [](){}, FUSIONCORE::Material());
+			FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+		}
+		
+		if (Debug)
+		{
+			pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
+		}
+
 		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 		
-		//pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
+		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
 
 		auto PathTracerImage = [&]() {
 			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, pathtracer.GetTracedImage());
 			Shaders.FBOShader->setInt("TracedImage", 5);
+			Shaders.FBOShader->setBool("Debug", Debug);
 		};
 
 	    ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, PathTracerImage, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);

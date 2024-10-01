@@ -6,7 +6,6 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
-#include "../../FusionUtility/Hashing.hpp"
 #include <omp.h>
 #include "../../FusionUtility/StopWatch.h"
 #include <algorithm>
@@ -15,7 +14,7 @@
 #include "../../FusionCore/Decal.hpp"
 
 template <typename T>
-using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T,16>>;
+using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
 
 inline void CompareVec3MinMax(glm::vec3& Min,glm::vec3& Max, const glm::vec3& v)
 {
@@ -290,13 +289,15 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 	std::deque<int> NodesToProcess;
 	NodesToProcess.push_back(ModelBoundingBoxIndex);
 
+	float ParentCost = std::numeric_limits<int>::max();
+
 	while (!NodesToProcess.empty())
 	{
-		auto &node = BVHNodes[NodesToProcess.front()];
-		NodesToProcess.pop_front();
+		auto &node = BVHNodes[NodesToProcess.back()];
+		NodesToProcess.pop_back();
 
 		node.Depth++;
-		if (node.Depth >= MaxDepth || node.TriangleCount <= 2)
+		if (node.Depth >= MaxDepth || node.TriangleCount <= 1)
 		{
 			continue;
 		}
@@ -351,6 +352,8 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 		Child1.Origin = (Child1.Max + Child1.Min) * 0.5f;
 		BVHNodes.push_back(std::move(Child1));
 		NodesToProcess.push_back(BVHNodes.size() - 1);
+
+		ParentCost = Cost;
 	}
 }
 
@@ -461,6 +464,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	ModelMatrixes.reserve(ModelCount);
 	ModelAlbedos.reserve(ModelCount);
 	ModelRoughness.reserve(ModelCount);
+	Models.reserve(ModelCount);
 	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
@@ -494,6 +498,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto& ModelWithMaterial = ModelsToTrace[i];
 		auto& model = ModelWithMaterial.first;
 		auto& material = ModelWithMaterial.second;
+
+		Models.push_back(model);
 
 		ModelMatrix = model->GetTransformation().GetModelMat4();
 		NormalMatrix = glm::transpose(glm::inverse(glm::mat3(ModelMatrix)));
@@ -567,7 +573,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto& node = TopDownBVHnodes[i];
 		if (node.ChildIndex < 0)
 		{
-		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals, TriangleCenters, TriangleMinMax, 28);
+		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals, TriangleCenters, TriangleMinMax, 27);
 		}
 	}
 	ModelNodeCount = BoundingBoxes.size();
@@ -690,6 +696,27 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 	shader.setMat4("ProjectionViewMat",camera.ProjectionViewMat);
 	shader.setFloat("Time",glfwGetTime());
 	
+	/*
+	AlignedBuffer<glm::mat4> ModelMatrices;
+	size_t HowManyTransformed = 0;
+
+	ModelMatrices.reserve(Models.size());
+	for (auto& model : this->Models)
+	{
+		auto& transformation = model->GetTransformation();
+		//if (transformation.IsTransformed)
+		{
+			ModelMatrices.push_back(transformation.GetModelMat4());
+			//transformation.IsTransformed = false;
+			//HowManyTransformed++;
+		}
+	}
+	//LOG_PARAMETERS(HowManyTransformed);
+
+	ModelMatricesData.Bind();
+	ModelMatricesData.BufferSubDataFill(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4) * ModelMatrices.size(), ModelMatrices.data());
+	*/
+
 	if (!IsInitialized)
 	{
 		this->MinBoundTexture.SendBindlessHandle(shader.GetID(), "MinBounds");
@@ -730,6 +757,7 @@ void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCO
 	{
 		this->MinBoundTexture.SendBindlessHandle(Shader.GetID(), "MinBounds");
 		this->MaxBoundTexture.SendBindlessHandle(Shader.GetID(), "MaxBounds");
+		this->TriangleCountTexture.SendBindlessHandle(Shader.GetID(), "TriangleCounts");
 		initialized = true;
 	}
 

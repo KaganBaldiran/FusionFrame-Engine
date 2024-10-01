@@ -66,24 +66,24 @@ namespace FUSIONCORE
         Model(Model& Other);
 
         inline unsigned int GetModelID() { return this->ModelID; };
-        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
-        void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
-        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
-        void DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO& InstanceDataVBO, size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps = std::vector<OmniShadowMap*>(), float EnvironmentAmbientAmount = 0.2f);
-        void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount);
-        void DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
-        void DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
-        void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices);
-        void DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
-        void DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material);
-        void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
+        void Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations);
+        void Draw(Camera3D& camera, Shader& shader, Material material, const std::function<void()>& ShaderPreperations);
+        void Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material,float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
+        void DrawInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO& InstanceDataVBO, size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps = std::vector<OmniShadowMap*>(), float EnvironmentAmbientAmount = 0.2f);
+        void DrawDeferredInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount);
+        void DrawDeferredInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
+        void DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount);
+        void DrawDeferred(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices);
+        void DrawDeferred(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material);
+        void DrawDeferredIndirect(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material);
+        void DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations);
 
-        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap , std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
-        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
-        void DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations,CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations, CubeMap& cubemap , std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount = 0.2f);
+        void Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps , std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount = 0.2f);
+        void DrawImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount = 0.2f);
 
         void FindGlobalMeshScales();
 

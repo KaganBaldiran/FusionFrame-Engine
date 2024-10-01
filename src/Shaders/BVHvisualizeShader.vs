@@ -7,6 +7,7 @@ out vec3 UniqueColor;
 
 layout (location = 1) uniform samplerBuffer MinBounds;
 layout (location = 2) uniform samplerBuffer MaxBounds;
+layout (location = 3) uniform samplerBuffer TriangleCounts;
 
 uniform mat4 ProjView;
 
@@ -17,12 +18,13 @@ float Hash(inout int x)
     x ^= x >> 15;
     x *= 0x846ca68bU;
     x ^= x >> 16;
-     return float(x & 0xFFFFFF) / float(0x1000000); 
+    return float(x & 0xFFFFFF) / float(0x1000000); 
 }
 
 void main()
  {
    uint seed = gl_InstanceID + 1;
+   vec3 TriangleCount = texelFetch(TriangleCounts,gl_InstanceID).xyz;
    UniqueColor = vec3(Hash(seed),Hash(seed),Hash(seed));
 
    vec3 Min = texelFetch(MinBounds,gl_InstanceID).xyz;

@@ -245,6 +245,11 @@ void FUSIONCORE::SSBO::BufferDataFill(GLenum target, GLsizeiptr size, const void
 	glBufferData(target, size, data, usage);
 }
 
+void FUSIONCORE::SSBO::BufferSubDataFill(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+{
+	glBufferSubData(target, offset, size, data);
+}
+
 FUSIONCORE::IndirectCommandBuffer::IndirectCommandBuffer()
 {
 	glGenBuffers(1, &this->icb);

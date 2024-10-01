@@ -45,7 +45,7 @@ FUSIONCORE::Model::Model(Model& Other)
     //this.
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()> &ShaderPreperations)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader,const std::function<void()> &ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -63,7 +63,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<voi
 	}
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, Material material,const std::function<void()>& ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -81,7 +81,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, Material material
 	}
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap,Material material, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -99,7 +99,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<voi
     }
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -124,7 +124,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<voi
     }
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -153,7 +153,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::function<voi
     }
 }
 
-void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO &InstanceDataVBO,size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, Material material,VBO &InstanceDataVBO,size_t InstanceCount,std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -206,7 +206,7 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, std::fun
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount)
+void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material, VBO& InstanceDataVBO, size_t InstanceCount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -232,7 +232,7 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
+void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -257,7 +257,7 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
+void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, VBO& InstanceDataVBO, size_t InstanceCount)
 {
     auto shaderPrep = [&](Material& material) {
         return [&]() {
@@ -286,7 +286,7 @@ void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, 
     }
 }
 
-void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices)
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material, std::vector<glm::mat4>& AnimationBoneMatrices)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -310,7 +310,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
     }
 }
 
-void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
+void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -326,7 +326,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, std::func
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredIndirect(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, Material material)
+void FUSIONCORE::Model::DrawDeferredIndirect(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, Material material)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -342,7 +342,7 @@ void FUSIONCORE::Model::DrawDeferredIndirect(Camera3D& camera, Shader& shader, s
     }
 }
 
-void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
+void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -358,7 +358,7 @@ void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& s
     }
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() 
     {
@@ -376,7 +376,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     }
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -399,7 +399,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     }
 }
 
-void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Material> materials, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, std::vector<OmniShadowMap*> ShadowMaps, std::vector<glm::mat4>& AnimationBoneMatrices, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
@@ -426,7 +426,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     }
 }
 
-void FUSIONCORE::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
+void FUSIONCORE::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader, const std::function<void()>& ShaderPreperations, CubeMap& cubemap, float EnvironmentAmbientAmount)
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");

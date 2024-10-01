@@ -1,6 +1,7 @@
 #pragma once
 #include "../FusionUtility/FusionDLLExport.h"
 #include "../FusionUtility/VectorMath.h"
+#include "../FusionUtility/Definitions.hpp"
 
 namespace FUSIONCORE
 {
@@ -98,6 +99,7 @@ namespace FUSIONCORE
 		void Bind();
 		void Unbind();
 		void BufferDataFill(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+		void BufferSubDataFill(GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
 	private:
 		GLuint ssbo;
 	};

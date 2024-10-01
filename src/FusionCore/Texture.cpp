@@ -109,6 +109,7 @@ FUSIONCORE::Texture2D::Texture2D(const GLuint SourceTexture, const GLenum Source
 
 void FUSIONCORE::Texture2D::Clear()
 {
+	if (TextureHandle != 0) glMakeImageHandleNonResidentARB(TextureHandle);
 	glDeleteTextures(1, &id);
 	LOG_INF("Texture Cleaned : " << PathData);
 }

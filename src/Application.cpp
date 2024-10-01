@@ -1298,10 +1298,10 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.2f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material0(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
-	FUSIONCORE::Material material2(1.0f, 0.0f, FF_COLOR_MINT_GREEN);
-	FUSIONCORE::Material material3(0.7f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
+	FUSIONCORE::Material material3(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	
 	models.push_back({ grid.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });

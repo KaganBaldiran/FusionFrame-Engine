@@ -76,7 +76,7 @@ struct RayData
 };
 
 int NodesToProcess[28];
-const vec3 LIGHT_DIRECTION = vec3(0.5f,0.4f,-0.7f);
+vec3 LIGHT_DIRECTION = vec3(cos(Time * 0.1f),0.4f,-0.7f);
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
 {
@@ -366,7 +366,7 @@ vec3 PBRshade(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPo
     vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
     vec3 radiance = vec3(1.0);
 
-    return (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * 4.0 * NdotL;
+    return (1.2 - shadow) * (kD * Albedo / PI + specular) * radiance * 4.0 * NdotL;
 }
 
 float Hash(inout int x)
@@ -405,9 +405,8 @@ bool RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection)
      return ClosestDistance != pos_infinity;
 }
 
-RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in bool Shadow,inout uint seed)
+RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in float SurfaceRoughness,in bool Shadow,inout uint seed,in vec3 F)
 {
-
    RayData ResultData;
    ResultData.Normal = vec3(0.0f);
    ResultData.Position = vec3(0.0f);
@@ -422,15 +421,35 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in bool Sha
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = vec3(0.0f);
 
-   const int SampleCount = 50;
+   const int SampleCount = int(200.0f * SurfaceRoughness);
    float invSampleCount = 1.0f / float(SampleCount);
+   float weight = 0.0f;
+   float LightIntensity = 4.0f;
+   bool isShadow = false;
    for(int i = 0;i < SampleCount;i++)
    {
-      SampleVector = SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection);
+      SampleVector = mix(rayDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection),SurfaceRoughness * SurfaceRoughness);
+      SampleVector = normalize(SampleVector * (1.0f - F));
+
       InvRayDirection = 1.0f / (SampleVector);
       data = TraverseBVH(rayOrigin + Epsilon * SampleVector,SampleVector,InvRayDirection,ClosestDistance);
-      ResultData.Light += data.Light * (1.0f - ResultData.Roughness);
+      
+      if(ClosestDistance == pos_infinity)
+      {
+         ResultData.Albedo.xyz += vec3(0.0f,0.2f,0.5f);
+         ResultData.Light += 0.05f;
+         ClosestDistance = pos_infinity;
+         continue;
+      }
+
+      isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
+      
+      ResultData.Light += data.Light * (1.0f - data.Roughness) * LightIntensity * (1.0f - float(isShadow));
       ResultData.Albedo += data.Albedo;
+      ResultData.Position += data.Position;
+      ResultData.Normal += data.Normal;
+
+      weight += (1.0f - data.Roughness);
 
       ClosestDistance = pos_infinity;
    }
@@ -438,12 +457,13 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in bool Sha
    ResultData.Albedo *= invSampleCount;
    ResultData.Roughness *= invSampleCount;
    ResultData.Albedo.xyz *= ResultData.Light;
+   ResultData.Position *= invSampleCount;
+   ResultData.Normal *= invSampleCount;
 
    return ResultData;
 }
 
-
-vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
+vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
 {
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = 1.0f / (rayDirection);
@@ -457,56 +477,13 @@ vec3 RayTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
    vec3 Color = vec3(0.0f);
    bool IsShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
 
-   vec3 Normal = vec3(0.0f);
-   float Roughness = 0.0f;
-   float CurrentRoughness = data.Roughness;
-   vec3 CurrentNormal = data.Normal;
-   vec3 Position = vec3(0.0f);
-   vec3 ReflectedRay;
-   vec3 NewRayOrigin;
-   RayData SecondaryData;
-
    uint seed = pixelPos.x * pixelPos.y;
-
-   int MaxBounces = 2;
-   for(int i = 0;i < MaxBounces;i++)
-   {
-       if(ClosestDistance == pos_infinity)
-       {
-         break;
-       }
-       ClosestDistance = pos_infinity;
-       //ReflectedRay = mix(reflect(rayDirection,CurrentNormal),SampleSemiSphere(vec2(Hash(seed),Hash(seed)),CurrentNormal),data.Roughness);
-       ReflectedRay = reflect(rayDirection,CurrentNormal);
-       ReflectedRay = normalize(ReflectedRay);
-       NewRayOrigin = data.Position + ReflectedRay * Epsilon;
-       InvRayDirection = 1.0f / (ReflectedRay);
-       SecondaryData = TraverseBVH(NewRayOrigin,ReflectedRay,InvRayDirection,ClosestDistance);
-
-       Color += (1.0f - CurrentRoughness) * SecondaryData.Albedo.xyz;
-       Normal += (1.0f - CurrentRoughness) * SecondaryData.Normal;
-       Roughness += SecondaryData.Roughness;
-       CurrentRoughness = SecondaryData.Roughness;
-       CurrentNormal = SecondaryData.Normal;
-   }
-   float invMaxBounces = 1.0f / (MaxBounces);
-   Color = Color * invMaxBounces;
-   Roughness = Roughness * invMaxBounces;
-   Normal = normalize(Normal * invMaxBounces);
-
    vec3 F = vec3(0.0f);
 
-   vec3 CombinedColor = (data.Albedo.xyz + Color) * 0.5f;
-   float CombinedRoughness = (Roughness + data.Roughness) * 0.5f;
-
    vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(IsShadow), F);
-   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal, IsShadow, seed).Albedo.xyz;
-   vec3 reflectionContribution = PBRshade(Normal, Color, Roughness, 0.0f, -rayOrigin, Position, float(0.0f), F);
-
-   vec3 finalColor = directLight;
-   finalColor += mix(reflectionContribution, indirectLight, CombinedRoughness);
-
-   return finalColor * 0.5f + float(IsShadow) * vec3(0.05f) * CombinedColor;
+   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal,data.Roughness, IsShadow, seed,F).Albedo.xyz;
+   vec3 finalColor = (directLight + indirectLight) * 0.5f;
+   return finalColor;
 }
 
 void main()
@@ -523,6 +500,6 @@ void main()
 
    // vec4 in_val = imageLoad( image, pos ).rgba;
 
-    vec3 result = RayTrace(rayOrigin,rayDirection.xyz,pos);
+    vec3 result = PathTrace(rayOrigin,rayDirection.xyz,pos);
     imageStore( image, pos,vec4(result,1.0f));
 }

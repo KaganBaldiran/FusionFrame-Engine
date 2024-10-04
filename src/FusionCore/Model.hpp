@@ -32,11 +32,11 @@ namespace FUSIONCORE
     class FUSIONFRAME_EXPORT PreMeshData
     {
     public:
-        std::vector<FUSIONCORE::Texture2D> textures;
+        std::vector<std::shared_ptr<Texture2D>> textures;
         std::vector<unsigned int> indices;
         std::vector<std::shared_ptr<Vertex>> vertices;
 
-        PreMeshData(std::vector<FUSIONCORE::Texture2D>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices);
+        PreMeshData(std::vector<std::shared_ptr<Texture2D>>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices);
     };
 
     FUSIONFRAME_EXPORT_FUNCTION glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
@@ -100,7 +100,7 @@ namespace FUSIONCORE
         void SetAlphaMaterial(Material& material);
 
         std::vector<Mesh> Meshes;
-        std::vector<Texture2D> textures_loaded;
+        std::vector<std::shared_ptr<Texture2D>> textures_loaded;
         std::vector<PreMeshData> PreMeshDatas;
 
         ~Model();
@@ -108,9 +108,9 @@ namespace FUSIONCORE
 
         void loadModel(std::string const& path , bool Async = false, bool AnimationModel = false);
         void processNode(aiNode* node, const aiScene* scene);
-        Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+        void processMesh(aiMesh* mesh, const aiScene* scene);
         void ExtractBones(std::vector<std::shared_ptr<Vertex>>& vertices, aiMesh* mesh, const aiScene* scene);
-        void loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, std::vector<FUSIONCORE::Texture2D>& Destination);
+        void loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, std::vector<std::shared_ptr<FUSIONCORE::Texture2D>>& Destination);
 
         PreMeshData processMeshAsync(aiMesh* mesh, const aiScene* scene);
         void processNodeAsync(aiNode* node, const aiScene* scene);
@@ -127,25 +127,25 @@ namespace FUSIONCORE
         inline const size_t GetInstanceDataInstanceCount() { return this->InstanceCount; };
         
     private:
-            std::string path;
-            std::vector<Texture2D> Textures;
-            unsigned int ModelID;
-            std::string directory;
-            glm::vec3 originpoint;
-            glm::vec3 dynamic_origin;
-            bool AnimationEnabled;
-            std::vector<glm::mat4>* FinalAnimationMatrices;
-            Material* AlphaMaterial;
+        std::string path;
+        std::vector<std::shared_ptr<Texture2D>> Textures;
+        unsigned int ModelID;
+        std::string directory;
+        glm::vec3 originpoint;
+        glm::vec3 dynamic_origin;
+        bool AnimationEnabled;
+        std::vector<glm::mat4>* FinalAnimationMatrices;
+        Material* AlphaMaterial;
 
-            std::map<std::string, BoneInfo> Bones;
-            int boneCounter = 0;
+        std::map<std::string, BoneInfo> Bones;
+        int boneCounter = 0;
 
-            aiScene* scene;
-            std::string ModelName;
+        aiScene* scene;
+        std::string ModelName;
 
-            int ModelImportStateCode = FF_INITIAL_CODE;
-            VBO* InstanceDataVBO;
-            size_t InstanceCount;
+        int ModelImportStateCode = FF_INITIAL_CODE;
+        VBO* InstanceDataVBO;
+        size_t InstanceCount;
     };
 
     FUSIONFRAME_EXPORT_FUNCTION std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);

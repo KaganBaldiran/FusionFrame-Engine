@@ -5,7 +5,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<Texture2D>& textures_i)
+FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Texture2D>>& textures_i)
 {
 	this->vertices.assign(vertices_i.begin(), vertices_i.end());
 	this->indices.assign(indices_i.begin(), indices_i.end());
@@ -13,21 +13,21 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 
 	for (size_t i = 0; i < textures.size(); i++)
 	{
-		if (textures[i].PbrMapType == "texture_diffuse")
+		if (textures[i]->PbrMapType == "texture_diffuse")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_DIFFUSE0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_specular")
+		else if (textures[i]->PbrMapType == "texture_specular")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_SPECULAR0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_normal")
+		else if (textures[i]->PbrMapType == "texture_normal")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_NORMAL0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_NORMAL, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_metalic")
+		else if (textures[i]->PbrMapType == "texture_metalic")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_METALIC0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_METALLIC, textures[i].get());
 		}
 	}
 
@@ -57,7 +57,7 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 	IndirectBufferFilled = false;
 }
 
-FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<Texture2D>& textures_i)
+FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<std::shared_ptr<Texture2D>>& textures_i)
 {
 	this->vertices.assign(vertices_i.begin(), vertices_i.end());
 	this->indices.assign(indices_i.begin(), indices_i.end());
@@ -66,21 +66,21 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 
 	for (size_t i = 0; i < textures.size(); i++)
 	{
-		if (textures[i].PbrMapType == "texture_diffuse")
+		if (textures[i]->PbrMapType == "texture_diffuse")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_DIFFUSE0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_specular")
+		else if (textures[i]->PbrMapType == "texture_specular")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_SPECULAR0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_normal")
+		else if (textures[i]->PbrMapType == "texture_normal")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_NORMAL0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_NORMAL, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_metalic")
+		else if (textures[i]->PbrMapType == "texture_metalic")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_METALIC0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_METALLIC, textures[i].get());
 		}
 	}
 
@@ -484,32 +484,33 @@ void FUSIONCORE::Mesh::CopyMesh(Mesh& other)
 
 	for (size_t i = 0; i < other.textures.size(); i++)
 	{
-		auto& SourceTexture = other.textures[i];
-		if (SourceTexture.GetTextureState() == FF_TEXTURE_SUCCESS)
+		auto SourceTexture = other.textures[i].get();
+		if (SourceTexture->GetTextureState() == FF_TEXTURE_SUCCESS)
 		{
-			Texture2D newTexture(SourceTexture.GetTexture(), SourceTexture.GetInternalFormat(), { SourceTexture.GetWidth() , SourceTexture.GetHeight() },
-				SourceTexture.GetFilePath().c_str(), SourceTexture.GetTextureType(), SourceTexture.GetPixelType(), GL_LINEAR, GL_LINEAR);
-			this->textures.push_back(newTexture);
+			this->textures.push_back(std::make_shared<Texture2D>(SourceTexture->GetTexture(), SourceTexture->GetInternalFormat(), glm::vec2(SourceTexture->GetWidth() , SourceTexture->GetHeight()),
+				                     SourceTexture->GetFilePath().c_str(), SourceTexture->GetTextureType(), SourceTexture->GetPixelType(), GL_LINEAR, GL_LINEAR));
 		}
 	}
 
+	Texture2D* tempTexture = nullptr;
 	for (size_t i = 0; i < textures.size(); i++)
 	{
-		if (textures[i].PbrMapType == "texture_diffuse")
+		tempTexture = textures[i].get();
+		if (tempTexture->PbrMapType == "texture_diffuse")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_DIFFUSE0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_specular")
+		else if (tempTexture->PbrMapType == "texture_specular")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_SPECULAR0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_normal")
+		else if (tempTexture->PbrMapType == "texture_normal")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_NORMAL0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_NORMAL, textures[i].get());
 		}
-		else if (textures[i].PbrMapType == "texture_metalic")
+		else if (tempTexture->PbrMapType == "texture_metalic")
 		{
-			ImportedMaterial.PushTextureMap(TEXTURE_METALIC0, textures[i]);
+			ImportedMaterial.PushTextureMap(FF_TEXTURE_METALLIC, textures[i].get());
 		}
 	}
 	this->ConstructMesh();

@@ -287,47 +287,47 @@ int Application::Run()
 	LOG("Duration: " << stopwatch.GetMiliseconds());
 #endif // DEBUG
 	FUSIONCORE::Material shovelMaterial;
-	shovelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShovelDiffuse);
-	shovelMaterial.PushTextureMap(TEXTURE_NORMAL0, ShovelNormal);
-	shovelMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShovelSpecular);
+	shovelMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &ShovelDiffuse);
+	shovelMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &ShovelNormal);
+	shovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
 
 	FUSIONCORE::Material FloorMaterial;
-	FloorMaterial.PushTextureMap(TEXTURE_DIFFUSE0, FloorAlbedo);
-	FloorMaterial.PushTextureMap(TEXTURE_NORMAL0, FloorNormal);
-	FloorMaterial.PushTextureMap(TEXTURE_SPECULAR0, FloorSpecular);
+	FloorMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &FloorAlbedo);
+	FloorMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &FloorNormal);
+	FloorMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &FloorSpecular);
 	FloorMaterial.SetTiling(3.0f);
 
 	FUSIONCORE::Material SofaMaterial;
-	SofaMaterial.PushTextureMap(TEXTURE_DIFFUSE0, SofaDiffuse);
-	SofaMaterial.PushTextureMap(TEXTURE_NORMAL0, SofaNormal);
-	SofaMaterial.PushTextureMap(TEXTURE_SPECULAR0, SofaSpecular);
+	SofaMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &SofaDiffuse);
+	SofaMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &SofaNormal);
+	SofaMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &SofaSpecular);
 
 	FUSIONCORE::Material MirrorMaterial;
-	MirrorMaterial.PushTextureMap(TEXTURE_DIFFUSE0, StoveDiffuse);
-	MirrorMaterial.PushTextureMap(TEXTURE_NORMAL0, StoveNormal);
-	MirrorMaterial.PushTextureMap(TEXTURE_SPECULAR0, StoveSpecular);
-	MirrorMaterial.PushTextureMap(TEXTURE_METALIC0, StoveMetalic);
+	MirrorMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &StoveDiffuse);
+	MirrorMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &StoveNormal);
+	MirrorMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &StoveSpecular);
+	MirrorMaterial.PushTextureMap(FF_TEXTURE_METALLIC, &StoveMetalic);
 
 	FUSIONCORE::Material WallMaterial;
-	WallMaterial.PushTextureMap(TEXTURE_DIFFUSE0, WallDiffuse);
-	WallMaterial.PushTextureMap(TEXTURE_NORMAL0, WallNormal);
-	WallMaterial.PushTextureMap(TEXTURE_SPECULAR0, WallSpecular);
+	WallMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &WallDiffuse);
+	WallMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &WallNormal);
+	WallMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &WallSpecular);
 	WallMaterial.SetTiling(2.0f);
 
 	FUSIONCORE::Material AnimationModelMaterial;
-	AnimationModelMaterial.PushTextureMap(TEXTURE_DIFFUSE0, bearDiffuse);
-	AnimationModelMaterial.PushTextureMap(TEXTURE_NORMAL0, bearNormal);
-	AnimationModelMaterial.PushTextureMap(TEXTURE_SPECULAR0, bearSpecular);
+	AnimationModelMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &bearDiffuse);
+	AnimationModelMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &bearNormal);
+	AnimationModelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &bearSpecular);
 
 	FUSIONCORE::Material ShrubMaterial;
-	ShrubMaterial.PushTextureMap(TEXTURE_DIFFUSE0, ShrubDiffuse);
-	ShrubMaterial.PushTextureMap(TEXTURE_NORMAL0, ShrubNormal);
-	ShrubMaterial.PushTextureMap(TEXTURE_SPECULAR0, ShrubSpecular);
-	ShrubMaterial.PushTextureMap(TEXTURE_ALPHA0, ShrubAlpha);
+	ShrubMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &ShrubDiffuse);
+	ShrubMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &ShrubNormal);
+	ShrubMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShrubSpecular);
+	ShrubMaterial.PushTextureMap(FF_TEXTURE_ALPHA, &ShrubAlpha);
 
 	FUSIONCORE::Material FalloutPosterMaterial;
-	FalloutPosterMaterial.PushTextureMap(TEXTURE_DIFFUSE0, FalloutPoster);
-	FalloutPosterMaterial.PushTextureMap(TEXTURE_NORMAL0, FalloutPosterNormal);
+	FalloutPosterMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &FalloutPoster);
+	FalloutPosterMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &FalloutPosterNormal);
 	FalloutPosterMaterial.SetTiling(-1.0f);
 	FalloutPosterMaterial.roughness = 0.7f;
 	//FalloutPosterMaterial.metalic = 0.8f;
@@ -1172,14 +1172,7 @@ int Application::Run()
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();
 
-	shovelMaterial.Clean();
-	FloorMaterial.Clean();
-	SofaMaterial.Clean();
-	MirrorMaterial.Clean();
-	WallMaterial.Clean();
-	AnimationModelMaterial.Clean();
-	ShrubMaterial.Clean();
-	FalloutPosterMaterial.Clean();
+	
 	//IslandMaterial.Clean();
 
 
@@ -1213,7 +1206,7 @@ int Application::PathTracer()
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/kloppenheim_02_puresky_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/sunflowers_puresky_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1245,23 +1238,37 @@ int Application::PathTracer()
 	}
 	FUSIONCORE::UploadLightsShader(*Shaders.DeferredPBRshader);
 
+	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg");
+	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_gl_2k.jpg");
+	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg");
+
+	FUSIONCORE::Texture2D StoveDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg");
+	FUSIONCORE::Texture2D StoveNormal("Resources\\models\\stove\\textures\\electric_stove_nor_gl_2k.jpg");
+	FUSIONCORE::Texture2D StoveSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg");
+	FUSIONCORE::Texture2D StoveMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg");
+
+	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png");
+	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png");
+	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png");
+
 	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
 	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
 	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
 	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	std::unique_ptr<FUSIONCORE::Model> Rock = std::make_unique<FUSIONCORE::Model>("Resources\\models\\RockFormation\\RockFormation.obj");
+	FUSIONCORE::Model Rock("Resources\\models\\RockFormation\\RockFormation.obj");
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	
+
 	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
-	Rock->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
+	Rock.GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
 	Cliff->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
 	Cliff->GetTransformation().TranslateNoTraceBack({ 6.0f,0.0f,0.0f });
 
 	grid->GetTransformation().Scale(glm::vec3(0.1f));
 
-	Stove->GetTransformation().Scale(glm::vec3(3.0f));
+	Stove->GetTransformation().Scale(glm::vec3(6.0f));
 
 	model1->GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,10.0f });
 	model1->GetTransformation().ScaleNoTraceBack(glm::vec3(0.1f, 0.1f, 0.1f));
@@ -1298,15 +1305,52 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material0(0.1f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
 	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
 	FUSIONCORE::Material material3(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+
+	SofaDiffuse.MakeBindless();
+	SofaDiffuse.MakeResident();
+	material1.PushTextureMap(FF_TEXTURE_DIFFUSE, &SofaDiffuse);
+
+	SofaNormal.MakeBindless();
+	SofaNormal.MakeResident();
+	material1.PushTextureMap(FF_TEXTURE_NORMAL, &SofaNormal);
+
+	SofaSpecular.MakeBindless();
+	SofaSpecular.MakeResident();
+	material1.PushTextureMap(FF_TEXTURE_SPECULAR, &SofaSpecular);
+
+	StoveDiffuse.MakeBindless();
+	StoveDiffuse.MakeResident();
+	material3.PushTextureMap(FF_TEXTURE_DIFFUSE, &StoveDiffuse);
+
+	StoveNormal.MakeBindless();
+	StoveNormal.MakeResident();
+	material3.PushTextureMap(FF_TEXTURE_NORMAL, &StoveNormal);
+
+	StoveSpecular.MakeBindless();
+	StoveSpecular.MakeResident();
+	material3.PushTextureMap(FF_TEXTURE_SPECULAR, &StoveSpecular);
+
+	ShovelDiffuse.MakeBindless();
+	ShovelDiffuse.MakeResident();
+	ShovelMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &ShovelDiffuse);
+
+	ShovelNormal.MakeBindless();
+	ShovelNormal.MakeResident();
+	ShovelMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &ShovelNormal);
+
+	ShovelSpecular.MakeBindless();
+	ShovelSpecular.MakeResident();
+	ShovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
 	
 	models.push_back({ grid.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });
-	models.push_back({model1.get(),&material3 });
-	models.push_back({Rock.get(),&material2 });
+	models.push_back({model1.get(),&ShovelMaterial });
+	models.push_back({&Rock,&material2 });
 	models.push_back({wall.get(),&material0 });
 	models.push_back({sofa.get(),&material1 });
 	models.push_back({Stove.get(),&material3 });
@@ -1427,7 +1471,7 @@ int Application::PathTracer()
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 		
-		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d);
+		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d,&cubemap);
 
 		auto PathTracerImage = [&]() {
 			glActiveTexture(GL_TEXTURE5);

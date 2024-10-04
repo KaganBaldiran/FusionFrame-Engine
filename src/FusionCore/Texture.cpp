@@ -106,6 +106,10 @@ FUSIONCORE::Texture2D::Texture2D(const GLuint SourceTexture, const GLenum Source
 	TextureHandle = 0;
 }
 
+FUSIONCORE::Texture2D::~Texture2D()
+{
+	Clear();
+}
 
 void FUSIONCORE::Texture2D::Clear()
 {
@@ -193,6 +197,11 @@ GLenum FUSIONCORE::Texture2D::GetPixelType()
 GLenum FUSIONCORE::Texture2D::GetTextureType()
 {
 	return TextureType;
+}
+
+GLuint64 FUSIONCORE::Texture2D::GetTextureHandle()
+{
+	return TextureHandle;
 }
 
 void FUSIONCORE::Texture2D::Bind(GLenum target)

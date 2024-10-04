@@ -66,7 +66,7 @@ namespace FUSIONCORE
 		bool IndirectBufferFilled;
 
 		Buffer3D ObjectBuffer;
-		std::vector<Texture2D> textures;
+		std::vector<std::shared_ptr<Texture2D>> textures;
 		std::vector<unsigned int> indices;
 		std::vector<std::shared_ptr<Vertex>> vertices;
 		std::vector<std::shared_ptr<HalfEdge>> HalfEdges;
@@ -83,8 +83,8 @@ namespace FUSIONCORE
 
 	public:
 
-		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<Texture2D>& textures_i);
-		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<Texture2D>& textures_i);
+		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Texture2D>>& textures_i);
+		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<std::shared_ptr<Texture2D>>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, Material material, std::function<void()>& ShaderPreperations);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations, CubeMap& cubeMap, Material material, float EnvironmentAmbientAmount = 0.2f);

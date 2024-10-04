@@ -19,7 +19,7 @@ namespace FUSIONCORE
 		inline GLuint GetTracedImage() { return image; };
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
-		void Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera);
+		void Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr);
 	private:
 		GLuint image;
 
@@ -44,13 +44,22 @@ namespace FUSIONCORE
 		TBO RoughnessData;
 		Texture2D RoughnessTexture;
 
-		SSBO TracerTriangleDataPositionsBuffer;
-		SSBO TracerTriangleDataNormalsBuffer;
+		TBO TracerTriangleUVdata;
+		Texture2D TracerTriangleUVTexture;
+
+		TBO TracerTriangleNormalData;
+		Texture2D TracerTriangleNormalsTexture;
+
+		TBO TracerTrianglePositionsData;
+		Texture2D TracerTrianglePositionsTexture;
+
 		SSBO ModelMatricesData;
+		SSBO ModelTextureHandlesData;
 
 		int TriangleCount;
 		int NodeCount;
 		int ModelNodeCount;
+		size_t ModelCount;
 		bool IsInitialized;
 
 		std::vector<BVHnode> TopDownBVHnodes;

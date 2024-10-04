@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_ARB_gpu_shader_int64 : enable
 
 layout(local_size_x=32,local_size_y=32,local_size_z=1) in;
 layout(rgba32f,binding=0) uniform image2D image;
@@ -17,15 +18,16 @@ layout (location = 9) uniform float Time;
 layout (location = 10) uniform samplerBuffer ModelAlbedos;
 layout (location = 11) uniform samplerBuffer ModelRoughness;
 
+layout (location = 12) uniform samplerBuffer TriangleUVS;
+layout (location = 13) uniform samplerBuffer TriangleNormals;
+layout (location = 14) uniform samplerBuffer TrianglePositions;
 
-readonly layout(std430,binding=6) restrict buffer TriangleDataNormals
-{
-  vec4 TriangleNormals[]; 
-};
+layout (location = 15) uniform int ModelCount;
+layout (location = 16) uniform samplerCube EnvironmentCubeMap;
 
-readonly layout(std430,binding=7) restrict buffer TriangleDataPositions
+readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 {
-  vec4 TrianglePositions[]; 
+   uint64_t TexturesHandles[];
 };
 
 readonly layout(std430,binding=8) restrict buffer ModelMatricesData
@@ -75,8 +77,9 @@ struct RayData
    float Light;
 };
 
-int NodesToProcess[28];
 vec3 LIGHT_DIRECTION = vec3(cos(Time * 0.1f),0.4f,-0.7f);
+float LIGHT_INTENSITY = 2.0f;
+int NodesToProcess[28];
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
 {
@@ -196,8 +199,20 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      vec3 n1 = vec3(0.0f);
      vec3 n2 = vec3(0.0f);
 
+     vec2 uv0 = vec2(0.0f);
+     vec2 uv1 = vec2(0.0f);
+     vec2 uv2 = vec2(0.0f);
+
      vec3 Normal = vec3(0.0f);
+     vec3 Tangent;
+     vec3 Bitangent;
+     vec3 up;
      vec2 TriangleUV = vec2(0.0f);
+     vec2 TriangleTextureUV = vec2(0.0f);
+
+     mat3 TBNmat = mat3(1.0);
+
+     uint64_t TextureHandle;
 
      float DistanceChild0 = 0.0f;
      float DistanceChild1 = 0.0f;  
@@ -208,10 +223,6 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      int NearChildIndex = -1;
      int FarChildIndex = -1;
 
-     vec3 TransformedRayOrigin = vec3(-1);
-     vec3 TransformedRayDirection = vec3(-1);
-     vec3 TransformedInvRayDirection = vec3(-1);
-     int LastHitModelID = -1;
      while(StackIndex > 0)
      {
         StackIndex--;
@@ -220,82 +231,113 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
         ChildIndex = int(texelFetch(ChildIndicies,CurrentIndex).r);
         if(ChildIndex == -1)
         {
-            //ClosestTriangleData = vec3(1.0,0.0f,0.0f);
             int TriangleIndex = int(texelFetch(TriangleIndicies,CurrentIndex).r);
 	        int TriCount = int(texelFetch(TriangleCounts,CurrentIndex).r);
             for(int i = TriangleIndex;i < TriangleIndex + TriCount;i++)
             {
-                v0 = TrianglePositions[i * 3].xyzw;
-                v1 = TrianglePositions[i * 3 + 1].xyz;
-                v2 = TrianglePositions[i * 3 + 2].xyz;
+                v0 = texelFetch(TrianglePositions,i * 3).xyzw;
+                v1 = texelFetch(TrianglePositions,i * 3 + 1).xyz;
+                v2 = texelFetch(TrianglePositions,i * 3 + 2).xyz;
 
                 CurrentModelID = int(v0.w);
-                /*
-
-                if(LastHitModelID != CurrentModelID)
-                {
-                    mat4 InvModelMat = inverse(ModelMatrices[CurrentModelID]);
-                    TransformedRayOrigin = vec3(InvModelMat * vec4(rayOrigin,1.0f));
-                    TransformedRayDirection = vec3(InvModelMat * vec4(rayDirection,1.0f));
-                    TransformedInvRayDirection = 1.0f / rayDirection;
-                    LastHitModelID = CurrentModelID;
-                }
-                */
+                
                 IntersectionData result = RayTriangleIntersection(rayOrigin,rayDirection.xyz,v0.xyz,v1,v2);
-                //IntersectionData result = RayTriangleIntersection(TransformedRayOrigin,TransformedRayDirection.xyz,v0.xyz,v1,v2);
 
                 if(result.t > 0.0f)
                 {
                     if(result.t < ClosestDistance)
                     {
                         TriangleUV = result.uv;
-                            
-                        n0 = TriangleNormals[i * 3].xyz;
-                        n1 = TriangleNormals[i * 3 + 1].xyz;
-                        n2 = TriangleNormals[i * 3 + 2].xyz;
+                        
+                        n0 = texelFetch(TriangleNormals,i * 3).xyz;
+                        n1 = texelFetch(TriangleNormals,i * 3 + 1).xyz;
+                        n2 = texelFetch(TriangleNormals,i * 3 + 2).xyz;
                         Normal = normalize((1.0f - TriangleUV.x - TriangleUV.y) * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
-                            
+
+                        uv0 = texelFetch(TriangleUVS,i * 3).xy;
+                        uv1 = texelFetch(TriangleUVS,i * 3 + 1).xy;
+                        uv2 = texelFetch(TriangleUVS,i * 3 + 2).xy;
+                        TriangleTextureUV = (1.0f - TriangleUV.x - TriangleUV.y) * uv0 + TriangleUV.x * uv1 + TriangleUV.y * uv2;
+
+                        TextureHandle = TexturesHandles[CurrentModelID];
+
+                        if (TextureHandle != 0) {
+                            data.Albedo = vec4(texture(sampler2D(TextureHandle),TriangleTextureUV).xyz,1.0f);
+                        }
+                        else
+                        {
+                            data.Albedo = texelFetch(ModelAlbedos,CurrentModelID);
+                        } 
+                        
+                        TextureHandle = TexturesHandles[CurrentModelID + ModelCount];
+
+                        if (TextureHandle != 0) {
+                            vec3 up = abs(Normal.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+                            Tangent = normalize(cross(up, Normal)); 
+                            Bitangent = normalize(cross(Normal, Tangent));
+
+                            TBNmat = mat3(Tangent,Bitangent,Normal);
+                            Normal = texture(sampler2D(TextureHandle),TriangleTextureUV).xyz * 2.0f - 1.0f;
+                            Normal = normalize(TBNmat * Normal);
+                            data.Normal = Normal;
+                        }
+                        else
+                        {
+                            data.Normal = Normal;
+                        }
+
+                        TextureHandle = TexturesHandles[CurrentModelID + ModelCount * 2];
+
+                        if (TextureHandle != 0) {
+                            data.Roughness = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
+                        }
+                        else
+                        {
+                             data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
+                        } 
+
                         ClosestDistance = result.t;
                         data.Position = rayOrigin + rayDirection * result.t;
-                        data.Normal = Normal;
-                        data.Albedo = texelFetch(ModelAlbedos,CurrentModelID);
-                        data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
-                        data.Light = max(0.0f,dot(LIGHT_DIRECTION,Normal));
+                        
+                        data.Light = LIGHT_INTENSITY * max(0.0f,dot(LIGHT_DIRECTION,Normal));
+                        data.uv = TriangleTextureUV;
                     }  
                 }
             }
         }
         else
         {
-            DistanceChild0 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex).xyz,texelFetch(MaxBounds,ChildIndex).xyz);
-            DistanceChild1 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex + 1).xyz,texelFetch(MaxBounds,ChildIndex + 1).xyz);
+               DistanceChild0 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex).xyz,texelFetch(MaxBounds,ChildIndex).xyz);
+               DistanceChild1 = RayAABBIntersection(rayOrigin,InvRayDirection,texelFetch(MinBounds,ChildIndex + 1).xyz,texelFetch(MaxBounds,ChildIndex + 1).xyz);
            
-            if(DistanceChild0 >= DistanceChild1)
-            {
-                if(DistanceChild0 < ClosestDistance)
-                {
-                    NodesToProcess[StackIndex] = ChildIndex;
-                    StackIndex++;
+               if (DistanceChild0 < ClosestDistance || DistanceChild1 < ClosestDistance) {
+                    if(DistanceChild0 >= DistanceChild1)
+                    {
+                        if(DistanceChild0 < ClosestDistance)
+                        {
+                            NodesToProcess[StackIndex] = ChildIndex;
+                            StackIndex++;
+                        }
+                        if(DistanceChild1 < ClosestDistance)
+                        {
+                            NodesToProcess[StackIndex] = ChildIndex + 1;
+                            StackIndex++;
+                        }
+                    }
+                    else
+                    {
+                        if(DistanceChild1 < ClosestDistance)
+                        {
+                            NodesToProcess[StackIndex] = ChildIndex + 1;
+                            StackIndex++;
+                        }
+                        if(DistanceChild0 < ClosestDistance)
+                        {
+                            NodesToProcess[StackIndex] = ChildIndex;
+                            StackIndex++;
+                        }
+                    } 
                 }
-                if(DistanceChild1 < ClosestDistance)
-                {
-                    NodesToProcess[StackIndex] = ChildIndex + 1;
-                    StackIndex++;
-                }
-            }
-            else
-            {
-                if(DistanceChild1 < ClosestDistance)
-                {
-                    NodesToProcess[StackIndex] = ChildIndex + 1;
-                    StackIndex++;
-                }
-                if(DistanceChild0 < ClosestDistance)
-                {
-                    NodesToProcess[StackIndex] = ChildIndex;
-                    StackIndex++;
-                }
-            } 
         }
      }
      return data;
@@ -366,7 +408,7 @@ vec3 PBRshade(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPo
     vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
     vec3 radiance = vec3(1.0);
 
-    return (1.2 - shadow) * (kD * Albedo / PI + specular) * radiance * 4.0 * NdotL;
+    return (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * LIGHT_INTENSITY * NdotL;
 }
 
 float Hash(inout int x)
@@ -382,8 +424,8 @@ float Hash(inout int x)
 vec3 SampleSemiSphere(vec2 seed,vec3 Normal)
 {
    float phi = 2.0f * PI * seed.x;
-   float cosTheta = sqrt(1.0f - seed.y);
-   float sinTheta = sqrt(seed.y);
+   float cosTheta = sqrt(seed.y);       
+   float sinTheta = sqrt(1.0f - seed.y); 
 
    vec3 SampledVector = vec3(cos(phi) * sinTheta,
                              sin(phi) * sinTheta,
@@ -405,7 +447,7 @@ bool RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection)
      return ClosestDistance != pos_infinity;
 }
 
-RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in float SurfaceRoughness,in bool Shadow,inout uint seed,in vec3 F)
+RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in bool Shadow,inout uint seed,in vec3 F,in vec3 CameraPosition)
 {
    RayData ResultData;
    ResultData.Normal = vec3(0.0f);
@@ -421,31 +463,35 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in float Su
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = vec3(0.0f);
 
-   const int SampleCount = int(200.0f * SurfaceRoughness);
+   const int SampleCount = int(150.0f * SurfaceRoughness);
    float invSampleCount = 1.0f / float(SampleCount);
    float weight = 0.0f;
    float LightIntensity = 4.0f;
    bool isShadow = false;
    for(int i = 0;i < SampleCount;i++)
    {
+      
       SampleVector = mix(rayDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection),SurfaceRoughness * SurfaceRoughness);
-      SampleVector = normalize(SampleVector * (1.0f - F));
+      SampleVector = normalize(SampleVector);
+
+      SampleVector = mix(SampleVector, rayDirection, Metallic);
 
       InvRayDirection = 1.0f / (SampleVector);
       data = TraverseBVH(rayOrigin + Epsilon * SampleVector,SampleVector,InvRayDirection,ClosestDistance);
       
       if(ClosestDistance == pos_infinity)
       {
-         ResultData.Albedo.xyz += vec3(0.0f,0.2f,0.5f);
-         ResultData.Light += 0.05f;
+         ResultData.Albedo.xyz += texture(EnvironmentCubeMap,SampleVector).xyz;
+         ResultData.Light += 0.08f;
          ClosestDistance = pos_infinity;
          continue;
       }
 
       isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
       
-      ResultData.Light += data.Light * (1.0f - data.Roughness) * LightIntensity * (1.0f - float(isShadow));
-      ResultData.Albedo += data.Albedo;
+      ResultData.Light += data.Light * (1.0f - float(isShadow)) * (1.0f - data.Roughness);
+      
+      ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(isShadow), F);
       ResultData.Position += data.Position;
       ResultData.Normal += data.Normal;
 
@@ -455,8 +501,11 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in float Su
    }
    ResultData.Light *= invSampleCount;
    ResultData.Albedo *= invSampleCount;
-   ResultData.Roughness *= invSampleCount;
+   ResultData.Albedo.xyz = (ResultData.Albedo.xyz + SurfaceAlbedo) * 0.5f;
    ResultData.Albedo.xyz *= ResultData.Light;
+   //ResultData.Albedo.xyz *= LIGHT_INTENSITY;
+
+   ResultData.Roughness *= invSampleCount;
    ResultData.Position *= invSampleCount;
    ResultData.Normal *= invSampleCount;
 
@@ -481,8 +530,9 @@ vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
    vec3 F = vec3(0.0f);
 
    vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(IsShadow), F);
-   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal,data.Roughness, IsShadow, seed,F).Albedo.xyz;
+   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal,data.Albedo.xyz,data.Roughness,0.0f, IsShadow, seed,F,rayOrigin).Albedo.xyz;
    vec3 finalColor = (directLight + indirectLight) * 0.5f;
+   //return indirectLight;
    return finalColor;
 }
 

@@ -38,6 +38,8 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
 
     this->InstanceDataVBO = nullptr;
     this->InstanceCount = 0;
+
+
 }
 
 FUSIONCORE::Model::Model(Model& Other)
@@ -597,7 +599,7 @@ void FUSIONCORE::Model::processNode(aiNode* node, const aiScene* scene)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        Meshes.push_back(processMesh(mesh, scene));
+        processMesh(mesh, scene);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -634,7 +636,7 @@ FUSIONCORE::PreMeshData FUSIONCORE::Model::processMeshAsync(aiMesh* mesh, const 
 {
     std::vector<std::shared_ptr<Vertex>> vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture2D> textures;
+    std::vector<std::shared_ptr<Texture2D>> textures;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
@@ -716,11 +718,11 @@ FUSIONCORE::PreMeshData FUSIONCORE::Model::processMeshAsync(aiMesh* mesh, const 
     return PreMeshData(textures , indices , vertices);
 }
 
-FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)
+void FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
     std::vector<std::shared_ptr<Vertex>> vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture2D> textures;
+    std::vector<std::shared_ptr<Texture2D>> textures;
     std::vector<std::shared_ptr<Face>> Faces;
 
     std::unordered_map<glm::vec3, unsigned int, Vec3Hash> PositionIndexMap;
@@ -802,9 +804,8 @@ FUSIONCORE::Mesh FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* sce
     loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal" , textures);
     loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic" , textures);
    
-    Mesh newMesh(vertices, indices,Faces, textures);
+    auto & newMesh = Meshes.emplace_back(vertices, indices, Faces, textures);
     newMesh.MeshName = mesh->mName.data;
-    return newMesh;
 }
 
 void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& vertices, aiMesh* mesh, const aiScene* scene)
@@ -856,7 +857,7 @@ void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& verti
     }
 }
 
-void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName , std::vector<FUSIONCORE::Texture2D> &Destination)
+void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName , std::vector<std::shared_ptr<FUSIONCORE::Texture2D>>& Destination)
 {
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
@@ -866,7 +867,7 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
         bool skip = false;
         for (unsigned int j = 0; j < textures_loaded.size(); j++)
         {
-            if (std::strcmp(textures_loaded[j].GetFilePath().c_str(), str.C_Str()) == 0)
+            if (std::strcmp(textures_loaded[j]->GetFilePath().c_str(), str.C_Str()) == 0)
             {
                 Destination.push_back(textures_loaded[j]);
                 skip = true;
@@ -887,11 +888,11 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
                 FilePath += "/" + std::string(str.C_Str());
             }
             
-            Texture2D texture(FilePath.c_str(),GL_REPEAT,GL_REPEAT,GL_TEXTURE_2D,GL_UNSIGNED_BYTE,GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR, true);
-            texture.PbrMapType = typeName;
+            auto SharedTexture = std::make_shared<Texture2D>(FilePath.c_str(), GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
+            SharedTexture->PbrMapType = typeName;
 
-            Destination.push_back(texture);
-            textures_loaded.push_back(texture);
+            Destination.push_back(SharedTexture);
+            textures_loaded.push_back(SharedTexture);
         }
     }
 }
@@ -936,7 +937,7 @@ FUSIONCORE::Model* FUSIONCORE::GetModel(unsigned int ModelID)
     return nullptr;
 }
 
-FUSIONCORE::PreMeshData::PreMeshData(std::vector<FUSIONCORE::Texture2D>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices)
+FUSIONCORE::PreMeshData::PreMeshData(std::vector<std::shared_ptr<FUSIONCORE::Texture2D>>& textures, std::vector<unsigned int>& indices, std::vector<std::shared_ptr<Vertex>>& vertices)
 {
     this->textures = textures;
     this->indices = indices;

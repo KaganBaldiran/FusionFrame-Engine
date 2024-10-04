@@ -281,7 +281,8 @@ inline void SplitBottomUp(int& BestAxis, float& BestPos, float& BestCost, BVHnod
 inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 						int ModelBoundingBoxIndex,
 						AlignedBuffer<glm::vec4>& TrianglePositions,
-						AlignedBuffer<glm::vec4>& TriangleNormals,
+						AlignedBuffer<glm::vec3>& TriangleNormals,
+						AlignedBuffer<glm::vec2>& TriangleUVs,
 						AlignedBuffer<glm::vec3> &TriangleCenters,
 						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
@@ -333,6 +334,7 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 
 				SwapThreeItems(TrianglePositions, i, swap);
 				SwapThreeItems(TriangleNormals, i, swap);
+				SwapThreeItems(TriangleUVs, i, swap);
 
 				std::swap(TriangleCenters[i], TriangleCenters[swap]);
 				std::swap(TriangleMinMax[i], TriangleMinMax[swap]);
@@ -452,7 +454,11 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<glm::mat4> ModelMatrixes;
 	AlignedBuffer<glm::vec3> TriangleCenters;
 	AlignedBuffer<glm::vec4> TrianglePositions;
-	AlignedBuffer<glm::vec4> TriangleNormals;
+	AlignedBuffer<glm::vec3> TriangleNormals;
+	AlignedBuffer<glm::vec2> TriangleUVs;
+
+	//Albedo-Normal
+	AlignedBuffer<GLuint64> TextureHandles;
 
 	AlignedBuffer<glm::vec4> ModelAlbedos;
 	AlignedBuffer<float> ModelRoughness;
@@ -460,10 +466,11 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
 	std::vector<BVHnode> BoundingBoxes;
 
-	size_t ModelCount = ModelsToTrace.size();
+	ModelCount = ModelsToTrace.size();
 	ModelMatrixes.reserve(ModelCount);
 	ModelAlbedos.reserve(ModelCount);
 	ModelRoughness.reserve(ModelCount);
+	TextureHandles.resize(ModelCount * 3);
 	Models.reserve(ModelCount);
 	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
@@ -490,8 +497,9 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 	TrianglePositions.reserve(ReserveCount);
 	TriangleNormals.reserve(ReserveCount);
-	TriangleCenters.reserve(ReserveCount);
-	TriangleMinMax.reserve(ReserveCount);
+	TriangleUVs.reserve(ReserveCount);
+	TriangleCenters.reserve(ReserveCount / 3);
+	TriangleMinMax.reserve(ReserveCount / 3);
 	
 	for (int i = 0; i < ModelCount; i++)
 	{
@@ -499,13 +507,20 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto& model = ModelWithMaterial.first;
 		auto& material = ModelWithMaterial.second;
 
+		auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
+		auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
+		auto RoughnessTexture = material->GetTextureMap(FF_TEXTURE_SPECULAR);
+		TextureHandles[i] = AlbedoTexture != nullptr ? AlbedoTexture->GetTextureHandle() : 0;
+		TextureHandles[i + ModelCount] = NormalTexture != nullptr ? NormalTexture->GetTextureHandle() : 0;
+		TextureHandles[i + ModelCount * 2] = RoughnessTexture != nullptr ? RoughnessTexture->GetTextureHandle() : 0;
+
 		Models.push_back(model);
 
 		ModelMatrix = model->GetTransformation().GetModelMat4();
 		NormalMatrix = glm::transpose(glm::inverse(glm::mat3(ModelMatrix)));
 
-		ModelMatrixes.push_back(ModelMatrix);
 		ModelAlbedos.push_back(material->Albedo);
+		ModelMatrixes.push_back(ModelMatrix);
 		ModelRoughness.push_back(material->roughness);
 		
 		for (auto& mesh : model->Meshes)
@@ -525,27 +540,30 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
 				
-				TriangleNormals.push_back(glm::vec4(glm::normalize(NormalMatrix * Vertex0->Normal),1.0f));
+				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex0->Normal));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				
+				TriangleUVs.push_back(Vertex0->TexCoords);
+
 				auto& Vertex1 = vertices[index1];
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex1->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
 				
-				TriangleNormals.push_back(glm::vec4(glm::normalize(NormalMatrix * Vertex1->Normal),1.0f));
+				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex1->Normal));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				
+				TriangleUVs.push_back(Vertex1->TexCoords);
+
 				auto& Vertex2 = vertices[index2];
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex2->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
 				TriangleCenter += TempPosition;
 				
-				TriangleNormals.push_back(glm::vec4(glm::normalize(NormalMatrix * Vertex2->Normal),1.0f));
+				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex2->Normal));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
-				
+				TriangleUVs.push_back(Vertex2->TexCoords);
+
 				TriangleCenter *= inv_three;
 
 				TriangleCenters.push_back(TriangleCenter);
@@ -573,7 +591,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto& node = TopDownBVHnodes[i];
 		if (node.ChildIndex < 0)
 		{
-		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals, TriangleCenters, TriangleMinMax, 27);
+		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals,
+			                   TriangleUVs,TriangleCenters, TriangleMinMax, 27);
 		}
 	}
 	ModelNodeCount = BoundingBoxes.size();
@@ -655,20 +674,36 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		ModelRoughness.data(),
 		GL_STATIC_DRAW);
 
-	TracerTriangleDataPositionsBuffer.Bind();
-	TracerTriangleDataPositionsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * TrianglePositions.size(), TrianglePositions.data(), GL_STATIC_DRAW);
-	TracerTriangleDataPositionsBuffer.BindSSBO(7);
-	TracerTriangleDataPositionsBuffer.Unbind();
+	SetTBObindlessTextureData(TracerTriangleUVdata,
+		TracerTriangleUVTexture,
+		GL_RG32F,
+		TriangleUVs.size() * sizeof(glm::vec2),
+		TriangleUVs.data(),
+		GL_STATIC_DRAW);
 
-	TracerTriangleDataNormalsBuffer.Bind();
-	TracerTriangleDataNormalsBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)* TriangleNormals.size(), TriangleNormals.data(), GL_STATIC_DRAW);
-	TracerTriangleDataNormalsBuffer.BindSSBO(6);
-	TracerTriangleDataNormalsBuffer.Unbind();
+	SetTBObindlessTextureData(TracerTriangleNormalData,
+		TracerTriangleNormalsTexture,
+		GL_RGB32F,
+		TriangleNormals.size() * sizeof(glm::vec3),
+		TriangleNormals.data(),
+		GL_STATIC_DRAW);
+
+	SetTBObindlessTextureData(TracerTrianglePositionsData,
+		TracerTrianglePositionsTexture,
+		GL_RGBA32F,
+		TrianglePositions.size() * sizeof(glm::vec4),
+		TrianglePositions.data(),
+		GL_STATIC_DRAW);
 
 	ModelMatricesData.Bind();
 	ModelMatricesData.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * ModelMatrixes.size(), ModelMatrixes.data(), GL_STREAM_DRAW);
 	ModelMatricesData.BindSSBO(8);
 	ModelMatricesData.Unbind();
+
+	ModelTextureHandlesData.Bind();
+	ModelTextureHandlesData.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint64) * TextureHandles.size(), TextureHandles.data(), GL_STREAM_DRAW);
+	ModelTextureHandlesData.BindSSBO(9);
+	ModelTextureHandlesData.Unbind();
 
 	TriangleCount = TrianglePositions.size();
 	IsInitialized = false;
@@ -679,43 +714,23 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 FUSIONCORE::PathTracer::~PathTracer()
 {
 	glDeleteTextures(1, &this->image);
-	this->ChildIndexTexture.Clear();
-	this->MaxBoundTexture.Clear();
-	this->MinBoundTexture.Clear();
-	this->TriangleCountTexture.Clear();
-	this->TriangleIndexTexture.Clear();
-	this->AlbedoTexture.Clear();
-	this->RoughnessTexture.Clear();
 }
 
-void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera)
+void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera,CubeMap* Cubemap)
 {
 	shader.use();
 	shader.setVec2("WindowSize", WindowSize);
 	shader.setVec3("CameraPosition", camera.Position);
 	shader.setMat4("ProjectionViewMat",camera.ProjectionViewMat);
 	shader.setFloat("Time",glfwGetTime());
+	shader.setInt("ModelCount", ModelCount);
 	
-	/*
-	AlignedBuffer<glm::mat4> ModelMatrices;
-	size_t HowManyTransformed = 0;
-
-	ModelMatrices.reserve(Models.size());
-	for (auto& model : this->Models)
+	if (Cubemap != nullptr)
 	{
-		auto& transformation = model->GetTransformation();
-		//if (transformation.IsTransformed)
-		{
-			ModelMatrices.push_back(transformation.GetModelMat4());
-			//transformation.IsTransformed = false;
-			//HowManyTransformed++;
-		}
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
+		shader.setInt("EnvironmentCubeMap", 3);
 	}
-	//LOG_PARAMETERS(HowManyTransformed);
-
-	ModelMatricesData.Bind();
-	ModelMatricesData.BufferSubDataFill(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4) * ModelMatrices.size(), ModelMatrices.data());
-	*/
 
 	if (!IsInitialized)
 	{
@@ -726,6 +741,9 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 		this->TriangleCountTexture.SendBindlessHandle(shader.GetID(), "TriangleCounts");
 		this->AlbedoTexture.SendBindlessHandle(shader.GetID(), "ModelAlbedos");
 		this->RoughnessTexture.SendBindlessHandle(shader.GetID(), "ModelRoughness");
+		this->TracerTriangleUVTexture.SendBindlessHandle(shader.GetID(), "TriangleUVS");
+		this->TracerTriangleNormalsTexture.SendBindlessHandle(shader.GetID(), "TriangleNormals");
+		this->TracerTrianglePositionsTexture.SendBindlessHandle(shader.GetID(), "TrianglePositions");
 		SendLightsShader(shader);
 		IsInitialized = true;
 	}

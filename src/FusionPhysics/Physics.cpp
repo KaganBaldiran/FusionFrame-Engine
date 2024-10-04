@@ -195,7 +195,7 @@ FUSIONPHYSICS::CollisionBoxAABB::CollisionBoxAABB(FUSIONCORE::WorldTransform& tr
 	Min = MinMax.first;
 	Max = MinMax.second;
 
-	std::vector<FUSIONCORE::Texture2D> textures;
+	std::vector<std::shared_ptr<FUSIONCORE::Texture2D>> textures;
 
 	std::vector<std::shared_ptr<FUSIONCORE::Face>> MeshFaces;
 	unsigned int IndexCount = (sizeof(indices) / sizeof(indices[0]));
@@ -342,7 +342,7 @@ FUSIONPHYSICS::CollisionBoxAABB::CollisionBoxAABB(glm::vec3 Size, glm::vec3 BoxS
 	Min = MinMax.first;
 	Max = MinMax.second;
 
-	std::vector<FUSIONCORE::Texture2D> textures;
+	std::vector<std::shared_ptr<FUSIONCORE::Texture2D>> textures;
 	std::vector<std::shared_ptr<FUSIONCORE::Face>> MeshFaces;
 	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 3)
 	{
@@ -1009,7 +1009,7 @@ FUSIONPHYSICS::CollisionBoxPlane::CollisionBoxPlane(glm::vec3 Size, glm::vec3 Bo
 	Min = MinMax.first;
 	Max = MinMax.second;
 
-	std::vector<FUSIONCORE::Texture2D> textures;
+	std::vector<std::shared_ptr<FUSIONCORE::Texture2D>> textures;
 	std::vector<std::shared_ptr<FUSIONCORE::Face>> MeshFaces;
 	for (size_t i = 0; i < (sizeof(indices) / sizeof(indices[0])); i += 4)
 	{

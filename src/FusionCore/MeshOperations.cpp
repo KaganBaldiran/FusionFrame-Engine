@@ -362,7 +362,7 @@ bool FUSIONCORE::MESHOPERATIONS::ImportObj(const char* FilePath, FUSIONCORE::Mod
 		}
 		inputFile.close();
 
-		std::vector<FUSIONCORE::Texture2D> textures;
+		std::vector<std::shared_ptr<FUSIONCORE::Texture2D>> textures;
 		for (size_t i = 0; i < MeshVertecies.size(); i++)
 		{
 			model.Meshes.emplace_back(MeshVertecies[i], MeshIndicies[i], MeshFaces[i], textures);

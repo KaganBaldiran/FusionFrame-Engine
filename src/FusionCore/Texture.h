@@ -44,6 +44,8 @@ namespace FUSIONCORE
 		Texture2D(const GLuint SourceTexture, const GLenum SourceTextureInternalFormat, const glm::vec2 SourceTextureSize, 
 			      const char* SourceTextureFilePath,GLenum texturetype, GLenum pixeltype, GLenum MAG_FILTER, GLenum MIN_FILTER);
 		
+		~Texture2D();
+
 		void Clear();
 		void Bind(GLuint slot, GLuint shader, const char* uniform);
 		void Bind(GLenum target);
@@ -69,6 +71,7 @@ namespace FUSIONCORE
 		GLenum GetInternalFormat();
 		GLenum GetPixelType();
 		GLenum GetTextureType();
+		GLuint64 GetTextureHandle();
 		inline const int GetTextureState() { return this->TextureState; };
 
 		std::string PbrMapType;

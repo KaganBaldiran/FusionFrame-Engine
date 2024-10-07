@@ -126,7 +126,7 @@ void FUSIONCORE::ScreenFrameBuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, Vec2<int> WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
+void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::function<void()> ShaderPrep, const glm::ivec2& WindowSize, bool DOFenabled, float DOFdistanceFar, float DOFdistanceClose, float DOFintensity, float Gamma, float Exposure)
 {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, FBOSize.x, FBOSize.y);
@@ -293,7 +293,7 @@ void FUSIONCORE::GeometryBuffer::Unbind()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 };
 
-void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, Vec2<int> WindowSize, std::vector<OmniShadowMap*> &ShadowMaps,CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
+void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& shader, std::function<void()> ShaderPrep, const glm::ivec2& WindowSize, std::vector<OmniShadowMap*> &ShadowMaps,CubeMap& cubeMap, glm::vec4 BackgroundColor, float EnvironmentAmbientAmount)
 {
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(3, attachments);

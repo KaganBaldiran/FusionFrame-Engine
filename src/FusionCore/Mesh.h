@@ -83,6 +83,7 @@ namespace FUSIONCORE
 
 	public:
 
+		Mesh() = default;
 		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Texture2D>>& textures_i);
 		Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces, std::vector<std::shared_ptr<Texture2D>>& textures_i);
 		void Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations);

@@ -110,7 +110,7 @@ int Application::Run()
 	FUSIONCORE::SetCascadedShadowBiasMultiplier(*Shaders.DeferredPBRshader);
 	//FUSIONCORE::CascadedDirectionalShadowMap sunShadowMap3(1024, 1024, shadowCascadeLevels);
 
-	Vec2<int> WindowSize;
+	glm::ivec2 WindowSize;
 	glm::dvec2 mousePos(0.0f);
 
 	glm::vec3 Target(0.0f);
@@ -417,8 +417,8 @@ int Application::Run()
 
 	glm::vec3 translateVector(0.0f, 0.0f, 0.01f);
 
-	Vec2<int> PrevWindowSize;
-	Vec2<int> PrevWindowPos;
+	glm::ivec2 PrevWindowSize;
+	glm::ivec2 PrevWindowPos;
 	bool IsFullScreen = false;
 	float AOamount = 0.5f;
 
@@ -873,7 +873,7 @@ int Application::Run()
 			if (!IsFullScreen)
 			{
 				glfwGetWindowPos(window, &PrevWindowPos.x, &PrevWindowPos.y);
-				PrevWindowSize(WindowSize);
+				PrevWindowSize = WindowSize;
 				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 				glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
 			}
@@ -891,7 +891,7 @@ int Application::Run()
 			DebugFBO = !DebugFBO;
 		}
 		//glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
-		FUSIONUTIL::GetWindowSize(window, WindowSize.x, WindowSize.y);
+		WindowSize = ApplicationWindow.GetWindowSize();
 		/*if (direction != glm::vec3(0.0f))
 		{
 		  camera3d.Orientation = direction;
@@ -1049,7 +1049,7 @@ int Application::Run()
 
 
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
-		cubemap.Draw(camera3d, WindowSize.Cast<float>());
+		cubemap.Draw(camera3d, WindowSize);
 
 		if (PixelModel)
 		{
@@ -1251,22 +1251,35 @@ int Application::PathTracer()
 	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png");
 	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png");
 
+	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/snow_02_rough_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+	FUSIONCORE::Texture2D FloorNormal("Resources/floor/snow_02_nor_gl_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/snow_02_diff_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+
 	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
 	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
 	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
 	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
+	std::unique_ptr<FUSIONCORE::Model> grid1 = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
+	std::unique_ptr<FUSIONCORE::Model> grid2 = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	FUSIONCORE::Model Rock("Resources\\models\\RockFormation\\RockFormation.obj");
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	
 
-	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 	Rock.GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
 	Cliff->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
 	Cliff->GetTransformation().TranslateNoTraceBack({ 6.0f,0.0f,0.0f });
 
+	grid->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
 	grid->GetTransformation().Scale(glm::vec3(0.1f));
+
+	grid1->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
+	grid1->GetTransformation().Scale(glm::vec3(0.1f));
+
+	grid2->GetTransformation().TranslateNoTraceBack({ 0.0f,-1.0f,0.0f });
+	grid2->GetTransformation().Scale(glm::vec3(0.1f));
+	grid2->GetTransformation().Rotate(glm::vec3(0.0f,1.0f,0.0f),90.0f);
 
 	Stove->GetTransformation().Scale(glm::vec3(6.0f));
 
@@ -1278,11 +1291,11 @@ int Application::PathTracer()
 	MainCharac->GetTransformation().TranslateNoTraceBack({ 4.0f,1.0f,-10.0f });
 	Stove->GetTransformation().TranslateNoTraceBack({ -3.0f,4.0f,-8.0f });
 	wall->GetTransformation().TranslateNoTraceBack({ 0.0f,-4.0f,0.0f });
-	wall->GetTransformation().ScaleNoTraceBack({ 2.0f,2.0f,2.0f });
+	wall->GetTransformation().ScaleNoTraceBack({ 4.0f,4.0f,4.0f });
 	//wall->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f);
 	sofa->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 300.0f);
-	sofa->GetTransformation().TranslateNoTraceBack({ -10.0f,-1.0f,-20.0f });
-	sofa->GetTransformation().ScaleNoTraceBack({ 4.0f,4.0f,4.0f });
+	sofa->GetTransformation().TranslateNoTraceBack({ -20.0f,-1.0f,-20.0f });
+	sofa->GetTransformation().ScaleNoTraceBack({ 7.0f,7.0f,7.0f });
 
 	Shaders.DeferredPBRshader->use();
 
@@ -1292,7 +1305,7 @@ int Application::PathTracer()
 	//FUSIONCORE::SetEnvironmentIBL(*Shaders.DeferredPBRshader, 2.0f, glm::vec3(BackGroundColor.x, BackGroundColor.y, BackGroundColor.z));
 	FUSIONCORE::UseShaderProgram(0);
 
-	Vec2<int> WindowSize;
+	glm::ivec2 WindowSize;
 	std::vector<FUSIONCORE::OmniShadowMap*> shadowMaps;
 	std::function<void()> shaderPrep = []() {};
 
@@ -1305,10 +1318,10 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.1f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material0(0.7f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
 	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
-	FUSIONCORE::Material material3(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
+	FUSIONCORE::Material material3(0.05f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 
 	SofaDiffuse.MakeBindless();
@@ -1346,8 +1359,9 @@ int Application::PathTracer()
 	ShovelSpecular.MakeBindless();
 	ShovelSpecular.MakeResident();
 	ShovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
-	
+
 	models.push_back({ grid.get(),&material2 });
+	//models.push_back({ grid2.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });
 	models.push_back({model1.get(),&ShovelMaterial });
 	models.push_back({&Rock,&material2 });
@@ -1358,8 +1372,8 @@ int Application::PathTracer()
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
 	
-	Vec2<int> PrevWindowSize;
-	Vec2<int> PrevWindowPos;
+	glm::ivec2 PrevWindowSize;
+	glm::ivec2 PrevWindowPos;
 	bool IsFullScreen = false;
 
 	auto window = ApplicationWindow.GetWindow();
@@ -1374,11 +1388,12 @@ int Application::PathTracer()
 	while (!ApplicationWindow.ShouldClose())
 	{
 		timer.Set();
-
-		FUSIONUTIL::GetWindowSize(ApplicationWindow.GetWindow(), WindowSize.x, WindowSize.y);
+		WindowSize = ApplicationWindow.GetWindowSize();
 
 		PrevMousePos = CurrentMousePos;
 		FUSIONUTIL::GetCursorPosition(window, CurrentMousePos.x, CurrentMousePos.y);
+
+		//LOG_PARAMETERS(ApplicationWindow.IsWindowResizedf());
 
 		static bool AllowPressF = true;
 		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_F, AllowPressF))
@@ -1387,7 +1402,7 @@ int Application::PathTracer()
 			if (!IsFullScreen)
 			{
 				glfwGetWindowPos(window, &PrevWindowPos.x, &PrevWindowPos.y);
-				PrevWindowSize(WindowSize);
+				PrevWindowSize = WindowSize;
 				const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 				glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
 			}
@@ -1408,7 +1423,6 @@ int Application::PathTracer()
 
 		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
-
 		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
@@ -1471,19 +1485,18 @@ int Application::PathTracer()
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 		
-		pathtracer.Render({ WindowSize.x,WindowSize.y }, PathTraceComputeShader, camera3d,&cubemap);
+		pathtracer.Render(ApplicationWindow, PathTraceComputeShader, camera3d,&cubemap);
 
 		auto PathTracerImage = [&]() {
-			glActiveTexture(GL_TEXTURE5);
+			/*glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, pathtracer.GetTracedImage());
 			Shaders.FBOShader->setInt("TracedImage", 5);
-			Shaders.FBOShader->setBool("Debug", Debug);
+			Shaders.FBOShader->setBool("Debug", Debug);*/
 		};
 
 	    ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, PathTracerImage, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
 
-		ApplicationWindow.SwapBuffers();
-		ApplicationWindow.PollEvents();
+		ApplicationWindow.UpdateWindow();
 		DeltaTime = timer.GetMiliseconds();
 	}
 

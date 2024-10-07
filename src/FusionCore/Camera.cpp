@@ -70,7 +70,7 @@ FUSIONCORE::Camera2D::Camera2D()
 	this->viewMat = glm::mat4(1.0f);
 }
 
-void FUSIONCORE::Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2<int> windowSize)
+void FUSIONCORE::Camera2D::UpdateCameraMatrix(glm::vec3 target, float zoom, const glm::ivec2& windowSize)
 {
 	float ratio = static_cast<float>(windowSize.x) / static_cast<float>(windowSize.y);
 	
@@ -99,7 +99,7 @@ FUSIONCORE::Camera3D::Camera3D()
 	targetPosition = glm::vec3(0.0f);
 }
 
-void FUSIONCORE::Camera3D::UpdateCameraMatrix(const float& fovDegree, const float& aspect, const float& near, const float& far, const Vec2<int>& windowSize)
+void FUSIONCORE::Camera3D::UpdateCameraMatrix(const float& fovDegree, const float& aspect, const float& near, const float& far, const glm::ivec2& windowSize)
 {
 	this->FarPlane = far;
 	this->NearPlane = near;
@@ -168,7 +168,7 @@ void FUSIONCORE::Camera3D::SetZoomSensitivity(float Speed)
 }
 #endif
 
-void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const Vec2<int>& WindowSize, const int& CameraLayout,float speed)
+void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& WindowSize, const int& CameraLayout,float speed)
 {
 	this->CameraLayout = CameraLayout;
 	if (CameraLayout == FF_CAMERA_LAYOUT_FIRST_PERSON)
@@ -406,6 +406,17 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const Vec2<int>& Win
 
 
 	ScrollAmount({ 0,0 });
+
+	if (PreviousOrientation != Orientation || PreviousPosition != Position)
+	{
+		IsCameraMoved = true;
+		PreviousOrientation = Orientation;
+		PreviousPosition = Position;
+	}
+	else
+	{
+		IsCameraMoved = false;
+	}
 }
 
 /*

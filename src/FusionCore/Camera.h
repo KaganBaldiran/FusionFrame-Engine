@@ -47,7 +47,7 @@ namespace FUSIONCORE
 	public:
 
 		Camera2D();
-		void UpdateCameraMatrix(glm::vec3 target, float zoom, Vec2<int> windowSize);
+		void UpdateCameraMatrix(glm::vec3 target, float zoom, const glm::ivec2& windowSize);
 
 	private:
 		glm::vec3 target;
@@ -78,7 +78,7 @@ namespace FUSIONCORE
 
 		Camera3D();
 
-		void UpdateCameraMatrix(const float& fovDegree, const float& aspect, const float& near, const float& far, const Vec2<int>& windowSize);
+		void UpdateCameraMatrix(const float& fovDegree, const float& aspect, const float& near, const float& far, const glm::ivec2& windowSize);
 		void SetOrientation(glm::vec3 Orien);
 		void SetPosition(glm::vec3 Pos);
 #ifndef FREE_INDUSTRY_STANDARD_CAMERA
@@ -90,7 +90,7 @@ namespace FUSIONCORE
 		void SetZoomSensitivity(float Speed);
 #endif
 		void Matrix(const GLuint& shaderprogram, const char* uniform);
-		void HandleInputs(GLFWwindow* window,const Vec2<int>& WindowSize,const int& CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON,float speed = 0.03f);
+		void HandleInputs(GLFWwindow* window, const glm::ivec2& WindowSize,const int& CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON,float speed = 0.03f);
 		const glm::vec3 GetUpVector() { return this->Up; };
 		inline const float& GetCameraFOV() { return this->FOV; };
 		inline const float& GetCameraAspectRatio() { return this->Aspect; };
@@ -132,6 +132,9 @@ namespace FUSIONCORE
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 		int CameraLayout;
+
+		glm::vec3 PreviousOrientation;
+		glm::vec3 PreviousPosition;
 	};
 
 	/*

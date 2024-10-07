@@ -6,9 +6,16 @@
 #include "../Model.hpp"
 #include "../../FusionPhysics/Physics.hpp"
 #include "../Texture.h"
+#include "../Window.hpp"
 #include "../../FusionUtility/Hashing.hpp"
+#include <OpenImageDenoise/oidn.hpp>
 
-struct BVHnode;
+static struct BVHnode;
+namespace oidn
+{
+	class DeviceRef;
+	class FilterRef;
+}
 
 namespace FUSIONCORE
 {
@@ -19,9 +26,16 @@ namespace FUSIONCORE
 		inline GLuint GetTracedImage() { return image; };
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
-		void Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr);
+		void Render(Window& window,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr,unsigned int DenoiseSampleCount = 60);
 	private:
-		GLuint image;
+		void Denoise(void* ColorBuffer, void* outputBuffer);
+
+		oidn::DeviceRef device;
+		oidn::FilterRef filter;
+		oidn::BufferRef colorBuf;
+
+		GLuint image,pbo;
+		glm::ivec2 ImageSize;
 
 		TBO MinBoundData;
 		Texture2D MinBoundTexture;
@@ -61,6 +75,8 @@ namespace FUSIONCORE
 		int ModelNodeCount;
 		size_t ModelCount;
 		bool IsInitialized;
+
+		int ProgressiveRenderedFrameCount;
 
 		std::vector<BVHnode> TopDownBVHnodes;
 		std::vector<BVHnode> BottomUpBVHNodes;

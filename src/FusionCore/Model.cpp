@@ -44,7 +44,12 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
 
 FUSIONCORE::Model::Model(Model& Other)
 {
-    //this.
+    this->Meshes.reserve(Other.Meshes.size());
+    for (auto& mesh : Other.Meshes)
+    {
+        auto &newMesh = Meshes.emplace_back();
+        newMesh.CopyMesh(mesh);
+    }
 }
 
 void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader,const std::function<void()> &ShaderPreperations)

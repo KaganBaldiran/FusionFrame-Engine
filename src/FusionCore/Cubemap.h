@@ -49,7 +49,7 @@ namespace FUSIONCORE
 		CubeMap(GLuint CubeMap, Shader& CubeMapShader);
 		CubeMap(Shader& CubeMapShader);
 		~CubeMap();
-		void Draw(Camera3D& camera, Vec2<float> windowSize);
+		void Draw(Camera3D& camera, const glm::vec2& windowSize);
 		GLuint GetCubeMapTexture() { return this->cubemaptextureID; };
 		void SetCubeMapTexture(GLuint CubeMapTexture);
 		void SetPreFilteredEnvMap(GLuint preFilteredEnvironmentMapID);

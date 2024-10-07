@@ -24,6 +24,7 @@ layout (location = 14) uniform samplerBuffer TrianglePositions;
 
 layout (location = 15) uniform int ModelCount;
 layout (location = 16) uniform samplerCube EnvironmentCubeMap;
+layout (location = 17) uniform int ProgressiveRenderedFrameCount;
 
 readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 {
@@ -77,9 +78,10 @@ struct RayData
    float Light;
 };
 
-vec3 LIGHT_DIRECTION = vec3(cos(Time * 0.1f),0.4f,-0.7f);
-float LIGHT_INTENSITY = 2.0f;
-int NodesToProcess[28];
+vec3 LIGHT_DIRECTION = vec3(0.1f,0.4f,-0.7f);
+vec3 LIGHT_COLOR = vec3(0.9f,0.9f,0.6f);
+float LIGHT_INTENSITY = 10.0f;
+int NodesToProcess[27];
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
 {
@@ -299,7 +301,7 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                         ClosestDistance = result.t;
                         data.Position = rayOrigin + rayDirection * result.t;
                         
-                        data.Light = LIGHT_INTENSITY * max(0.0f,dot(LIGHT_DIRECTION,Normal));
+                        data.Light = max(0.0f,dot(LIGHT_DIRECTION,Normal));
                         data.uv = TriangleTextureUV;
                     }  
                 }
@@ -406,7 +408,7 @@ vec3 PBRshade(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPo
     vec3 kD = (1.0 - kS) * (1.0 - Metalic);
 
     vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
-    vec3 radiance = vec3(1.0);
+    vec3 radiance = LIGHT_COLOR;
 
     return (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * LIGHT_INTENSITY * NdotL;
 }
@@ -438,16 +440,27 @@ vec3 SampleSemiSphere(vec2 seed,vec3 Normal)
    return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
 }
 
-bool RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection)
+float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float LightDiameter,inout uint seed)
 {
+     vec3 SampleLightDirection = vec3(0.0f);
+     float Shadow = 0.0f;
+     const int SampleCount = int(5.0f);
      float ClosestDistance = pos_infinity;
-     vec3 InvRayDirection = 1.0f / (LightDirection);
-     TraverseBVH(CurrentPosition + Epsilon * LightDirection,LightDirection,InvRayDirection,ClosestDistance);
+     for(int i = 0;i < SampleCount;i++)
+     {
+       SampleLightDirection = mix(LightDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),LightDirection),LightDiameter);
 
-     return ClosestDistance != pos_infinity;
+       vec3 InvRayDirection = 1.0f / (SampleLightDirection);
+       TraverseBVH(CurrentPosition + Epsilon * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance);
+       Shadow += float(ClosestDistance != pos_infinity);
+       ClosestDistance = pos_infinity;
+     }
+     Shadow /= SampleCount;
+   
+     return Shadow;
 }
 
-RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in bool Shadow,inout uint seed,in vec3 F,in vec3 CameraPosition)
+RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in float Shadow,inout uint seed,in vec3 F,in vec3 CameraPosition)
 {
    RayData ResultData;
    ResultData.Normal = vec3(0.0f);
@@ -463,14 +476,13 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 Sur
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = vec3(0.0f);
 
-   const int SampleCount = int(150.0f * SurfaceRoughness);
+   const int SampleCount = max(1,int(6.0f * SurfaceRoughness));
    float invSampleCount = 1.0f / float(SampleCount);
    float weight = 0.0f;
-   float LightIntensity = 4.0f;
-   bool isShadow = false;
+   float isShadow = 0.0f;
+   float EnvironmentIntensity = 0.1f;
    for(int i = 0;i < SampleCount;i++)
    {
-      
       SampleVector = mix(rayDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection),SurfaceRoughness * SurfaceRoughness);
       SampleVector = normalize(SampleVector);
 
@@ -481,17 +493,21 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 Sur
       
       if(ClosestDistance == pos_infinity)
       {
-         ResultData.Albedo.xyz += texture(EnvironmentCubeMap,SampleVector).xyz;
-         ResultData.Light += 0.08f;
+         vec3 reflectionStrength = (1.0f - F) * SurfaceRoughness;
+         ResultData.Albedo.xyz += mix(texture(EnvironmentCubeMap,SampleVector).xyz,SurfaceAlbedo,reflectionStrength);
+         ResultData.Light += EnvironmentIntensity;
          ClosestDistance = pos_infinity;
          continue;
       }
 
-      isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
+      isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
       
-      ResultData.Light += data.Light * (1.0f - float(isShadow)) * (1.0f - data.Roughness);
+      ResultData.Light += data.Light * (1.0f - isShadow) * (1.0f - data.Roughness);
+
+      bool IsClearCoated = 0.6f <= Hash(seed);
       
-      ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(isShadow), F);
+      ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, isShadow, F);
+      //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,SurfaceRoughness);    
       ResultData.Position += data.Position;
       ResultData.Normal += data.Normal;
 
@@ -501,9 +517,9 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 Sur
    }
    ResultData.Light *= invSampleCount;
    ResultData.Albedo *= invSampleCount;
-   ResultData.Albedo.xyz = (ResultData.Albedo.xyz + SurfaceAlbedo) * 0.5f;
+   //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,F);    
+   //ResultData.Albedo.xyz = (ResultData.Albedo.xyz + SurfaceAlbedo) * 0.5f;
    ResultData.Albedo.xyz *= ResultData.Light;
-   //ResultData.Albedo.xyz *= LIGHT_INTENSITY;
 
    ResultData.Roughness *= invSampleCount;
    ResultData.Position *= invSampleCount;
@@ -522,11 +538,11 @@ vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
    {
       return vec3(0.0f);
    }
+   uint seed = pixelPos.x * pixelPos.y * uint(Time);
 
    vec3 Color = vec3(0.0f);
-   bool IsShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION);
+   float IsShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
 
-   uint seed = pixelPos.x * pixelPos.y;
    vec3 F = vec3(0.0f);
 
    vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(IsShadow), F);
@@ -548,8 +564,14 @@ void main()
     rayDir4 = vec4(rayDir4.xyz / rayDir4.w,1.0f);
     vec3 rayDirection = normalize(rayDir4.xyz - rayOrigin.xyz);
 
-   // vec4 in_val = imageLoad( image, pos ).rgba;
-
     vec3 result = PathTrace(rayOrigin,rayDirection.xyz,pos);
+
+    if(ProgressiveRenderedFrameCount >= 0)
+    {
+       float weight = 1.0 / float(ProgressiveRenderedFrameCount + 1);
+       vec4 PreviousFrame = imageLoad( image, pos ).rgba;
+       result = mix(PreviousFrame.xyz,result,weight);
+    }
+
     imageStore( image, pos,vec4(result,1.0f));
 }

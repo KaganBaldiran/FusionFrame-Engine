@@ -243,7 +243,7 @@ FUSIONCORE::CubeMap::~CubeMap()
     glDeleteTextures(1, &this->cubemaptextureID);
 }
 
-void FUSIONCORE::CubeMap::Draw(Camera3D &camera, Vec2<float> windowSize)
+void FUSIONCORE::CubeMap::Draw(Camera3D &camera, const glm::vec2& windowSize)
 {
     
     glDepthMask(GL_FALSE);

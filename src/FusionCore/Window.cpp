@@ -7,6 +7,14 @@ static std::pair<bool, bool> BaseSystemsInitialised;
 
 void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
+FUSIONCORE::Window::Window()
+{
+	window = nullptr;
+	InitialWindowSize = { 0,0 };
+	WindowSize = { 0,0 };
+	WindowName = "";
+}
+
 int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion,
 	                          bool EnableGLdebug, const char* WindowName){
 	if (!BaseSystemsInitialised.first && !glfwInit())
@@ -77,8 +85,12 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 		glDebugMessageCallback(debugCallback, nullptr);
 	}
 
-	this->WindowSize = {width,height};
+	this->InitialWindowSize = this->WindowSize = {width,height};
 	this->WindowName = WindowName;
+
+	glfwSetWindowUserPointer(window, this);
+	glfwSetWindowSizeCallback(window, window_size_callback);
+
 	return FF_SUCCESS_CODE;
 }
 
@@ -103,9 +115,32 @@ void FUSIONCORE::Window::PollEvents()
 	glfwPollEvents();
 }
 
+void FUSIONCORE::Window::UpdateWindow()
+{
+	IsWindowResized = false;
+	SwapBuffers();
+	PollEvents();
+}
+
 void FUSIONCORE::Window::MakeWindowContextCurrent()
 {
 	glfwMakeContextCurrent(window);
+	glfwSetWindowUserPointer(window, this);
+}
+
+void FUSIONCORE::Window::window_size_callback(GLFWwindow* window, int width, int height)
+{
+	Window* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
+	if (instance) {
+		instance->OnWindowResize(width, height);
+	}
+}
+
+void FUSIONCORE::Window::OnWindowResize(const int& width, const int& height)
+{
+	WindowSize.x = width;
+	WindowSize.y = height;
+	IsWindowResized = true;
 }
 
 void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {

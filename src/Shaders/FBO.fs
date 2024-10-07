@@ -8,6 +8,8 @@ uniform sampler2D SSRtexture;
 uniform sampler2D IDtexture;
 uniform sampler2D TracedImage;
 
+layout(rgba32f,binding=0) uniform image2D image;
+
 uniform sampler2DArray CascadeShadowMaps1024;
 
 uniform float FarPlane;
@@ -60,7 +62,8 @@ void main()
 	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
     //OutColor /= 2.0f;
    // vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
-	vec3 TracedUV = texture(TracedImage, TexCoords.xy).xyz;
+	//vec3 TracedUV = texture(TracedImage, TexCoords.xy).xyz;
+	vec3 TracedUV = imageLoad( image, ivec2(TexCoords.xy * imageSize(image)) ).rgb;
 	OutColor.xyz =  TracedUV;
 	if(Debug)
 	{

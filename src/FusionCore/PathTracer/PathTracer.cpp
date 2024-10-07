@@ -444,6 +444,24 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindImageTexture(0, image, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
+	glGenBuffers(1, &pbo);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+
+	glBufferData(GL_PIXEL_PACK_BUFFER, width * height * 3 * sizeof(float), NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+	ImageSize = { width,height };
+
+
+	device = oidn::newDevice(oidn::DeviceType::CUDA);
+	device.commit();
+
+	colorBuf = device.newBuffer(ImageSize.x * ImageSize.y * 3 * sizeof(float));
+	filter = device.newFilter("RT");
+
+	filter.set("hdr", true); 
+	filter.commit();
+
 	if (ModelsToTrace.empty())
 	{
 		return;
@@ -707,6 +725,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 	TriangleCount = TrianglePositions.size();
 	IsInitialized = false;
+	ProgressiveRenderedFrameCount = -1;
 
 	LOG("Process took: " << timer.GetMiliseconds());
 }
@@ -716,21 +735,20 @@ FUSIONCORE::PathTracer::~PathTracer()
 	glDeleteTextures(1, &this->image);
 }
 
-void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D& camera,CubeMap* Cubemap)
+void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& camera,CubeMap* Cubemap,unsigned int DenoiseSampleCount)
 {
+	glm::vec2 WindowSize = window.GetWindowSize();
+	static bool IsDenoised = false;
 	shader.use();
-	shader.setVec2("WindowSize", WindowSize);
-	shader.setVec3("CameraPosition", camera.Position);
-	shader.setMat4("ProjectionViewMat",camera.ProjectionViewMat);
-	shader.setFloat("Time",glfwGetTime());
-	shader.setInt("ModelCount", ModelCount);
-	
-	if (Cubemap != nullptr)
+
+	if (camera.IsCameraMovedf() || window.IsWindowResizedf())
 	{
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
-		shader.setInt("EnvironmentCubeMap", 3);
+		ProgressiveRenderedFrameCount = -1;
+		IsDenoised = false;
 	}
+	else ProgressiveRenderedFrameCount++;
+	
+	shader.setInt("ProgressiveRenderedFrameCount", ProgressiveRenderedFrameCount);
 
 	if (!IsInitialized)
 	{
@@ -748,17 +766,86 @@ void FUSIONCORE::PathTracer::Render(glm::vec2 WindowSize,Shader& shader,Camera3D
 		IsInitialized = true;
 	}
 	
-	GLuint workGroupSizeX = 32;
-	GLuint workGroupSizeY = 32;
+	if (ProgressiveRenderedFrameCount <= 60)
+	{
+		shader.setVec2("WindowSize", WindowSize);
+		shader.setVec3("CameraPosition", camera.Position);
+		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
+		shader.setFloat("Time", glfwGetTime());
+		shader.setInt("ModelCount", ModelCount);
 
-	GLuint numGroupsX = (WindowSize.x + workGroupSizeX - 1) / workGroupSizeX;
-	GLuint numGroupsY = (WindowSize.y  + workGroupSizeY - 1) / workGroupSizeY;
+		if (Cubemap != nullptr)
+		{
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
+			shader.setInt("EnvironmentCubeMap", 3);
+		}
 
-	glDispatchCompute(numGroupsX, numGroupsY,1);
+		GLuint workGroupSizeX = 32;
+		GLuint workGroupSizeY = 32;
 
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
-	
-	UseShaderProgram(0);
+		GLuint numGroupsX = (WindowSize.x + workGroupSizeX - 1) / workGroupSizeX;
+		GLuint numGroupsY = (WindowSize.y + workGroupSizeY - 1) / workGroupSizeY;
+
+		glDispatchCompute(numGroupsX, numGroupsY, 1);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+
+		UseShaderProgram(0);
+	}
+	else
+	{
+
+		if (!IsDenoised)
+		{
+			/*glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+			glBindTexture(GL_TEXTURE_2D, image);
+
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 0);
+
+			float* pixels = (float*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 4);*/
+
+			IsDenoised = true;
+ 
+			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 3);
+			glBindTexture(GL_TEXTURE_2D, image);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, outputBuffer.data());
+			colorBuf.write(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), outputBuffer.data());
+
+			Denoise(colorBuf.getData(), colorBuf.getData());
+			glBindTexture(GL_TEXTURE_2D, image);
+
+			colorBuf.read(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), outputBuffer.data());
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ImageSize.x, ImageSize.y, GL_RGB, GL_FLOAT, outputBuffer.data());  
+
+			/*glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+
+			float* pixels2 = (float*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_ONLY);
+			memcpy(pixels2, outputBuffer.data(), ImageSize.x * ImageSize.y * 4);
+
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ImageSize.x, ImageSize.y, GL_RGBA, GL_FLOAT, 0);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);*/
+		}
+	}
+}
+
+void FUSIONCORE::PathTracer::Denoise(void* ColorBuffer, void* outputBuffer)
+{
+	filter.setImage("color", ColorBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y); 
+	filter.setImage("output", outputBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y); 
+	filter.commit();
+
+	filter.execute();
+
+	const char* errorMessage;
+	if (device.getError(errorMessage) != oidn::Error::None)
+		std::cout << "Error: " << errorMessage << std::endl;	
 }
 
 void FUSIONCORE::PathTracer::VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor)

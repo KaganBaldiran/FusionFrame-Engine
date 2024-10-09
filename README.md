@@ -35,7 +35,7 @@ Currently has a ray/path tracer with reflections , indirect lighting and shadows
 Ray tracing is done on a compute shader using a hybrid BVH(top and bottom) for acceleration. 
 
 Here is a quick demo scene with basic pbr shading and visualization of the BVH structure.
-![image](https://github.com/user-attachments/assets/ac597f52-d800-4eac-9a36-347e8bb8b725)
+![Uploading image.png…]()
 ![image](https://github.com/user-attachments/assets/ce34ea33-c634-4fd3-b95b-9b8d5e5a5335)
 
 ## Documentation

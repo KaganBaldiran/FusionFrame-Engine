@@ -22,7 +22,7 @@ namespace FUSIONCORE
 	class PathTracer
 	{
 	public:
-		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, Shader& shader);
+		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace);
 		inline GLuint GetTracedImage() { return image; };
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);

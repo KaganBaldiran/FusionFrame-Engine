@@ -1370,7 +1370,7 @@ int Application::PathTracer()
 	models.push_back({Stove.get(),&material3 });
 	models.push_back({Cliff.get(),&material2 });
 
-	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models, PathTracerGeometryPassComputeShader);
+	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models);
 	
 	glm::ivec2 PrevWindowSize;
 	glm::ivec2 PrevWindowPos;

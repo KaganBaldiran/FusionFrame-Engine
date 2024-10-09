@@ -376,6 +376,7 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 	while (!NodesToProcess.empty())
 	{
 		auto& node = BVHNodes[NodesToProcess.front()];
+
 		NodesToProcess.pop_front();
 
 		if (node.TriangleCount <= 1)
@@ -432,7 +433,7 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 	}
 }
 
-FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace,Shader& shader)
+FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace)
 {
 	glGenTextures(1, &image);
 	glActiveTexture(GL_TEXTURE0);
@@ -766,7 +767,7 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		IsInitialized = true;
 	}
 	
-	if (ProgressiveRenderedFrameCount <= 60)
+	if (ProgressiveRenderedFrameCount <= 150)
 	{
 		shader.setVec2("WindowSize", WindowSize);
 		shader.setVec3("CameraPosition", camera.Position);

@@ -460,6 +460,43 @@ float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float Li
      return Shadow;
 }
 
+void TraceRay(in vec3 rayOrigin,in vec3 rayDirection,inout float ClosestDistance,inout RayData data,inout RayData ResultData,in int SampleCount,inout uint seed,in vec3 F,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in vec3 CameraPosition)
+{
+    vec3 Origin = rayOrigin;
+    vec3 Direction = rayDirection;
+    vec3 InvRayDirection = 1.0f / Direction;
+    float isShadow = 0.0f;
+    float EnvironmentIntensity = 0.15f;
+    vec3 reflectionStrength;
+    for(int i = 0;i < SampleCount;i++)
+    {
+        data = TraverseBVH(Origin + Epsilon * Direction,Direction,InvRayDirection,ClosestDistance);
+      
+        if(ClosestDistance == pos_infinity)
+        {
+            reflectionStrength = (1.0f - F) * SurfaceRoughness;
+            ResultData.Albedo.xyz += mix(texture(EnvironmentCubeMap,Direction).xyz,SurfaceAlbedo,reflectionStrength);
+            ResultData.Light += EnvironmentIntensity;
+            ClosestDistance = pos_infinity;
+            break;
+        }
+
+        isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
+      
+        ResultData.Light += data.Light * (1.0f - isShadow) * (1.0f - data.Roughness);
+      
+        ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, CameraPosition, data.Position, isShadow, F);
+        //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,SurfaceRoughness);    
+        ResultData.Position += data.Position;
+        ResultData.Normal += data.Normal;
+
+        ClosestDistance = pos_infinity;
+        Origin = data.Position;
+        Direction = reflect(Direction,data.Normal);
+        InvRayDirection = 1.0f / Direction;
+    }
+}
+
 RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in float Shadow,inout uint seed,in vec3 F,in vec3 CameraPosition)
 {
    RayData ResultData;
@@ -476,44 +513,19 @@ RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 Sur
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = vec3(0.0f);
 
-   const int SampleCount = max(1,int(6.0f * SurfaceRoughness));
+   //int SampleCount = max(1,int(SurfaceRoughness * 6.0f));
+   int SampleCount = max(1,min(30,int(SurfaceRoughness * ProgressiveRenderedFrameCount)));
+   const int BounceCount = 7;
    float invSampleCount = 1.0f / float(SampleCount);
    float weight = 0.0f;
-   float isShadow = 0.0f;
-   float EnvironmentIntensity = 0.1f;
+
    for(int i = 0;i < SampleCount;i++)
    {
       SampleVector = mix(rayDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection),SurfaceRoughness * SurfaceRoughness);
+      SampleVector = mix(SampleVector, rayDirection, Metallic);
       SampleVector = normalize(SampleVector);
 
-      SampleVector = mix(SampleVector, rayDirection, Metallic);
-
-      InvRayDirection = 1.0f / (SampleVector);
-      data = TraverseBVH(rayOrigin + Epsilon * SampleVector,SampleVector,InvRayDirection,ClosestDistance);
-      
-      if(ClosestDistance == pos_infinity)
-      {
-         vec3 reflectionStrength = (1.0f - F) * SurfaceRoughness;
-         ResultData.Albedo.xyz += mix(texture(EnvironmentCubeMap,SampleVector).xyz,SurfaceAlbedo,reflectionStrength);
-         ResultData.Light += EnvironmentIntensity;
-         ClosestDistance = pos_infinity;
-         continue;
-      }
-
-      isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
-      
-      ResultData.Light += data.Light * (1.0f - isShadow) * (1.0f - data.Roughness);
-
-      bool IsClearCoated = 0.6f <= Hash(seed);
-      
-      ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, isShadow, F);
-      //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,SurfaceRoughness);    
-      ResultData.Position += data.Position;
-      ResultData.Normal += data.Normal;
-
-      weight += (1.0f - data.Roughness);
-
-      ClosestDistance = pos_infinity;
+      TraceRay(rayOrigin,SampleVector,ClosestDistance,data,ResultData,BounceCount,seed,F,SurfaceAlbedo,SurfaceRoughness,rayOrigin);
    }
    ResultData.Light *= invSampleCount;
    ResultData.Albedo *= invSampleCount;

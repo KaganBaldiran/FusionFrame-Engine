@@ -15,71 +15,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_internal.h"
 
-
-GLFWwindow* FUSIONUTIL::InitializeWindow(int width, int height,unsigned int MajorGLversion , unsigned int MinorGLversion,bool EnableGLdebug,const char* WindowName)
-{
-	if (!glfwInit())
-	{
-		LOG_ERR("Initializing GLFW!");
-		glfwTerminate();
-		return nullptr;
-	}
-	LOG_INF("GLFW initialized!");
-
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glEnable(GL_MULTISAMPLE);
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MajorGLversion);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MinorGLversion);
-	if (EnableGLdebug)
-	{
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-	}
-
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow* window = glfwCreateWindow(width, height, WindowName, NULL, NULL);
-
-	if (window == NULL)
-	{
-		LOG_ERR("Initializing Window!");
-		glfwTerminate();
-		return nullptr;
-	}
-	LOG_INF("Window initialized!");
-
-	glfwMakeContextCurrent(window);
-
-	if (glewInit() != GLEW_OK)
-	{
-		LOG_ERR("Initializing GLEW!");
-		glfwTerminate();
-		return nullptr;
-	}
-	LOG_INF("Glew initialized!");
-
-	int major, minor;
-	glGetIntegerv(GL_MAJOR_VERSION, &major);
-	glGetIntegerv(GL_MINOR_VERSION, &minor);
-	LOG_INF("OpenGL version : " << major << "." << minor << " core");
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-	glfwSetScrollCallback(window, FUSIONCORE::scrollCallback);
-
-	if (EnableGLdebug)
-	{
-		//glDebugMessageCallback(debugCallback, nullptr);
-	}
-
-    return window;
-}
-
 void FUSIONUTIL::InitializeImguiGLFW(GLFWwindow* window)
 {
 	IMGUI_CHECKVERSION();
@@ -231,4 +166,14 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeTexturedShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CascadedLightSpaceMatrixComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.DecalShader->GetID());
+}
+
+FUSIONUTIL::DefaultShaders::DefaultShaders()
+{
+	InitializeDefaultShaders(*this);
+}
+
+FUSIONUTIL::DefaultShaders::~DefaultShaders()
+{
+	DisposeDefaultShaders(*this);
 }

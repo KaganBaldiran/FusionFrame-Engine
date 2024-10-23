@@ -1199,14 +1199,13 @@ int Application::PathTracer()
 	FUSIONUTIL::InitializeEngineBuffers();
 	FUSIONCORE::InitializeCascadedShadowMapTextureArray(4096, 1, 1024);
 	FUSIONUTIL::DefaultShaders Shaders;
-	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	FUSIONCORE::Shader PathTraceComputeShader("Shaders/PathTracer.comp.glsl");
 	FUSIONCORE::Shader BVHvisualizeShader("Shaders/BVHvisualizeShader.vs", "Shaders/BVHvisualizeShader.fs");
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/sunflowers_puresky_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/steinbach_field_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1226,12 +1225,12 @@ int Application::PathTracer()
 	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
 	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(400.0f, 600.0f);
+	std::uniform_real_distribution<float> RandomIntensity(5.0f, 10.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 1; i++)
 	{
 		LightIntensity = RandomIntensity(engine);
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
@@ -1251,9 +1250,9 @@ int Application::PathTracer()
 	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png");
 	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png");
 
-	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/snow_02_rough_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
-	FUSIONCORE::Texture2D FloorNormal("Resources/floor/snow_02_nor_gl_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
-	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/snow_02_diff_1k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/patterned_cobblestone_02_diff_2k.jpg", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+	FUSIONCORE::Texture2D FloorNormal("Resources/floor/patterned_cobblestone_02_nor_gl_2k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
+	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/patterned_cobblestone_02_rough_2k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
 
 	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
 	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
@@ -1320,7 +1319,7 @@ int Application::PathTracer()
 
 	FUSIONCORE::Material material0(0.7f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
-	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_MINT_GREEN);
+	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_WARM_COCOA);
 	FUSIONCORE::Material material3(0.05f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 
@@ -1347,6 +1346,10 @@ int Application::PathTracer()
 	StoveSpecular.MakeBindless();
 	StoveSpecular.MakeResident();
 	material3.PushTextureMap(FF_TEXTURE_SPECULAR, &StoveSpecular);
+	
+	StoveMetalic.MakeBindless();
+	StoveMetalic.MakeResident();
+	material3.PushTextureMap(FF_TEXTURE_METALLIC, &StoveMetalic);
 
 	ShovelDiffuse.MakeBindless();
 	ShovelDiffuse.MakeResident();
@@ -1359,6 +1362,19 @@ int Application::PathTracer()
 	ShovelSpecular.MakeBindless();
 	ShovelSpecular.MakeResident();
 	ShovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
+
+
+	FloorAlbedo.MakeBindless();
+	FloorAlbedo.MakeResident();
+	material0.PushTextureMap(FF_TEXTURE_DIFFUSE, &FloorAlbedo);
+
+	FloorNormal.MakeBindless();
+	FloorNormal.MakeResident();
+	material0.PushTextureMap(FF_TEXTURE_NORMAL, &FloorNormal);
+
+	FloorSpecular.MakeBindless();
+	FloorSpecular.MakeResident();
+	material0.PushTextureMap(FF_TEXTURE_SPECULAR, &FloorSpecular);
 
 	models.push_back({ grid.get(),&material2 });
 	//models.push_back({ grid2.get(),&material2 });
@@ -1385,13 +1401,20 @@ int Application::PathTracer()
 	FUSIONCORE::Model* PixelModel = nullptr;
 	glm::dvec2 CurrentMousePos(0.0f);
 	glm::dvec2 PrevMousePos(0.0f);
+
+	//FUSIONUTIL::InitializeImguiGLFW(ApplicationWindow.GetWindow());
 	while (!ApplicationWindow.ShouldClose())
 	{
 		timer.Set();
 		WindowSize = ApplicationWindow.GetWindowSize();
+	    //FUSIONUTIL::CreateFrameImguiGLFW();
+		//pathtracer.PathTracerDashBoard();
+
 
 		PrevMousePos = CurrentMousePos;
 		FUSIONUTIL::GetCursorPosition(window, CurrentMousePos.x, CurrentMousePos.y);
+
+		
 
 		//LOG_PARAMETERS(ApplicationWindow.IsWindowResizedf());
 
@@ -1487,27 +1510,32 @@ int Application::PathTracer()
 		
 		pathtracer.Render(ApplicationWindow, PathTraceComputeShader, camera3d,&cubemap);
 
-		auto PathTracerImage = [&]() {
-			/*glActiveTexture(GL_TEXTURE5);
-			glBindTexture(GL_TEXTURE_2D, pathtracer.GetTracedImage());
-			Shaders.FBOShader->setInt("TracedImage", 5);
-			Shaders.FBOShader->setBool("Debug", Debug);*/
+		std::function<void()> OnFBOrender = [&]()
+		{
+				Shaders.FBOShader->setBool("Debug", Debug);
 		};
 
-	    ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, PathTracerImage, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
+        ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, OnFBOrender, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
+		
+		/*
+		if (pathtracer.IsPathTracingDone())
+		{
+		}
+		*/
+		//FUSIONUTIL::RenderImguiGLFW(); 
 
 		ApplicationWindow.UpdateWindow();
 		DeltaTime = timer.GetMiliseconds();
 	}
 
-	FUSIONUTIL::DisposeDefaultShaders(Shaders);
+	//FUSIONUTIL::TerminateRenderImguiGLFW();
 	FUSIONCORE::TerminateCascadedShadowMapTextureArray();
 
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();
-	glDeleteProgram(PathTraceComputeShader.GetID());
-	glDeleteProgram(PathTracerGeometryPassComputeShader.GetID());
 	BVHvisualizeShader.Clear();
+	PathTracerGeometryPassComputeShader.Clear();
+	PathTraceComputeShader.Clear();
 
 	ApplicationWindow.TerminateWindow();
 	FUSIONUTIL::TerminateGLFW();

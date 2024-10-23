@@ -4,39 +4,47 @@
 layout(local_size_x=32,local_size_y=32,local_size_z=1) in;
 layout(rgba32f,binding=0) uniform image2D image;
 
+//BVH data
 layout (location = 1) uniform samplerBuffer MinBounds;
 layout (location = 2) uniform samplerBuffer MaxBounds;
 layout (location = 3) uniform samplerBuffer ChildIndicies;
 layout (location = 4) uniform samplerBuffer TriangleIndicies;
 layout (location = 5) uniform samplerBuffer TriangleCounts;
 
+//Utility uniforms
 layout (location = 6) uniform vec2 WindowSize;
 layout (location = 7) uniform vec3 CameraPosition;
 layout (location = 8) uniform mat4 ProjectionViewMat;
 layout (location = 9) uniform float Time;
 
+//Material data
 layout (location = 10) uniform samplerBuffer ModelAlbedos;
 layout (location = 11) uniform samplerBuffer ModelRoughness;
-
-layout (location = 12) uniform samplerBuffer TriangleUVS;
-layout (location = 13) uniform samplerBuffer TriangleNormals;
-layout (location = 14) uniform samplerBuffer TrianglePositions;
-
-layout (location = 15) uniform int ModelCount;
-layout (location = 16) uniform samplerCube EnvironmentCubeMap;
-layout (location = 17) uniform int ProgressiveRenderedFrameCount;
+layout (location = 12) uniform samplerBuffer ModelMetallic;
 
 readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 {
    uint64_t TexturesHandles[];
 };
 
+//Geometry data
+layout (location = 13) uniform samplerBuffer TriangleUVS;
+layout (location = 14) uniform samplerBuffer TriangleNormals;
+layout (location = 15) uniform samplerBuffer TrianglePositions;
+layout (location = 16) uniform samplerBuffer TriangleTangentsBitangents;
+
+layout (location = 17) uniform int ModelCount;
+layout (location = 18) uniform samplerCube EnvironmentCubeMap;
+layout (location = 19) uniform int ProgressiveRenderedFrameCount;
+
+layout (location = 20) uniform int LightCount;
+
 readonly layout(std430,binding=8) restrict buffer ModelMatricesData
 {
   mat4 ModelMatrices[]; 
 };
 
-/*
+
 struct Light
 {
   vec4 Position;
@@ -47,13 +55,12 @@ struct Light
   int ShadowMapIndex;
 };
 
-layout (location = 14) uniform int LightCount;
 
 layout(std430 , binding = 4) restrict buffer LightsDatas
 {
     Light Lights[];
 };
-*/
+
 
 #define BACKGROUND_COLOR vec4(1.0f)
 const float pos_infinity = uintBitsToFloat(0x7F800000);
@@ -73,14 +80,14 @@ struct RayData
    vec3 Position;
    vec3 Normal;
    vec4 Albedo;
-   vec2 uv;
+   float Metallic;
    float Roughness;
+   vec2 uv;
    float Light;
 };
 
-vec3 LIGHT_DIRECTION = vec3(0.1f,0.4f,-0.7f);
-vec3 LIGHT_COLOR = vec3(0.9f,0.9f,0.6f);
-float LIGHT_INTENSITY = 10.0f;
+const float InvLightCount = 1.0f / LightCount;
+uint seed;
 int NodesToProcess[27];
 
 IntersectionData RayTriangleIntersection(vec3 rayOrigin,vec3 rayDirection,vec3 vertex0,vec3 vertex1,vec3 vertex2)
@@ -189,8 +196,9 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      data.Normal = vec3(0.0f);
      data.Position = vec3(0.0f);
      data.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
-     data.uv = vec2(0.0f);
      data.Roughness = 0.0f;
+     data.Metallic = 0.0f;
+     data.uv = vec2(0.0f);
      data.Light = 0.0f;
 
      vec4 v0 = vec4(0.0f);
@@ -201,11 +209,8 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      vec3 n1 = vec3(0.0f);
      vec3 n2 = vec3(0.0f);
 
-     vec2 uv0 = vec2(0.0f);
-     vec2 uv1 = vec2(0.0f);
-     vec2 uv2 = vec2(0.0f);
-
      vec3 Normal = vec3(0.0f);
+     vec3 TextureNormal = vec3(0.0f);
      vec3 Tangent;
      vec3 Bitangent;
      vec3 up;
@@ -225,6 +230,10 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      int NearChildIndex = -1;
      int FarChildIndex = -1;
 
+     int iTrip;
+     int TriangleIndex;
+     int TriCount;
+
      while(StackIndex > 0)
      {
         StackIndex--;
@@ -233,8 +242,8 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
         ChildIndex = int(texelFetch(ChildIndicies,CurrentIndex).r);
         if(ChildIndex == -1)
         {
-            int TriangleIndex = int(texelFetch(TriangleIndicies,CurrentIndex).r);
-	        int TriCount = int(texelFetch(TriangleCounts,CurrentIndex).r);
+            TriangleIndex = int(texelFetch(TriangleIndicies,CurrentIndex).r);
+	        TriCount = int(texelFetch(TriangleCounts,CurrentIndex).r);
             for(int i = TriangleIndex;i < TriangleIndex + TriCount;i++)
             {
                 v0 = texelFetch(TrianglePositions,i * 3).xyzw;
@@ -250,19 +259,21 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                     if(result.t < ClosestDistance)
                     {
                         TriangleUV = result.uv;
-                        
-                        n0 = texelFetch(TriangleNormals,i * 3).xyz;
-                        n1 = texelFetch(TriangleNormals,i * 3 + 1).xyz;
-                        n2 = texelFetch(TriangleNormals,i * 3 + 2).xyz;
-                        Normal = normalize((1.0f - TriangleUV.x - TriangleUV.y) * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
 
-                        uv0 = texelFetch(TriangleUVS,i * 3).xy;
-                        uv1 = texelFetch(TriangleUVS,i * 3 + 1).xy;
-                        uv2 = texelFetch(TriangleUVS,i * 3 + 2).xy;
-                        TriangleTextureUV = (1.0f - TriangleUV.x - TriangleUV.y) * uv0 + TriangleUV.x * uv1 + TriangleUV.y * uv2;
+                        float OneMinusUV = (1.0f - TriangleUV.x - TriangleUV.y);
+                        
+                        iTrip = i * 3;
+                        n0 = texelFetch(TriangleNormals,iTrip).xyz;
+                        n1 = texelFetch(TriangleNormals,iTrip + 1).xyz;
+                        n2 = texelFetch(TriangleNormals,iTrip + 2).xyz;
+                        Normal = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+
+                        n0.xy = texelFetch(TriangleUVS,iTrip).xy;
+                        n1.xy = texelFetch(TriangleUVS,iTrip + 1).xy;
+                        n2.xy = texelFetch(TriangleUVS,iTrip + 2).xy;
+                        TriangleTextureUV = OneMinusUV * n0.xy + TriangleUV.x * n1.xy + TriangleUV.y * n2.xy;
 
                         TextureHandle = TexturesHandles[CurrentModelID];
-
                         if (TextureHandle != 0) {
                             data.Albedo = vec4(texture(sampler2D(TextureHandle),TriangleTextureUV).xyz,1.0f);
                         }
@@ -272,11 +283,19 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                         } 
                         
                         TextureHandle = TexturesHandles[CurrentModelID + ModelCount];
+                        if (TextureHandle != 0) 
+                        {
+                            iTrip *= 2;
 
-                        if (TextureHandle != 0) {
-                            vec3 up = abs(Normal.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
-                            Tangent = normalize(cross(up, Normal)); 
-                            Bitangent = normalize(cross(Normal, Tangent));
+                            n0 = texelFetch(TriangleTangentsBitangents,iTrip).xyz;
+                            n1 = texelFetch(TriangleTangentsBitangents,iTrip + 2).xyz;
+                            n2 = texelFetch(TriangleTangentsBitangents,iTrip + 4).xyz;
+                            Tangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+
+                            n0 = texelFetch(TriangleTangentsBitangents,iTrip + 1).xyz;
+                            n1 = texelFetch(TriangleTangentsBitangents,iTrip + 3).xyz;
+                            n2 = texelFetch(TriangleTangentsBitangents,iTrip + 5).xyz;
+                            Bitangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
 
                             TBNmat = mat3(Tangent,Bitangent,Normal);
                             Normal = texture(sampler2D(TextureHandle),TriangleTextureUV).xyz * 2.0f - 1.0f;
@@ -289,7 +308,6 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                         }
 
                         TextureHandle = TexturesHandles[CurrentModelID + ModelCount * 2];
-
                         if (TextureHandle != 0) {
                             data.Roughness = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
                         }
@@ -298,10 +316,25 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                              data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
                         } 
 
+                        TextureHandle = TexturesHandles[CurrentModelID + ModelCount * 3];
+                        if (TextureHandle != 0) {
+                            data.Metallic = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
+                        }
+                        else
+                        {
+                            data.Metallic = texelFetch(ModelMetallic,CurrentModelID).x;
+                        } 
+
                         ClosestDistance = result.t;
                         data.Position = rayOrigin + rayDirection * result.t;
                         
-                        data.Light = max(0.0f,dot(LIGHT_DIRECTION,Normal));
+
+                        for(int i=0;i < LightCount;i++)
+                        {
+                           data.Light += max(0.0f,dot(normalize(Lights[i].Position.xyz),Normal));
+                        }
+                        data.Light /= float(LightCount); 
+
                         data.uv = TriangleTextureUV;
                     }  
                 }
@@ -394,23 +427,28 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 vec3 PBRshade(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPos, vec3 Position, float shadow,inout vec3 F) {
     vec3 V = normalize(CameraPos - Position);
     float NdotV = max(dot(N, V), 0.0);
-
     vec3 F0 = mix(vec3(0.04), Albedo, Metalic);
-    vec3 L = normalize(LIGHT_DIRECTION);
-    vec3 H = normalize(V + L);
 
-    float NDF = DistributionGGX(N, H, roughness);
-    float G = GeometrySmith(N, V, L, roughness);
-    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3 Lo = vec3(0.0f);
+    for(int i=0;i < LightCount;i++)
+    {
+        vec3 L = normalize(Lights[i].Position.xyz);
+        vec3 H = normalize(V + L);
 
-    float NdotL = max(dot(N, L), 0.0);
-    vec3 kS = F;
-    vec3 kD = (1.0 - kS) * (1.0 - Metalic);
+        float NDF = DistributionGGX(N, H, roughness);
+        float G = GeometrySmith(N, V, L, roughness);
+        F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
-    vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
-    vec3 radiance = LIGHT_COLOR;
+        float NdotL = max(dot(N, L), 0.0);
+        vec3 kS = F;
+        vec3 kD = (1.0 - kS) * (1.0 - Metalic);
 
-    return (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * LIGHT_INTENSITY * NdotL;
+        vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+        vec3 radiance = Lights[i].Color.xyz;
+        Lo += (1.0 - shadow) * (kD * Albedo / PI + specular) * radiance * Lights[i].Intensity * NdotL;
+    }
+
+    return Lo;
 }
 
 float Hash(inout int x)
@@ -423,11 +461,11 @@ float Hash(inout int x)
     return float(x & 0xFFFFFF) / float(0x1000000); 
 }
 
-vec3 SampleSemiSphere(vec2 seed,vec3 Normal)
+vec3 SampleSemiSphere(vec2 InputSeed,vec3 Normal)
 {
-   float phi = 2.0f * PI * seed.x;
-   float cosTheta = sqrt(seed.y);       
-   float sinTheta = sqrt(1.0f - seed.y); 
+   float phi = 2.0f * PI * InputSeed.x;
+   float cosTheta = sqrt(InputSeed.y);       
+   float sinTheta = sqrt(1.0f - InputSeed.y); 
 
    vec3 SampledVector = vec3(cos(phi) * sinTheta,
                              sin(phi) * sinTheta,
@@ -440,18 +478,18 @@ vec3 SampleSemiSphere(vec2 seed,vec3 Normal)
    return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
 }
 
-float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float LightDiameter,inout uint seed)
+float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float LightDiameter)
 {
      vec3 SampleLightDirection = vec3(0.0f);
      float Shadow = 0.0f;
-     const int SampleCount = int(5.0f);
+     const int SampleCount = 5;
      float ClosestDistance = pos_infinity;
      for(int i = 0;i < SampleCount;i++)
      {
        SampleLightDirection = mix(LightDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),LightDirection),LightDiameter);
 
        vec3 InvRayDirection = 1.0f / (SampleLightDirection);
-       TraverseBVH(CurrentPosition + Epsilon * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance);
+       TraverseBVH(CurrentPosition + Epsilon * distance(CameraPosition,CurrentPosition) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance);
        Shadow += float(ClosestDistance != pos_infinity);
        ClosestDistance = pos_infinity;
      }
@@ -460,35 +498,35 @@ float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float Li
      return Shadow;
 }
 
-void TraceRay(in vec3 rayOrigin,in vec3 rayDirection,inout float ClosestDistance,inout RayData data,inout RayData ResultData,in int SampleCount,inout uint seed,in vec3 F,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in vec3 CameraPosition)
+void TraceRay(inout vec4 Albedo,inout float Light,in vec3 rayOrigin,in vec3 rayDirection,inout float ClosestDistance,inout RayData data,in int SampleCount,in vec3 F,in vec3 SurfaceAlbedo,in float SurfaceRoughness)
 {
     vec3 Origin = rayOrigin;
     vec3 Direction = rayDirection;
     vec3 InvRayDirection = 1.0f / Direction;
     float isShadow = 0.0f;
-    float EnvironmentIntensity = 0.15f;
+    float EnvironmentIntensity = 0.1f;
     vec3 reflectionStrength;
     for(int i = 0;i < SampleCount;i++)
     {
-        data = TraverseBVH(Origin + Epsilon * Direction,Direction,InvRayDirection,ClosestDistance);
+        data = TraverseBVH(Origin + Epsilon * distance(CameraPosition,Origin) * Direction,Direction,InvRayDirection,ClosestDistance);
       
         if(ClosestDistance == pos_infinity)
         {
             reflectionStrength = (1.0f - F) * SurfaceRoughness;
-            ResultData.Albedo.xyz += mix(texture(EnvironmentCubeMap,Direction).xyz,SurfaceAlbedo,reflectionStrength);
-            ResultData.Light += EnvironmentIntensity;
+            Albedo.xyz += mix(texture(EnvironmentCubeMap,Direction).xyz,SurfaceAlbedo,reflectionStrength);
+            Light += EnvironmentIntensity;
             ClosestDistance = pos_infinity;
             break;
         }
 
-        isShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
-      
-        ResultData.Light += data.Light * (1.0f - isShadow) * (1.0f - data.Roughness);
-      
-        ResultData.Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, CameraPosition, data.Position, isShadow, F);
-        //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,SurfaceRoughness);    
-        ResultData.Position += data.Position;
-        ResultData.Normal += data.Normal;
+        for(int y = 0;y < LightCount;y++)
+        {
+           isShadow += RayTraceShadows(data.Position,normalize(Lights[y].Position.xyz),0.05f);
+        }
+        isShadow *= InvLightCount;
+
+        Light += data.Light * (1.0f - isShadow) * (1.0f - data.Roughness) * (1.0f / float(i + 1));
+        Albedo.xyz += PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic, CameraPosition, data.Position, isShadow, F);
 
         ClosestDistance = pos_infinity;
         Origin = data.Position;
@@ -497,50 +535,37 @@ void TraceRay(in vec3 rayOrigin,in vec3 rayDirection,inout float ClosestDistance
     }
 }
 
-RayData RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in float Shadow,inout uint seed,in vec3 F,in vec3 CameraPosition)
+vec4 RayTraceIndirectLight(in vec3 rayOrigin,in vec3 rayDirection,in vec3 SurfaceNormal,in vec3 SurfaceAlbedo,in float SurfaceRoughness,in float Metallic,in float Shadow,in vec3 F,in vec3 CameraPosition)
 {
-   RayData ResultData;
-   ResultData.Normal = vec3(0.0f);
-   ResultData.Position = vec3(0.0f);
-   ResultData.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
-   ResultData.uv = vec2(0.0f);
-   ResultData.Roughness = 0.0f;
-   ResultData.Light = 0.0f;
+   vec4 Albedo = vec4(SurfaceAlbedo,1.0f);
+   float Light = 0.0f;
 
    RayData data;
    vec3 SampleVector = vec3(0.0f);
 
    float ClosestDistance = pos_infinity;
+   rayDirection = reflect(rayDirection,SurfaceNormal);
+   
    vec3 InvRayDirection = vec3(0.0f);
 
-   //int SampleCount = max(1,int(SurfaceRoughness * 6.0f));
-   int SampleCount = max(1,min(30,int(SurfaceRoughness * ProgressiveRenderedFrameCount)));
-   const int BounceCount = 7;
-   float invSampleCount = 1.0f / float(SampleCount);
-   float weight = 0.0f;
-
+   int SampleCount = max(1,min(15,int(SurfaceRoughness * ProgressiveRenderedFrameCount * 0.5f)));
+   const int BounceCount = 6;
    for(int i = 0;i < SampleCount;i++)
    {
       SampleVector = mix(rayDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),rayDirection),SurfaceRoughness * SurfaceRoughness);
       SampleVector = mix(SampleVector, rayDirection, Metallic);
       SampleVector = normalize(SampleVector);
 
-      TraceRay(rayOrigin,SampleVector,ClosestDistance,data,ResultData,BounceCount,seed,F,SurfaceAlbedo,SurfaceRoughness,rayOrigin);
+      TraceRay(Albedo,Light,rayOrigin,SampleVector,ClosestDistance,data,BounceCount,F,SurfaceAlbedo,SurfaceRoughness);
    }
-   ResultData.Light *= invSampleCount;
-   ResultData.Albedo *= invSampleCount;
-   //ResultData.Albedo.xyz = mix(ResultData.Albedo.xyz,SurfaceAlbedo,F);    
-   //ResultData.Albedo.xyz = (ResultData.Albedo.xyz + SurfaceAlbedo) * 0.5f;
-   ResultData.Albedo.xyz *= ResultData.Light;
+   Light /= float(SampleCount);
+   Albedo /= float(SampleCount + 1);
+   Albedo.xyz *= Light;
 
-   ResultData.Roughness *= invSampleCount;
-   ResultData.Position *= invSampleCount;
-   ResultData.Normal *= invSampleCount;
-
-   return ResultData;
+   return Albedo;
 }
 
-vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
+vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection)
 {
    float ClosestDistance = pos_infinity;
    vec3 InvRayDirection = 1.0f / (rayDirection);
@@ -548,26 +573,30 @@ vec3 PathTrace(in vec3 rayOrigin,in vec3 rayDirection,in ivec2 pixelPos)
    
    if(ClosestDistance == pos_infinity)
    {
-      return vec3(0.0f);
+      return texture(EnvironmentCubeMap,rayDirection).xyz;
    }
-   uint seed = pixelPos.x * pixelPos.y * uint(Time);
 
    vec3 Color = vec3(0.0f);
-   float IsShadow = RayTraceShadows(data.Position,LIGHT_DIRECTION,0.05f,seed);
+   float IsShadow = 0.0f;
+   for(int i = 0;i < LightCount;i++)
+   {
+      IsShadow += RayTraceShadows(data.Position,normalize(Lights[i].Position.xyz),0.05f);
+   }
+   IsShadow *= InvLightCount;
 
    vec3 F = vec3(0.0f);
 
-   vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, 0.0f, rayOrigin, data.Position, float(IsShadow), F);
-   vec3 indirectLight = RayTraceIndirectLight(data.Position, data.Normal,data.Albedo.xyz,data.Roughness,0.0f, IsShadow, seed,F,rayOrigin).Albedo.xyz;
-   vec3 finalColor = (directLight + indirectLight) * 0.5f;
-   //return indirectLight;
+   vec3 directLight = PBRshade(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic, rayOrigin, data.Position, float(IsShadow), F);
+   vec3 indirectLight = RayTraceIndirectLight(data.Position,rayDirection,data.Normal,data.Albedo.xyz,data.Roughness,data.Metallic, IsShadow,F,rayOrigin).xyz;
+   vec3 finalColor = mix(directLight,indirectLight,0.5f);
    return finalColor;
 }
 
 void main()
 {
     ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
-    vec2 uv = (vec2(pos)+0.5f)/WindowSize;
+    seed = pos.x * pos.y * uint(Time);
+    vec2 uv = (vec2(pos)+vec2(Hash(seed),Hash(seed)))/WindowSize;
 
     vec2 uvND = uv * 2.0f - 1.0f;
 
@@ -576,7 +605,7 @@ void main()
     rayDir4 = vec4(rayDir4.xyz / rayDir4.w,1.0f);
     vec3 rayDirection = normalize(rayDir4.xyz - rayOrigin.xyz);
 
-    vec3 result = PathTrace(rayOrigin,rayDirection.xyz,pos);
+    vec3 result = PathTrace(rayOrigin,rayDirection.xyz);
 
     if(ProgressiveRenderedFrameCount >= 0)
     {

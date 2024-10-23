@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "PathTracer.hpp"
 #include <glew.h>
 #include <glfw3.h>
@@ -6,12 +5,15 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
-#include <omp.h>
 #include "../../FusionUtility/StopWatch.h"
 #include <algorithm>
 #include "../../FusionCore/Color.hpp"
 #include "../../FusionCore/Light.hpp"
 #include "../../FusionCore/Decal.hpp"
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_internal.h"
 
 template <typename T>
 using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
@@ -92,8 +94,6 @@ inline void SetTBObindlessTextureData(FUSIONCORE::TBO& tbo,FUSIONCORE::Texture2D
 	tbo.TexBuffer(internalUsage);
 	texture.MakeBindless();
     texture.MakeResident();
-
-	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
 
 inline void CalculateModelBoundingBox(FUSIONCORE::Model*& Model,
@@ -284,6 +284,7 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 						AlignedBuffer<glm::vec3>& TriangleNormals,
 						AlignedBuffer<glm::vec2>& TriangleUVs,
 						AlignedBuffer<glm::vec3> &TriangleCenters,
+						AlignedBuffer<glm::vec3> &TriangleTangentsBitangents,
 						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
 {
@@ -335,6 +336,8 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 				SwapThreeItems(TrianglePositions, i, swap);
 				SwapThreeItems(TriangleNormals, i, swap);
 				SwapThreeItems(TriangleUVs, i, swap);
+				SwapThreeItems(TriangleTangentsBitangents, i * 2, swap * 2);
+				SwapThreeItems(TriangleTangentsBitangents, i * 2 + 1, swap * 2 + 1);
 
 				std::swap(TriangleCenters[i], TriangleCenters[swap]);
 				std::swap(TriangleMinMax[i], TriangleMinMax[swap]);
@@ -451,6 +454,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	glBufferData(GL_PIXEL_PACK_BUFFER, width * height * 3 * sizeof(float), NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
+	glGenQueries(1, &queryObject);
+
 	ImageSize = { width,height };
 
 
@@ -474,6 +479,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<glm::vec3> TriangleCenters;
 	AlignedBuffer<glm::vec4> TrianglePositions;
 	AlignedBuffer<glm::vec3> TriangleNormals;
+	AlignedBuffer<glm::vec3> TriangleTangentsBitangents;
 	AlignedBuffer<glm::vec2> TriangleUVs;
 
 	//Albedo-Normal
@@ -481,6 +487,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 	AlignedBuffer<glm::vec4> ModelAlbedos;
 	AlignedBuffer<float> ModelRoughness;
+	AlignedBuffer<float> ModelMetallic;
 
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
 	std::vector<BVHnode> BoundingBoxes;
@@ -489,7 +496,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	ModelMatrixes.reserve(ModelCount);
 	ModelAlbedos.reserve(ModelCount);
 	ModelRoughness.reserve(ModelCount);
-	TextureHandles.resize(ModelCount * 3);
+	TextureHandles.resize(ModelCount * 4);
 	Models.reserve(ModelCount);
 	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
@@ -516,6 +523,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 	TrianglePositions.reserve(ReserveCount);
 	TriangleNormals.reserve(ReserveCount);
+	TriangleTangentsBitangents.reserve(ReserveCount * 2);
 	TriangleUVs.reserve(ReserveCount);
 	TriangleCenters.reserve(ReserveCount / 3);
 	TriangleMinMax.reserve(ReserveCount / 3);
@@ -529,9 +537,11 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
 		auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
 		auto RoughnessTexture = material->GetTextureMap(FF_TEXTURE_SPECULAR);
+		auto MetallicTexture = material->GetTextureMap(FF_TEXTURE_METALLIC);
 		TextureHandles[i] = AlbedoTexture != nullptr ? AlbedoTexture->GetTextureHandle() : 0;
 		TextureHandles[i + ModelCount] = NormalTexture != nullptr ? NormalTexture->GetTextureHandle() : 0;
 		TextureHandles[i + ModelCount * 2] = RoughnessTexture != nullptr ? RoughnessTexture->GetTextureHandle() : 0;
+		TextureHandles[i + ModelCount * 3] = MetallicTexture != nullptr ? MetallicTexture->GetTextureHandle() : 0;
 
 		Models.push_back(model);
 
@@ -539,8 +549,9 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		NormalMatrix = glm::transpose(glm::inverse(glm::mat3(ModelMatrix)));
 
 		ModelAlbedos.push_back(material->Albedo);
-		ModelMatrixes.push_back(ModelMatrix);
 		ModelRoughness.push_back(material->roughness);
+		ModelMetallic.push_back(material->metalic);
+		ModelMatrixes.push_back(ModelMatrix);
 		
 		for (auto& mesh : model->Meshes)
 		{
@@ -560,6 +571,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleCenter += TempPosition;
 				
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex0->Normal));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex0->Tangent));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex0->Bitangent));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
 				TriangleUVs.push_back(Vertex0->TexCoords);
 
@@ -570,6 +583,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleCenter += TempPosition;
 				
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex1->Normal));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex1->Tangent));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex1->Bitangent));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
 				TriangleUVs.push_back(Vertex1->TexCoords);
 
@@ -580,6 +595,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleCenter += TempPosition;
 				
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex2->Normal));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex2->Tangent));
+				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex2->Bitangent));
 				TrianglePositions.push_back(glm::vec4(TempPosition, i));
 				TriangleUVs.push_back(Vertex2->TexCoords);
 
@@ -611,7 +628,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		if (node.ChildIndex < 0)
 		{
 		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals,
-			                   TriangleUVs,TriangleCenters, TriangleMinMax, 27);
+			                   TriangleUVs,TriangleCenters,TriangleTangentsBitangents,
+			                   TriangleMinMax, 27);
 		}
 	}
 	ModelNodeCount = BoundingBoxes.size();
@@ -693,6 +711,13 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		ModelRoughness.data(),
 		GL_STATIC_DRAW);
 
+	SetTBObindlessTextureData(MetallicData,
+		MetallicTexture,
+		GL_R32F,
+		ModelCount * sizeof(float),
+		ModelMetallic.data(),
+		GL_STATIC_DRAW);
+
 	SetTBObindlessTextureData(TracerTriangleUVdata,
 		TracerTriangleUVTexture,
 		GL_RG32F,
@@ -707,12 +732,21 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		TriangleNormals.data(),
 		GL_STATIC_DRAW);
 
+	SetTBObindlessTextureData(TracerTriangleTangentBitangentData,
+		TracerTriangleTangentBitangentTexture,
+		GL_RGB32F,
+		TriangleTangentsBitangents.size() * sizeof(glm::vec3),
+		TriangleTangentsBitangents.data(),
+		GL_STATIC_DRAW);
+
 	SetTBObindlessTextureData(TracerTrianglePositionsData,
 		TracerTrianglePositionsTexture,
 		GL_RGBA32F,
 		TrianglePositions.size() * sizeof(glm::vec4),
 		TrianglePositions.data(),
 		GL_STATIC_DRAW);
+
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
 	ModelMatricesData.Bind();
 	ModelMatricesData.BufferDataFill(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * ModelMatrixes.size(), ModelMatrixes.data(), GL_STREAM_DRAW);
@@ -731,9 +765,29 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	LOG("Process took: " << timer.GetMiliseconds());
 }
 
+GLint FUSIONCORE::PathTracer::IsPathTracingDone()
+{
+	GLint PathTracingDone = 0;
+	glGetQueryObjectiv(queryObject, GL_QUERY_RESULT_AVAILABLE, &PathTracingDone);
+	LOG_PARAMETERS(PathTracingDone);
+	return PathTracingDone;
+}
+
+void FUSIONCORE::PathTracer::PathTracerDashBoard()
+{
+	ImGui::Begin("Path Tracer Settings");
+	ImGui::Text("Hello");
+	if (ImGui::Button("Render"))
+	{
+		ShouldPathTrace = true;
+	}
+	ImGui::End();
+}
+
 FUSIONCORE::PathTracer::~PathTracer()
 {
 	glDeleteTextures(1, &this->image);
+	glDeleteQueries(1, &queryObject);
 }
 
 void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& camera,CubeMap* Cubemap,unsigned int DenoiseSampleCount)
@@ -760,14 +814,16 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		this->TriangleCountTexture.SendBindlessHandle(shader.GetID(), "TriangleCounts");
 		this->AlbedoTexture.SendBindlessHandle(shader.GetID(), "ModelAlbedos");
 		this->RoughnessTexture.SendBindlessHandle(shader.GetID(), "ModelRoughness");
+		this->MetallicTexture.SendBindlessHandle(shader.GetID(), "ModelMetallic");
 		this->TracerTriangleUVTexture.SendBindlessHandle(shader.GetID(), "TriangleUVS");
 		this->TracerTriangleNormalsTexture.SendBindlessHandle(shader.GetID(), "TriangleNormals");
 		this->TracerTrianglePositionsTexture.SendBindlessHandle(shader.GetID(), "TrianglePositions");
+		this->TracerTriangleTangentBitangentTexture.SendBindlessHandle(shader.GetID(), "TriangleTangentsBitangents");
 		SendLightsShader(shader);
 		IsInitialized = true;
 	}
 	
-	if (ProgressiveRenderedFrameCount <= 150)
+	if (ProgressiveRenderedFrameCount <= 60)
 	{
 		shader.setVec2("WindowSize", WindowSize);
 		shader.setVec3("CameraPosition", camera.Position);
@@ -790,7 +846,6 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 
 		glDispatchCompute(numGroupsX, numGroupsY, 1);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
-
 		UseShaderProgram(0);
 	}
 	else
@@ -808,7 +863,8 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 4);*/
 
 			IsDenoised = true;
- 
+			ShouldPathTrace = false;
+
 			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 3);
 			glBindTexture(GL_TEXTURE_2D, image);
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, outputBuffer.data());

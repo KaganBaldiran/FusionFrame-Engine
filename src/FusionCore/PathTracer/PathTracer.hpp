@@ -24,6 +24,8 @@ namespace FUSIONCORE
 	public:
 		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace);
 		inline GLuint GetTracedImage() { return image; };
+		GLint IsPathTracingDone();
+		void PathTracerDashBoard();
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
 		void Render(Window& window,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr,unsigned int DenoiseSampleCount = 60);
@@ -34,7 +36,7 @@ namespace FUSIONCORE
 		oidn::FilterRef filter;
 		oidn::BufferRef colorBuf;
 
-		GLuint image,pbo;
+		GLuint image,pbo,queryObject;
 		glm::ivec2 ImageSize;
 
 		TBO MinBoundData;
@@ -58,11 +60,17 @@ namespace FUSIONCORE
 		TBO RoughnessData;
 		Texture2D RoughnessTexture;
 
+		TBO MetallicData;
+		Texture2D MetallicTexture;
+
 		TBO TracerTriangleUVdata;
 		Texture2D TracerTriangleUVTexture;
 
 		TBO TracerTriangleNormalData;
 		Texture2D TracerTriangleNormalsTexture;
+
+		TBO TracerTriangleTangentBitangentData;
+		Texture2D TracerTriangleTangentBitangentTexture;
 
 		TBO TracerTrianglePositionsData;
 		Texture2D TracerTrianglePositionsTexture;
@@ -75,6 +83,7 @@ namespace FUSIONCORE
 		int ModelNodeCount;
 		size_t ModelCount;
 		bool IsInitialized;
+		bool ShouldPathTrace;
 
 		int ProgressiveRenderedFrameCount;
 

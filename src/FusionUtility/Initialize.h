@@ -11,6 +11,9 @@ namespace FUSIONUTIL
 	class FUSIONFRAME_EXPORT DefaultShaders
 	{
 	public:
+        DefaultShaders();
+        ~DefaultShaders();
+
 		/**
         * @brief Default shader for rendering basic objects with a single color.
         * This shader does not support lighting or texturing.
@@ -109,22 +112,6 @@ namespace FUSIONUTIL
     FUSIONFRAME_EXPORT_FUNCTION void InitializeEngineBuffers();
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
     FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
-     /*
-     Initializes a GLFW window.
-
-     Parameters:
-       - width: The width of the window.
-       - height: The height of the window.
-       - MajorGLversion: The major version of the OpenGL context.
-       - MinorGLversion: The minor version of the OpenGL context.
-       - EnableGLdebug: Whether to enable OpenGL debug context.
-       - WindowName: The name of the window.
-
-     Returns:
-       A pointer to the GLFW window if initialization is successful, otherwise nullptr.
-     */
-
-    FUSIONFRAME_EXPORT_FUNCTION GLFWwindow* InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
     
     FUSIONFRAME_EXPORT_FUNCTION void InitializeImguiGLFW(GLFWwindow* window);
     FUSIONFRAME_EXPORT_FUNCTION void RenderImguiGLFW();

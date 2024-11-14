@@ -59,6 +59,8 @@ namespace FUSIONCORE
 		void MakeResident();
 		//Makes a bindless texture non-resident to allow altering operations.
 		void MakeNonResident();
+		//Returns if the texture is already made resident
+		inline bool IsTextureResident() { return IsResident; };
 		//Sends the bindless texture to a shader sampler.
 		void SendBindlessHandle(GLuint Shader, std::string Uniform);
 		void Unbind();
@@ -81,6 +83,7 @@ namespace FUSIONCORE
 		int width, height, channels;
 		std::string PathData;
 		int TextureState;
+		bool IsResident;
 		GLenum PixelType , InternalFormat , TextureType;
 		GLuint64 TextureHandle;
 	};

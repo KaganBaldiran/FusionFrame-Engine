@@ -1,0 +1,17 @@
+# Blender 4.2.3 LTS MTL File: 'chess_set_2k.blend'
+# www.blender.org
+
+newmtl chess_set_board
+map_Kd ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_board_diff_2k.png
+map_Pr ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_board_rough_2k.png
+map_Bump -bm 1.000000 ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_board_nor_gl_2k.png
+
+newmtl chess_set_pieces_black
+map_Kd ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_black_diff_2k.png
+map_Pr ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_black_rough_2k.png
+map_Bump -bm 1.000000 ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_black_nor_gl_2k.png
+
+newmtl chess_set_pieces_white
+map_Kd ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_white_diff_2k.png
+map_Pr ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_white_rough_2k.png
+map_Bump -bm 1.000000 ../../../../../../../Downloads/chess_set_2k.blend/textures/chess_set_pieces_white_nor_gl_2k.png

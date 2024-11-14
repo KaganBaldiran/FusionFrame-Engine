@@ -2,18 +2,18 @@
 #include <glew.h>
 #include <glfw3.h>
 
-FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo)
+FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo,glm::vec3 Emission)
 {
-	this->roughness = roughness;
-	this->metalic = metalic;
+	this->Roughness = roughness;
+	this->Metallic = metalic;
 	this->Albedo = Albedo;
+	this->Emission = Emission;
 	std::fill_n(this->DisableClayMaterial, 5, 1);
 }
 
 void FUSIONCORE::Material::PushTextureMap(const char* Key,Texture2D* TextureMap)
 {
 	TextureMaps[Key] = TextureMap;
-
 	std::string KeyValue(Key);
 	if (KeyValue.find("diffuse") != std::string::npos)
 	{
@@ -91,10 +91,27 @@ void FUSIONCORE::Material::SetMaterialShader(Shader& shader)
 	}
 
 	glUniform1iv(glGetUniformLocation(shader.GetID(), "disableclaymaterial"), 5, &DisableClayMaterial[0]);
-	shader.setFloat("metallic", this->metalic);
-	shader.setFloat("roughness", this->roughness);
+	shader.setFloat("metallic", this->Metallic);
+	shader.setFloat("roughness", this->Roughness);
 	shader.setFloat("TilingCoeff", this->TilingCoeff);
 	shader.setVec4("albedo", Albedo);
+}
+
+void FUSIONCORE::Material::MakeMaterialBindlessResident()
+{
+	for(auto& texture : this->TextureMaps)
+    {
+		texture.second->MakeBindless();
+		texture.second->MakeResident();
+	}
+}
+
+void FUSIONCORE::Material::MakeMaterialBindlessNonResident()
+{
+	for (auto& texture : this->TextureMaps)
+	{
+		texture.second->MakeNonResident();
+	}
 }
 
 void FUSIONCORE::SetEnvironment(Shader& shader, float FogIntesity, glm::vec3 FogColor, glm::vec3 EnvironmentRadiance)

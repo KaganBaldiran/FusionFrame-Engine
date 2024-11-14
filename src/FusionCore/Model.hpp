@@ -8,6 +8,7 @@
 #include <string>
 #include "Mesh.h"
 #include <map>
+#include <set>
 #include "Object.hpp"
 #include "Cubemap.h"
 #include <filesystem>
@@ -100,7 +101,7 @@ namespace FUSIONCORE
         void SetAlphaMaterial(Material& material);
 
         std::vector<Mesh> Meshes;
-        std::vector<std::shared_ptr<Texture2D>> textures_loaded;
+        std::unordered_map<std::string,std::shared_ptr<Texture2D>> textures_loaded;
         std::vector<PreMeshData> PreMeshDatas;
 
         ~Model();
@@ -110,7 +111,7 @@ namespace FUSIONCORE
         void processNode(aiNode* node, const aiScene* scene);
         void processMesh(aiMesh* mesh, const aiScene* scene);
         void ExtractBones(std::vector<std::shared_ptr<Vertex>>& vertices, aiMesh* mesh, const aiScene* scene);
-        void loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, std::vector<std::shared_ptr<FUSIONCORE::Texture2D>>& Destination);
+        void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName,const char* TextureKey, FUSIONCORE::Material& DestinationMaterial);
 
         PreMeshData processMeshAsync(aiMesh* mesh, const aiScene* scene);
         void processNodeAsync(aiNode* node, const aiScene* scene);
@@ -146,6 +147,8 @@ namespace FUSIONCORE
         int ModelImportStateCode = FF_INITIAL_CODE;
         VBO* InstanceDataVBO;
         size_t InstanceCount;
+
+        void ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Material& TempMaterial);
     };
 
     FUSIONFRAME_EXPORT_FUNCTION std::vector<std::shared_ptr<FUSIONCORE::Model>> ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel = false);

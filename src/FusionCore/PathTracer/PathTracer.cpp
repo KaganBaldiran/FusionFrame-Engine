@@ -436,6 +436,27 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 	}
 }
 
+void ProcessMaterial(FUSIONCORE::Material*& material,
+					AlignedBuffer<GLuint64> &TextureHandles,
+					AlignedBuffer<glm::vec4> &ModelAlbedos,
+					AlignedBuffer<float> &ModelRoughness,
+					AlignedBuffer<float> &ModelMetallic)
+{
+	auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
+	auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
+	auto RoughnessTexture = material->GetTextureMap(FF_TEXTURE_SPECULAR);
+	auto MetallicTexture = material->GetTextureMap(FF_TEXTURE_METALLIC);
+	auto AlphaTexture = material->GetTextureMap(FF_TEXTURE_ALPHA);
+	TextureHandles.push_back(AlbedoTexture != nullptr ? AlbedoTexture->GetTextureHandle() : 0);
+	TextureHandles.push_back(NormalTexture != nullptr ? NormalTexture->GetTextureHandle() : 0);
+	TextureHandles.push_back(RoughnessTexture != nullptr ? RoughnessTexture->GetTextureHandle() : 0);
+	TextureHandles.push_back(MetallicTexture != nullptr ? MetallicTexture->GetTextureHandle() : 0);
+	TextureHandles.push_back(AlphaTexture != nullptr ? AlphaTexture->GetTextureHandle() : 0);
+	ModelAlbedos.push_back(material->Albedo);
+	ModelRoughness.push_back(material->Roughness);
+	ModelMetallic.push_back(material->Metallic);
+}
+
 FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace)
 {
 	glGenTextures(1, &image);
@@ -488,6 +509,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<glm::vec4> ModelAlbedos;
 	AlignedBuffer<float> ModelRoughness;
 	AlignedBuffer<float> ModelMetallic;
+	int MaterialIndex = -1;
 
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
 	std::vector<BVHnode> BoundingBoxes;
@@ -496,7 +518,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	ModelMatrixes.reserve(ModelCount);
 	ModelAlbedos.reserve(ModelCount);
 	ModelRoughness.reserve(ModelCount);
-	TextureHandles.resize(ModelCount * 4);
+	TextureHandles.reserve(ModelCount * 4);
 	Models.reserve(ModelCount);
 	
 	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
@@ -534,30 +556,35 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		auto& model = ModelWithMaterial.first;
 		auto& material = ModelWithMaterial.second;
 
-		auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
-		auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
-		auto RoughnessTexture = material->GetTextureMap(FF_TEXTURE_SPECULAR);
-		auto MetallicTexture = material->GetTextureMap(FF_TEXTURE_METALLIC);
-		TextureHandles[i] = AlbedoTexture != nullptr ? AlbedoTexture->GetTextureHandle() : 0;
-		TextureHandles[i + ModelCount] = NormalTexture != nullptr ? NormalTexture->GetTextureHandle() : 0;
-		TextureHandles[i + ModelCount * 2] = RoughnessTexture != nullptr ? RoughnessTexture->GetTextureHandle() : 0;
-		TextureHandles[i + ModelCount * 3] = MetallicTexture != nullptr ? MetallicTexture->GetTextureHandle() : 0;
+		if (material != nullptr)
+		{
+			MaterialIndex++;
+			LOG_PARAMETERS(MaterialIndex);
+			ProcessMaterial(material,TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic);
+		}
 
 		Models.push_back(model);
 
 		ModelMatrix = model->GetTransformation().GetModelMat4();
 		NormalMatrix = glm::transpose(glm::inverse(glm::mat3(ModelMatrix)));
 
-		ModelAlbedos.push_back(material->Albedo);
-		ModelRoughness.push_back(material->roughness);
-		ModelMetallic.push_back(material->metalic);
 		ModelMatrixes.push_back(ModelMatrix);
 		
-		for (auto& mesh : model->Meshes)
+		for (int MeshIndex = 0; MeshIndex < model->Meshes.size(); MeshIndex++)
 		{
+			auto& mesh = model->Meshes[MeshIndex];
 			auto& indices = mesh.GetIndices();
 			auto& vertices = mesh.GetVertices();
 			CurrentModelTriangleCount += indices.size() / 3;
+
+			if (material == nullptr)
+			{
+				MaterialIndex++;
+				LOG_PARAMETERS(MaterialIndex);
+				auto MeshMaterial = &mesh.ImportedMaterial;
+				MeshMaterial->MakeMaterialBindlessResident();
+				ProcessMaterial(MeshMaterial,TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic);
+			}
 			
 			for (size_t y = 0; y < indices.size(); y += 3)
 			{
@@ -573,7 +600,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex0->Normal));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex0->Tangent));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex0->Bitangent));
-				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex0->TexCoords);
 
 				auto& Vertex1 = vertices[index1];
@@ -585,7 +612,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex1->Normal));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex1->Tangent));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex1->Bitangent));
-				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex1->TexCoords);
 
 				auto& Vertex2 = vertices[index2];
@@ -597,7 +624,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleNormals.push_back(glm::normalize(NormalMatrix * Vertex2->Normal));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex2->Tangent));
 				TriangleTangentsBitangents.push_back(glm::normalize(NormalMatrix * Vertex2->Bitangent));
-				TrianglePositions.push_back(glm::vec4(TempPosition, i));
+				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex2->TexCoords);
 
 				TriangleCenter *= inv_three;
@@ -700,21 +727,21 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	SetTBObindlessTextureData(AlbedoData,
 		AlbedoTexture,
 		GL_RGBA32F,
-		ModelCount * sizeof(glm::vec4),
+		ModelAlbedos.size() * sizeof(glm::vec4),
 		ModelAlbedos.data(),
 		GL_STATIC_DRAW);
 
 	SetTBObindlessTextureData(RoughnessData,
 		RoughnessTexture,
 		GL_R32F,
-		ModelCount * sizeof(float),
+		ModelRoughness.size() * sizeof(float),
 		ModelRoughness.data(),
 		GL_STATIC_DRAW);
 
 	SetTBObindlessTextureData(MetallicData,
 		MetallicTexture,
 		GL_R32F,
-		ModelCount * sizeof(float),
+		ModelMetallic.size() * sizeof(float),
 		ModelMetallic.data(),
 		GL_STATIC_DRAW);
 
@@ -823,7 +850,7 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		IsInitialized = true;
 	}
 	
-	if (ProgressiveRenderedFrameCount <= 60)
+	if (ProgressiveRenderedFrameCount <= 1000)
 	{
 		shader.setVec2("WindowSize", WindowSize);
 		shader.setVec3("CameraPosition", camera.Position);

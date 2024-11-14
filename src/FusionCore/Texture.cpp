@@ -12,6 +12,7 @@ FUSIONCORE::Texture2D::Texture2D()
 	TextureState = FF_TEXTURE_UNINITIALIZED;  
 	channels = 0;
 	glGenTextures(1, &id);
+	IsResident = false;
 }
 
 FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuint Wrap_T_filter,GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter, bool Flip)
@@ -20,6 +21,7 @@ FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuin
 	this->PixelType = PixelType;
 	this->TextureType = TextureType;
 	TextureHandle = 0;
+	IsResident = false;
 
 	glGenTextures(1, &id);
 	glBindTexture(TextureType, id);
@@ -104,6 +106,7 @@ FUSIONCORE::Texture2D::Texture2D(const GLuint SourceTexture, const GLenum Source
 	LOG_INF("Texture was copied from texture[ID:" << SourceTexture << "] to texture[ID:" << this->id << "]");
 	TextureState = FF_TEXTURE_SUCCESS;
 	TextureHandle = 0;
+	IsResident = false;
 }
 
 FUSIONCORE::Texture2D::~Texture2D()
@@ -113,7 +116,7 @@ FUSIONCORE::Texture2D::~Texture2D()
 
 void FUSIONCORE::Texture2D::Clear()
 {
-	if (TextureHandle != 0) glMakeImageHandleNonResidentARB(TextureHandle);
+	if (TextureHandle != 0 && IsResident) glMakeImageHandleNonResidentARB(TextureHandle);
 	glDeleteTextures(1, &id);
 	LOG_INF("Texture Cleaned : " << PathData);
 }
@@ -150,19 +153,23 @@ void FUSIONCORE::Texture2D::MakeBindless()
 
 void FUSIONCORE::Texture2D::MakeResident()
 {
+	if (IsResident) return;
 	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be made resident");
 	glMakeTextureHandleResidentARB(this->TextureHandle);
+	IsResident = true; 
 }
 
 void FUSIONCORE::Texture2D::MakeNonResident()
 {
+	if (!IsResident) return;
 	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be made non-resident");
 	glMakeTextureHandleNonResidentARB(this->TextureHandle);
+	IsResident = false;
 }
 
 void FUSIONCORE::Texture2D::SendBindlessHandle(GLuint Shader, std::string Uniform)
 {
-	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be sent to shaders");
+	if (TextureHandle == 0 && !IsResident) throw FFexception("Non-bindless textures cannot be sent to shaders");
 
 	GLint location = glGetUniformLocation(Shader, Uniform.c_str());
 	glUniformHandleui64ARB(location, this->TextureHandle);

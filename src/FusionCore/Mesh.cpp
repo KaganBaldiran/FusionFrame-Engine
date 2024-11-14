@@ -112,6 +112,42 @@ FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::ve
 	IndirectBufferFilled = false;
 }
 
+FUSIONCORE::Mesh::Mesh(std::vector<std::shared_ptr<Vertex>>& vertices_i, std::vector<unsigned int>& indices_i, std::vector<std::shared_ptr<Face>>& Faces,FUSIONCORE::Material& InputMaterial)
+{
+	this->vertices.assign(vertices_i.begin(), vertices_i.end());
+	this->indices.assign(indices_i.begin(), indices_i.end());
+	this->Faces.assign(Faces.begin(), Faces.end());
+
+	this->ImportedMaterial = InputMaterial;
+
+	std::vector<Vertex> rawVertices;
+	rawVertices.reserve(vertices.size());
+
+	for (const auto& vertexPtr : vertices) {
+		rawVertices.push_back(*vertexPtr);
+	}
+
+	this->ConstructHalfEdges();
+
+	ObjectBuffer.Bind();
+
+	ObjectBuffer.BufferDataFill(GL_ARRAY_BUFFER, rawVertices.size() * sizeof(FUSIONCORE::Vertex), &rawVertices[0], GL_STATIC_DRAW);
+	ObjectBuffer.BindEBO();
+	ObjectBuffer.BufferDataFill(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	ObjectBuffer.AttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)0);
+	ObjectBuffer.AttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, Normal));
+	ObjectBuffer.AttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, TexCoords));
+	ObjectBuffer.AttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, Tangent));
+	ObjectBuffer.AttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, Bitangent));
+	ObjectBuffer.AttribIPointer(5, 4, GL_INT, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, m_BoneIDs));
+	ObjectBuffer.AttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(FUSIONCORE::Vertex), (void*)offsetof(Vertex, m_Weights));
+
+	ObjectBuffer.Unbind();
+
+	IndirectBufferFilled = false;
+}
+
 void FUSIONCORE::Mesh::Draw(Camera3D& camera, Shader& shader, std::function<void()>& ShaderPreperations)
 {
 	shader.use();

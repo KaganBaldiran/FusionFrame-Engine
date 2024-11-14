@@ -11,7 +11,7 @@
 
 #define SPEED 5.0f
 #define CAMERA_CLOSE_PLANE 0.5f
-#define CAMERA_FAR_PLANE 90.0f
+#define CAMERA_FAR_PLANE 200.0f
 const float BlendAmount = 0.04f;
 const float InterBlendAmount = 0.04f;
 
@@ -329,7 +329,7 @@ int Application::Run()
 	FalloutPosterMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &FalloutPoster);
 	FalloutPosterMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &FalloutPosterNormal);
 	FalloutPosterMaterial.SetTiling(-1.0f);
-	FalloutPosterMaterial.roughness = 0.7f;
+	FalloutPosterMaterial.Roughness = 0.7f;
 	//FalloutPosterMaterial.metalic = 0.8f;
 	//FalloutPosterMaterial.Albedo = { 1.0f,0.0f,0.0f,1.0f };
 
@@ -533,8 +533,8 @@ int Application::Run()
 
 	float PreviousZoom = 0.0f;
 
-	camera3d.SetMinMaxZoom(true, -15.0f, 15.0f);
-	camera3d.SetZoomSensitivity(3.0f);
+	//camera3d.SetMinMaxZoom(true, -15.0f, 15.0f);
+	//camera3d.SetZoomSensitivity(3.0f);
 
 	FUSIONPHYSICS::QuadNode headNode;
 
@@ -923,7 +923,7 @@ int Application::Run()
 
 		//LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
 		//camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
-		camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
+		//camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD,0.1f);
 
 		camera2d.UpdateCameraMatrix({ 0.0f,0.0f,0.0f }, 1.0f, WindowSize);
@@ -1188,6 +1188,31 @@ public:
 	int data;
 };
 
+void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Destination)
+{
+	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
+	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
+	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
+	std::uniform_real_distribution<float> RandomIntensity(9.5f, 11.0f);
+	std::default_random_engine engine(seed);
+
+	std::vector<FUSIONCORE::Light> Lights;
+	float LightIntensity;
+
+	LightIntensity = RandomIntensity(engine);
+	Lights.emplace_back(glm::vec3(0.0f,1.0f,0.2f), FF_COLOR_PEARL_WHITE, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	//Lights.emplace_back(glm::vec3(-0.3f,1.0f,0.2f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	/*
+	for (size_t i = 0; i < 2; i++)aa
+	{
+		LightIntensity = RandomIntensity(engine);
+		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	}
+	*/
+	FUSIONCORE::UploadLightsShader(Destination);
+}
+
 int Application::PathTracer()
 {
 	const int width = 1000;
@@ -1205,7 +1230,7 @@ int Application::PathTracer()
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/steinbach_field_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1216,35 +1241,23 @@ int Application::PathTracer()
 	FUSIONCORE::Camera3D camera3d;
 	//FUSIONCORE::Camera2D camera2d;
 
-	camera3d.SetMinMaxZoom(true, -15.0f, 15.0f);
-	camera3d.SetZoomSensitivity(3.0f);
+	//camera3d.SetMinMaxZoom(true, -15.0f, 15.0f);
+	//camera3d.SetZoomSensitivity(3.0f);
 	camera3d.SetPosition(glm::vec3(12.353, 13.326, 15.2838));
 	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
-	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
-	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
-	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(5.0f, 10.0f);
-	std::default_random_engine engine(seed);
-
-	std::vector<FUSIONCORE::Light> Lights;
-	float LightIntensity;
-	for (size_t i = 0; i < 1; i++)
-	{
-		LightIntensity = RandomIntensity(engine);
-		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
-	}
-	FUSIONCORE::UploadLightsShader(*Shaders.DeferredPBRshader);
+	RandomizeLights(Shaders,PathTraceComputeShader);
 
 	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg");
 	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_gl_2k.jpg");
 	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg");
+	FUSIONCORE::Texture2D SofaOpacity("Resources\\models\\sofa\\textures\\sofa_03_opacity_2k.png");
 
 	FUSIONCORE::Texture2D StoveDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg");
 	FUSIONCORE::Texture2D StoveNormal("Resources\\models\\stove\\textures\\electric_stove_nor_gl_2k.jpg");
 	FUSIONCORE::Texture2D StoveSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg");
 	FUSIONCORE::Texture2D StoveMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg");
+	FUSIONCORE::Texture2D StoveOpacity("Resources\\models\\stove\\textures\\electric_stove_opacity_2k.png");
 
 	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png");
 	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png");
@@ -1263,8 +1276,15 @@ int Application::PathTracer()
 	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	FUSIONCORE::Model Rock("Resources\\models\\RockFormation\\RockFormation.obj");
+	FUSIONCORE::Model Chess("Resources\\models\\chess\\chess_set_2k.obj");
+	FUSIONCORE::Model Car("Resources\\models\\Sponza\\sponza.obj");
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	
+	Chess.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,25.0f });
+	Chess.GetTransformation().Scale(glm::vec3(9.0f));
+
+	Car.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
+	//Car.GetTransformation().Scale(glm::vec3(9.0f));
 
 	Rock.GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
 	Cliff->GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
@@ -1317,74 +1337,51 @@ int Application::PathTracer()
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
 
-	FUSIONCORE::Material material0(0.7f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material material0(0.4f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
+	FUSIONCORE::Material RedMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
 	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
 	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_WARM_COCOA);
 	FUSIONCORE::Material material3(0.05f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 
-	SofaDiffuse.MakeBindless();
-	SofaDiffuse.MakeResident();
 	material1.PushTextureMap(FF_TEXTURE_DIFFUSE, &SofaDiffuse);
-
-	SofaNormal.MakeBindless();
-	SofaNormal.MakeResident();
 	material1.PushTextureMap(FF_TEXTURE_NORMAL, &SofaNormal);
-
-	SofaSpecular.MakeBindless();
-	SofaSpecular.MakeResident();
 	material1.PushTextureMap(FF_TEXTURE_SPECULAR, &SofaSpecular);
+	material1.PushTextureMap(FF_TEXTURE_ALPHA, &SofaOpacity);
+	material1.MakeMaterialBindlessResident();
 
-	StoveDiffuse.MakeBindless();
-	StoveDiffuse.MakeResident();
+
 	material3.PushTextureMap(FF_TEXTURE_DIFFUSE, &StoveDiffuse);
-
-	StoveNormal.MakeBindless();
-	StoveNormal.MakeResident();
 	material3.PushTextureMap(FF_TEXTURE_NORMAL, &StoveNormal);
-
-	StoveSpecular.MakeBindless();
-	StoveSpecular.MakeResident();
 	material3.PushTextureMap(FF_TEXTURE_SPECULAR, &StoveSpecular);
-	
-	StoveMetalic.MakeBindless();
-	StoveMetalic.MakeResident();
 	material3.PushTextureMap(FF_TEXTURE_METALLIC, &StoveMetalic);
+	material3.PushTextureMap(FF_TEXTURE_ALPHA, &StoveOpacity);
+	material3.MakeMaterialBindlessResident();
 
-	ShovelDiffuse.MakeBindless();
-	ShovelDiffuse.MakeResident();
+
 	ShovelMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &ShovelDiffuse);
-
-	ShovelNormal.MakeBindless();
-	ShovelNormal.MakeResident();
 	ShovelMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &ShovelNormal);
-
-	ShovelSpecular.MakeBindless();
-	ShovelSpecular.MakeResident();
 	ShovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
+	ShovelMaterial.MakeMaterialBindlessResident();
 
-
-	FloorAlbedo.MakeBindless();
-	FloorAlbedo.MakeResident();
+	
 	material0.PushTextureMap(FF_TEXTURE_DIFFUSE, &FloorAlbedo);
-
-	FloorNormal.MakeBindless();
-	FloorNormal.MakeResident();
 	material0.PushTextureMap(FF_TEXTURE_NORMAL, &FloorNormal);
-
-	FloorSpecular.MakeBindless();
-	FloorSpecular.MakeResident();
 	material0.PushTextureMap(FF_TEXTURE_SPECULAR, &FloorSpecular);
-
+	material0.MakeMaterialBindlessResident();
+	/*
 	models.push_back({ grid.get(),&material2 });
 	//models.push_back({ grid2.get(),&material2 });
 	models.push_back({MainCharac.get(),&material0 });
 	models.push_back({model1.get(),&ShovelMaterial });
-	models.push_back({&Rock,&material2 });
+	models.push_back({&Rock,nullptr });
 	models.push_back({wall.get(),&material0 });
 	models.push_back({sofa.get(),&material1 });
 	models.push_back({Stove.get(),&material3 });
-	models.push_back({Cliff.get(),&material2 });
+	models.push_back({&Chess,nullptr });
+	models.push_back({Cliff.get(),nullptr });
+	*/
+	models.push_back({&Car,nullptr });
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models);
 	
@@ -1401,7 +1398,7 @@ int Application::PathTracer()
 	FUSIONCORE::Model* PixelModel = nullptr;
 	glm::dvec2 CurrentMousePos(0.0f);
 	glm::dvec2 PrevMousePos(0.0f);
-
+	bool AllowPathTrace = false;
 	//FUSIONUTIL::InitializeImguiGLFW(ApplicationWindow.GetWindow());
 	while (!ApplicationWindow.ShouldClose())
 	{
@@ -1436,32 +1433,25 @@ int Application::PathTracer()
 			}
 		}
 
-		static bool AllowG = true;
-		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_G, AllowG))
-		{
-			Debug = !Debug;
-		}
 		//eventmanager.Publish<NewEvent>(event);
 
 
-		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
+		camera3d.UpdateCameraMatrix(90.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
 		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
 
+		static bool AllowPressR = true;
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_R, AllowPressR)) AllowPathTrace = !AllowPathTrace;
 		
-		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
-		/*grid->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		MainCharac->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		model1->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		Rock->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		wall->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		sofa->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		Cliff->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
-		Stove->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());*/
-		//FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
-		
+		if (!AllowPathTrace)
+		{
+			for (auto& model : models)
+			{
+				model.first->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+			}
+		}
 
 		Gbuffer.Unbind();
 		
@@ -1501,18 +1491,20 @@ int Application::PathTracer()
 		
 		if (Debug)
 		{
-			pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
+			//pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
 		}
 
 		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
-		
-		pathtracer.Render(ApplicationWindow, PathTraceComputeShader, camera3d,&cubemap);
+		if (AllowPathTrace)
+		{
+			pathtracer.Render(ApplicationWindow, PathTraceComputeShader, camera3d, &cubemap);
+		}
 
 		std::function<void()> OnFBOrender = [&]()
 		{
-				Shaders.FBOShader->setBool("Debug", Debug);
+			Shaders.FBOShader->setBool("Debug", !AllowPathTrace);
 		};
 
         ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, OnFBOrender, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);

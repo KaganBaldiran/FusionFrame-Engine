@@ -68,7 +68,8 @@ void main()
 	if(Debug)
 	{
       //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
-	  OutColor.xyz =  mix(texture(Viewport, TexCoords.xy).xyz,TracedUV,0.8f);
+	  OutColor.xyz = texture(Viewport, TexCoords.xy).xyz;
+	  //OutColor.xyz =  mix(texture(Viewport, TexCoords.xy).xyz,TracedUV,0.8f);
 	}
     
 	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);

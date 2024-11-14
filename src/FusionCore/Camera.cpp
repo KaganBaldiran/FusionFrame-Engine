@@ -230,7 +230,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 			if (firstclick)
 			{
-				glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+				glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
 				firstclick = false;
 			}
 
@@ -240,8 +240,8 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 
 			Vec2<float> rot;
 
-			rot.x = sensitivity * (float)(mousepos.y - (WindowSize.y / 2)) / WindowSize.y;
-			rot.y = sensitivity * (float)(mousepos.x - (WindowSize.x / 2)) / WindowSize.x;
+			rot.x = sensitivity * (float)(mousepos.y - (WindowSize.y * 0.5f)) / WindowSize.y;
+			rot.y = sensitivity * (float)(mousepos.x - (WindowSize.x * 0.5f)) / WindowSize.x;
 
 			glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rot.x), glm::normalize(glm::cross(Orientation, Up)));
 
@@ -251,7 +251,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 			}
 
 			Orientation = glm::rotate(Orientation, glm::radians(-rot.y), Up);
-			glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+			glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
 		}
 
 		else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_RELEASE)
@@ -372,7 +372,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 
 			if (firstclick)
 			{
-				glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+				glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
 				firstclick = false;
 			}
 
@@ -381,8 +381,8 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 
 			Vec2<float> rot;
 
-			rot.x = CameraSensitivity * (float)(mousepos.y - (WindowSize.y / 2)) / WindowSize.y;
-			rot.y = CameraSensitivity * (float)(mousepos.x - (WindowSize.x / 2)) / WindowSize.x;
+			rot.x = CameraSensitivity * (float)(mousepos.y - (WindowSize.y * 0.5f)) / WindowSize.y;
+			rot.y = CameraSensitivity * (float)(mousepos.x - (WindowSize.x * 0.5f)) / WindowSize.x;
 
 			glm::vec3 cameraToTarget = targetPosition - Position;
 			float distanceToTarget = glm::length(cameraToTarget);
@@ -391,7 +391,7 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 			Position = targetPosition - distanceToTarget * glm::normalize(cameraToTarget);
 			Orientation = glm::normalize(targetPosition - Position);
 
-			glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+			glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
 		}
 
 		else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_RELEASE)

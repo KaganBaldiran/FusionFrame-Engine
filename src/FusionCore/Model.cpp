@@ -702,25 +702,63 @@ FUSIONCORE::PreMeshData FUSIONCORE::Model::processMeshAsync(aiMesh* mesh, const 
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-
-    /*std::vector<Texture2D> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-    std::vector<Texture2D> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-    std::vector<Texture2D> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-    std::vector<Texture2D> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());*/
-
-    loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
-    loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures);
-    loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", textures);
-    loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic", textures);
-
     return PreMeshData(textures , indices , vertices);
+}
+
+void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Material& TempMaterial)
+{
+    LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", FF_TEXTURE_DIFFUSE, TempMaterial);
+    aiString path;
+    if (material->GetTexture(aiTextureType_SHININESS, 0, &path) == AI_SUCCESS) {
+        LoadMaterialTextures(material, aiTextureType_SHININESS, "texture_specular", FF_TEXTURE_SPECULAR, TempMaterial);
+    }
+    else if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path) == AI_SUCCESS) {
+        LoadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_specular", FF_TEXTURE_SPECULAR, TempMaterial);
+    }
+    else if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS) {
+        LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", FF_TEXTURE_SPECULAR, TempMaterial);
+    }
+    LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", FF_TEXTURE_NORMAL, TempMaterial);
+    LoadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic", FF_TEXTURE_METALLIC, TempMaterial);
+    LoadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_alpha", FF_TEXTURE_ALPHA, TempMaterial);
+
+    aiColor4D color;
+    float value;
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, color)) {
+        TempMaterial.Emission.x = color.r;
+        TempMaterial.Emission.y = color.g;
+        TempMaterial.Emission.z = color.b;
+
+        //std::cout << "Emissive Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {
+        TempMaterial.Albedo.x = color.r;
+        TempMaterial.Albedo.y = color.g;
+        TempMaterial.Albedo.z = color.b;
+        TempMaterial.Albedo.w = color.a;
+
+        //std::cout << "Albedo Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_METALLIC_FACTOR, value)) {
+        TempMaterial.Metallic = value;
+        //LOG_PARAMETERS(TempMaterial.Metallic);
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_ROUGHNESS_FACTOR, value)) {
+        TempMaterial.Roughness = value;
+        //LOG_PARAMETERS(TempMaterial.Roughness);
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_SPECULAR_FACTOR, value)) {
+        TempMaterial.Roughness = value;
+        //LOG_PARAMETERS(TempMaterial.Roughness);
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_CLEARCOAT_FACTOR, value)) {
+        TempMaterial.ClearCoat = value;
+        //LOG_PARAMETERS(TempMaterial.ClearCoat);
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, value)) {
+        TempMaterial.Alpha = value;
+        //LOG_PARAMETERS(TempMaterial.Alpha);
+    }
 }
 
 void FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -803,20 +841,16 @@ void FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)
     ExtractBones(vertices, mesh, scene);
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    Material TempMaterial;
 
-    loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse" , textures);
-    loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular" , textures);
-    loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal" , textures);
-    loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic" , textures);
-   
-    auto & newMesh = Meshes.emplace_back(vertices, indices, Faces, textures);
+    ProcessMeshMaterial(material, TempMaterial);
+
+    auto & newMesh = Meshes.emplace_back(vertices, indices, Faces, TempMaterial);
     newMesh.MeshName = mesh->mName.data;
 }
 
 void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& vertices, aiMesh* mesh, const aiScene* scene)
 {
-    //LOG("mesh->mNumBones: " << mesh->mNumBones);
-
     for (size_t i = 0; i < mesh->mNumBones; i++)
     {
         int boneID = -1;
@@ -838,13 +872,11 @@ void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& verti
         assert(boneID != -1);
         auto weights = mesh->mBones[i]->mWeights;
         int NumberWeights = mesh->mBones[i]->mNumWeights;
-        //LOG("NumberWeights[" << i << "] : " << NumberWeights);
 
         for (size_t x = 0; x < NumberWeights; x++)
         {
             int vertexID = weights[x].mVertexId;
             float weight = weights[x].mWeight;
-            //LOG("vertexID: " << vertexID << "weight: " << weight);
             assert(vertexID <= vertices.size());
 
             auto& vertextemp = vertices[vertexID];
@@ -862,7 +894,7 @@ void FUSIONCORE::Model::ExtractBones(std::vector<std::shared_ptr<Vertex>>& verti
     }
 }
 
-void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName , std::vector<std::shared_ptr<FUSIONCORE::Texture2D>>& Destination)
+void FUSIONCORE::Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName,const char* TextureKey,FUSIONCORE::Material& DestinationMaterial)
 {
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
@@ -870,14 +902,11 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
         mat->GetTexture(type, i, &str);
         
         bool skip = false;
-        for (unsigned int j = 0; j < textures_loaded.size(); j++)
+        if (textures_loaded.find(str.C_Str()) != textures_loaded.end())
         {
-            if (std::strcmp(textures_loaded[j]->GetFilePath().c_str(), str.C_Str()) == 0)
-            {
-                Destination.push_back(textures_loaded[j]);
-                skip = true;
-                break;
-            }
+            DestinationMaterial.PushTextureMap(TextureKey, textures_loaded[str.C_Str()].get());
+            skip = true;
+            break;
         }
         if (!skip)
         {
@@ -896,8 +925,8 @@ void FUSIONCORE::Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type
             auto SharedTexture = std::make_shared<Texture2D>(FilePath.c_str(), GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
             SharedTexture->PbrMapType = typeName;
 
-            Destination.push_back(SharedTexture);
-            textures_loaded.push_back(SharedTexture);
+            DestinationMaterial.PushTextureMap(TextureKey,SharedTexture.get());
+            textures_loaded[str.C_Str()] = SharedTexture;
         }
     }
 }

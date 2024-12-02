@@ -9,9 +9,9 @@
 
 #include "FusionCore/PathTracer/PathTracer.hpp"
 
-#define SPEED 5.0f
+#define SPEED 6.0f
 #define CAMERA_CLOSE_PLANE 0.5f
-#define CAMERA_FAR_PLANE 200.0f
+#define CAMERA_FAR_PLANE 800.0f
 const float BlendAmount = 0.04f;
 const float InterBlendAmount = 0.04f;
 
@@ -1194,14 +1194,14 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
 	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(9.5f, 11.0f);
+	std::uniform_real_distribution<float> RandomIntensity(13.1f, 14.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
 
 	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(0.0f,1.0f,0.2f), FF_COLOR_PEARL_WHITE, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	//Lights.emplace_back(glm::vec3(-0.3f,1.0f,0.2f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	/*
 	for (size_t i = 0; i < 2; i++)aa
@@ -1230,7 +1230,7 @@ int Application::PathTracer()
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1247,7 +1247,7 @@ int Application::PathTracer()
 	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
 	RandomizeLights(Shaders,PathTraceComputeShader);
-
+	/*
 	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg");
 	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_gl_2k.jpg");
 	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg");
@@ -1277,13 +1277,22 @@ int Application::PathTracer()
 	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
 	FUSIONCORE::Model Rock("Resources\\models\\RockFormation\\RockFormation.obj");
 	FUSIONCORE::Model Chess("Resources\\models\\chess\\chess_set_2k.obj");
-	FUSIONCORE::Model Car("Resources\\models\\Sponza\\sponza.obj");
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
-	
+	*/
+	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Original.obj");
+	FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Documents\\CodeProjects\\FusionFrame-Engine\\src\\Resources\\models\\Bistro\\Interior\\interior.obj");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
+	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
+	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");
+	//Car.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
+	//Curtain.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
+	//Curtain.GetTransformation().ScaleNoTraceBack(glm::vec3(40.0f));
+	/*
 	Chess.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,25.0f });
 	Chess.GetTransformation().Scale(glm::vec3(9.0f));
 
-	Car.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
 	//Car.GetTransformation().Scale(glm::vec3(9.0f));
 
 	Rock.GetTransformation().ScaleNoTraceBack(glm::vec3(0.2f));
@@ -1315,7 +1324,7 @@ int Application::PathTracer()
 	sofa->GetTransformation().RotateNoTraceBack(glm::vec3(0.0f, 1.0f, 0.0f), 300.0f);
 	sofa->GetTransformation().TranslateNoTraceBack({ -20.0f,-1.0f,-20.0f });
 	sofa->GetTransformation().ScaleNoTraceBack({ 7.0f,7.0f,7.0f });
-
+	*/
 	Shaders.DeferredPBRshader->use();
 
 	FUSIONCORE::Color FogColor(FF_COLOR_CORNFLOWER_BLUE);
@@ -1343,7 +1352,7 @@ int Application::PathTracer()
 	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_WARM_COCOA);
 	FUSIONCORE::Material material3(0.05f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
 	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
-
+	/*
 	material1.PushTextureMap(FF_TEXTURE_DIFFUSE, &SofaDiffuse);
 	material1.PushTextureMap(FF_TEXTURE_NORMAL, &SofaNormal);
 	material1.PushTextureMap(FF_TEXTURE_SPECULAR, &SofaSpecular);
@@ -1369,6 +1378,7 @@ int Application::PathTracer()
 	material0.PushTextureMap(FF_TEXTURE_NORMAL, &FloorNormal);
 	material0.PushTextureMap(FF_TEXTURE_SPECULAR, &FloorSpecular);
 	material0.MakeMaterialBindlessResident();
+	*/
 	/*
 	models.push_back({ grid.get(),&material2 });
 	//models.push_back({ grid2.get(),&material2 });
@@ -1381,7 +1391,8 @@ int Application::PathTracer()
 	models.push_back({&Chess,nullptr });
 	models.push_back({Cliff.get(),nullptr });
 	*/
-	models.push_back({&Car,nullptr });
+    models.push_back({&Car,nullptr });
+	//models.push_back({&Curtain,nullptr });
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models);
 	
@@ -1436,8 +1447,8 @@ int Application::PathTracer()
 		//eventmanager.Publish<NewEvent>(event);
 
 
-		camera3d.UpdateCameraMatrix(90.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 1000.0f, WindowSize);
-		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
+		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.06f * DeltaTime);
 		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
@@ -1449,8 +1460,9 @@ int Application::PathTracer()
 		{
 			for (auto& model : models)
 			{
-				model.first->DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrep, FUSIONCORE::Material());
+				model.first->DrawDeferredImportedMaterial(camera3d, *Shaders.GbufferShader, shaderPrep);
 			}
+			pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
 		}
 
 		Gbuffer.Unbind();
@@ -1491,7 +1503,7 @@ int Application::PathTracer()
 		
 		if (Debug)
 		{
-			//pathtracer.VisualizeBVH(camera3d, BVHvisualizeShader, FF_COLOR_RED);
+			
 		}
 
 		

@@ -720,8 +720,9 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
     }
     LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", FF_TEXTURE_NORMAL, TempMaterial);
     LoadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic", FF_TEXTURE_METALLIC, TempMaterial);
-    LoadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_alpha", FF_TEXTURE_ALPHA, TempMaterial);
-
+    LoadMaterialTextures(material, aiTextureType_OPACITY, "texture_alpha", FF_TEXTURE_ALPHA, TempMaterial);
+    LoadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emissive", FF_TEXTURE_EMISSIVE, TempMaterial);
+    
     aiColor4D color;
     float value;
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, color)) {
@@ -729,6 +730,9 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
         TempMaterial.Emission.y = color.g;
         TempMaterial.Emission.z = color.b;
 
+        if (aiReturn_SUCCESS == material->Get(AI_MATKEY_EMISSIVE_INTENSITY, value)) {
+            TempMaterial.Emission.w = value;
+        }
         //std::cout << "Emissive Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {
@@ -923,6 +927,7 @@ void FUSIONCORE::Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type
             }
             
             auto SharedTexture = std::make_shared<Texture2D>(FilePath.c_str(), GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
+            if (SharedTexture->GetTextureState() == FF_TEXTURE_ERROR) continue;
             SharedTexture->PbrMapType = typeName;
 
             DestinationMaterial.PushTextureMap(TextureKey,SharedTexture.get());

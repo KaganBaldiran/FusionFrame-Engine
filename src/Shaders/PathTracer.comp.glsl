@@ -21,6 +21,8 @@ layout (location = 9) uniform float Time;
 layout (location = 10) uniform samplerBuffer ModelAlbedos;
 layout (location = 11) uniform samplerBuffer ModelRoughness;
 layout (location = 12) uniform samplerBuffer ModelMetallic;
+layout (location = 13) uniform samplerBuffer ModelAlphas;
+layout (location = 14) uniform samplerBuffer ModelEmissives;
 
 readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 {
@@ -28,16 +30,18 @@ readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 };
 
 //Geometry data
-layout (location = 13) uniform samplerBuffer TriangleUVS;
-layout (location = 14) uniform samplerBuffer TriangleNormals;
-layout (location = 15) uniform samplerBuffer TrianglePositions;
-layout (location = 16) uniform samplerBuffer TriangleTangentsBitangents;
+layout (location = 15) uniform samplerBuffer TriangleUVS;
+layout (location = 16) uniform samplerBuffer TriangleNormals;
+layout (location = 17) uniform samplerBuffer TrianglePositions;
+layout (location = 18) uniform samplerBuffer TriangleTangentsBitangents;
 
-layout (location = 17) uniform int ModelCount;
-layout (location = 18) uniform samplerCube EnvironmentCubeMap;
-layout (location = 19) uniform int ProgressiveRenderedFrameCount;
+layout (location = 19) uniform int ModelCount;
+layout (location = 20) uniform samplerCube EnvironmentCubeMap;
+layout (location = 21) uniform int ProgressiveRenderedFrameCount;
 
-layout (location = 20) uniform int LightCount;
+layout (location = 22) uniform int LightCount;
+layout (location = 23) uniform float CameraPlaneDistance;
+layout (location = 24) uniform float RandomSeed;
 
 readonly layout(std430,binding=8) restrict buffer ModelMatricesData
 {
@@ -81,6 +85,7 @@ struct RayData
    vec3 Position;
    vec3 Normal;
    vec4 Albedo;
+   vec4 Emissive;
    float Metallic;
    float Roughness;
    float Alpha;
@@ -88,7 +93,7 @@ struct RayData
    vec3 Light;
 };
 
-const float InvLightCount = 1.0f / LightCount;
+const float InvLightCount = 1.0f / max(1.0f,float(LightCount));
 uint seed;
 int NodesToProcess[27];
 
@@ -196,7 +201,7 @@ vec4 RayTraceSphere(in vec3 ro,in vec3 rd,float sphereRadius)
 }
 
 
-RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirection,inout float ClosestDistance)
+RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirection,inout float ClosestDistance,in bool SampleMaterial)
 {
      int StackIndex = 0; 
      NodesToProcess[StackIndex] = 0;
@@ -208,6 +213,7 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      data.Normal = vec3(0.0f);
      data.Position = vec3(0.0f);
      data.Albedo = vec4(0.0f,0.0f,0.0f,1.0f);
+     data.Emissive = vec4(0.0f);
      data.Roughness = 0.0f;
      data.Metallic = 0.0f;
      data.Alpha = 1.0f;
@@ -271,89 +277,103 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                     if(result.t < ClosestDistance)
                     {
                         TriangleUV = result.uv;
-
                         float OneMinusUV = (1.0f - TriangleUV.x - TriangleUV.y);
-                        
                         iTrip = i * 3;
-                        n0 = texelFetch(TriangleNormals,iTrip).xyz;
-                        n1 = texelFetch(TriangleNormals,iTrip + 1).xyz;
-                        n2 = texelFetch(TriangleNormals,iTrip + 2).xyz;
-                        Normal = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
 
                         n0.xy = texelFetch(TriangleUVS,iTrip).xy;
                         n1.xy = texelFetch(TriangleUVS,iTrip + 1).xy;
                         n2.xy = texelFetch(TriangleUVS,iTrip + 2).xy;
                         TriangleTextureUV = OneMinusUV * n0.xy + TriangleUV.x * n1.xy + TriangleUV.y * n2.xy;
 
-                        TextureHandle = TexturesHandles[CurrentModelID * 5];
-                        if (TextureHandle != 0) {
-                            data.Albedo = vec4(texture(sampler2D(TextureHandle),TriangleTextureUV).xyz,1.0f);
-                        }
-                        else
+                        if(SampleMaterial)
                         {
-                            data.Albedo = texelFetch(ModelAlbedos,CurrentModelID);
-                        } 
+                            n0 = texelFetch(TriangleNormals,iTrip).xyz;
+                            n1 = texelFetch(TriangleNormals,iTrip + 1).xyz;
+                            n2 = texelFetch(TriangleNormals,iTrip + 2).xyz;
+                            Normal = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+
+                            TextureHandle = TexturesHandles[CurrentModelID * 6];
+                            if (TextureHandle != 0) {
+                                data.Albedo = vec4(texture(sampler2D(TextureHandle),TriangleTextureUV).xyz,1.0f);
+                            }
+                            else
+                            {
+                                data.Albedo = texelFetch(ModelAlbedos,CurrentModelID);
+                            } 
                         
-                        TextureHandle = TexturesHandles[CurrentModelID * 5 + 1];
-                        if (TextureHandle != 0) 
-                        {
-                            iTrip *= 2;
+                            TextureHandle = TexturesHandles[CurrentModelID * 6 + 1];
+                            if (TextureHandle != 0) 
+                            {
+                                iTrip *= 2;
 
-                            n0 = texelFetch(TriangleTangentsBitangents,iTrip).xyz;
-                            n1 = texelFetch(TriangleTangentsBitangents,iTrip + 2).xyz;
-                            n2 = texelFetch(TriangleTangentsBitangents,iTrip + 4).xyz;
-                            Tangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+                                n0 = texelFetch(TriangleTangentsBitangents,iTrip).xyz;
+                                n1 = texelFetch(TriangleTangentsBitangents,iTrip + 2).xyz;
+                                n2 = texelFetch(TriangleTangentsBitangents,iTrip + 4).xyz;
+                                Tangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
 
-                            n0 = texelFetch(TriangleTangentsBitangents,iTrip + 1).xyz;
-                            n1 = texelFetch(TriangleTangentsBitangents,iTrip + 3).xyz;
-                            n2 = texelFetch(TriangleTangentsBitangents,iTrip + 5).xyz;
-                            Bitangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
+                                n0 = texelFetch(TriangleTangentsBitangents,iTrip + 1).xyz;
+                                n1 = texelFetch(TriangleTangentsBitangents,iTrip + 3).xyz;
+                                n2 = texelFetch(TriangleTangentsBitangents,iTrip + 5).xyz;
+                                Bitangent = normalize(OneMinusUV * n0 + TriangleUV.x * n1 + TriangleUV.y * n2);
 
-                            TBNmat = mat3(Tangent,Bitangent,Normal);
-                            Normal = texture(sampler2D(TextureHandle),TriangleTextureUV).xyz * 2.0f - 1.0f;
-                            Normal = normalize(TBNmat * Normal);
-                            data.Normal = Normal;
-                        }
-                        else
-                        {
-                            data.Normal = Normal;
-                        }
+                                TBNmat = mat3(Tangent,Bitangent,Normal);
+                                Normal = texture(sampler2D(TextureHandle),TriangleTextureUV).xyz * 2.0f - 1.0f;
+                                //Normal = vec3(Normal.x,-Normal.y,Normal.z);
+                                Normal = normalize(TBNmat * Normal);
+                                data.Normal = Normal;
+                            }
+                            else
+                            {
+                                data.Normal = Normal;
+                            }
 
-                        TextureHandle = TexturesHandles[CurrentModelID * 5 + 2];
-                        if (TextureHandle != 0) {
-                            data.Roughness = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
-                        }
-                        else
-                        {
-                            data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
-                        } 
+                            TextureHandle = TexturesHandles[CurrentModelID * 6 + 2];
+                            if (TextureHandle != 0) {
+                                data.Roughness = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
+                            }
+                            else
+                            {
+                                data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
+                            } 
 
-                        TextureHandle = TexturesHandles[CurrentModelID * 5 + 3];
-                        if (TextureHandle != 0) {
-                            data.Metallic = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
-                        }
-                        else
-                        {
-                            data.Metallic = texelFetch(ModelMetallic,CurrentModelID).x;
-                        }
-                        
-                        TextureHandle = TexturesHandles[CurrentModelID * 5 + 4];
+                            TextureHandle = TexturesHandles[CurrentModelID * 6 + 3];
+                            if (TextureHandle != 0) {
+                                data.Metallic = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
+                            }
+                            else
+                            {
+                                data.Metallic = texelFetch(ModelMetallic,CurrentModelID).x;
+                            }
+                          
+                            TextureHandle = TexturesHandles[CurrentModelID * 6 + 5];
+                            if (TextureHandle != 0) {
+                                data.Emissive.xyzw = texture(sampler2D(TextureHandle),TriangleTextureUV).xyzw;
+                            }
+                            else
+                            {
+                                data.Emissive.xyzw = texelFetch(ModelEmissives,CurrentModelID).xyzw;
+                            }
+                            
+                            /*
+                            data.Light = vec3(0.0f);
+                            for(int y = 0;y < LightCount;y++)
+                            {
+                                data.Light += max(0.0f,dot(normalize(Lights[y].Position.xyz),Normal)) * Lights[y].Color.xyz * Lights[y].Intensity;
+                            }
+                            */
+
+                            data.uv = TriangleTextureUV;
+                        }  
+                        data.Position = rayOrigin + rayDirection * result.t;
+                        TextureHandle = TexturesHandles[CurrentModelID * 6 + 4];
                         if (TextureHandle != 0) {
                             data.Alpha = texture(sampler2D(TextureHandle),TriangleTextureUV).x;
                         }
-
-                        ClosestDistance = result.t;
-                        data.Position = rayOrigin + rayDirection * result.t;
-                        
-                        /*
-                        data.Light = vec3(0.0f);
-                        for(int y = 0;y < LightCount;y++)
+                        else
                         {
-                            data.Light += max(0.0f,dot(normalize(Lights[y].Position.xyz),Normal)) * Lights[y].Color.xyz * Lights[y].Intensity;
+                            data.Alpha = texelFetch(ModelAlphas,CurrentModelID).x;
                         }
-                        */
-
-                        data.uv = TriangleTextureUV;
+                        ClosestDistance = result.t;
                     }  
                 }
             }
@@ -441,52 +461,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 } 
 
-
-vec3 EvaluateBRDF(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPos, vec3 Position,inout vec3 brdf) {
-    vec3 V = normalize(CameraPos - Position);
-    vec3 F0 = mix(vec3(0.04), Albedo, Metalic);
-    float NdotV = max(dot(N, V), 0.0);
-    vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
-
-    vec3 Lo = vec3(0.0f);
-    for(int i=0;i < LightCount;i++)
-    {
-        vec3 L = normalize(Lights[i].Position.xyz);
-        vec3 H = normalize(V + L);
-
-        float NDF = DistributionGGX(N, H, roughness);
-        float G = GeometrySmith(N, V, L, roughness);
-
-        float NdotL = max(dot(N, L), 0.0);
-        vec3 kS = F;
-        vec3 kD = (1.0 - kS) * (1.0 - Metalic);
-
-        vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
-        vec3 radiance = Lights[i].Color.xyz;
-        Lo += (kD * Albedo * Inv_PI + specular) * radiance * Lights[i].Intensity * NdotL;
-        brdf += specular * Lights[i].Intensity * NdotL;
-    }
-    return Lo;
-}
-
-vec3 SampleGGX(vec2 InputSeed,vec3 Normal,float Roughness)
-{
-   float a = Roughness * Roughness;
-   float phi = 2.0f * PI * InputSeed.x;
-   float cosTheta = sqrt((1.0 - InputSeed.y) / (1.0 + (a * a - 1.0) * InputSeed.y));
-   float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-   vec3 SampledVector = vec3(cos(phi) * sinTheta,
-                             sin(phi) * sinTheta,
-                             cosTheta);
-
-   vec3 Tangent = abs(Normal.z) < 0.9999 ? normalize(cross(vec3(0.0, 0.0, 1.0), Normal)) 
-                                          : normalize(cross(vec3(1.0, 0.0, 0.0), Normal));   
-   vec3 Bitangent = normalize(cross(Tangent,Normal));
-                              
-   return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
-}
-
 vec3 SampleSemiSphere(vec2 InputSeed,vec3 Normal)
 {
    float phi = 2.0f * PI * InputSeed.x;
@@ -508,36 +482,164 @@ float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float Li
 {
      vec3 SampleLightDirection = vec3(0.0f);
      float Shadow = 0.0f;
-     const int SampleCount = 3;
-     float ClosestDistance = pos_infinity;
-     for(int i = 0;i < SampleCount;i++)
+     float ClosestDistance = 0.0f;
+     RayData data;
+     float HitAlpha = 0.0f;
+     vec3 Position = CurrentPosition;
+     vec3 InvRayDirection;
+     while(HitAlpha < 1.0f && Shadow < 1.0f)
      {
-       SampleLightDirection = mix(LightDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),LightDirection),LightDiameter);
-
-       vec3 InvRayDirection = 1.0f / (SampleLightDirection);
-       TraverseBVH(CurrentPosition + Epsilon * distance(CameraPosition,CurrentPosition) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance);
-       Shadow += float(ClosestDistance != pos_infinity);
-       ClosestDistance = pos_infinity;
+         ClosestDistance = pos_infinity;
+         SampleLightDirection = mix(LightDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),LightDirection),LightDiameter);
+         InvRayDirection = 1.0f / (SampleLightDirection);
+         data = TraverseBVH(Position + Epsilon * distance(CameraPosition,Position) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance,false);
+         HitAlpha = data.Alpha;
+         if(ClosestDistance != pos_infinity)
+         {
+            Shadow += HitAlpha;
+         }
+         Position = data.Position;
      }
-     Shadow /= SampleCount;
    
-     return Shadow;
+     return min(1.0f,Shadow);
 }
 
-vec3 SampleBSDF(in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,in float Roughness,in float Metallic,in float Alpha,in float F0,in vec3 brdf)
+vec3 CookTorranceBRDFspec(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,float Roughness,vec3 F0)
 {
-    float AdjustedRoughness = mix(mix(Roughness,0.0f,Metallic),0.0f,(brdf.x * brdf.x));
+    vec3 H = normalize(ViewDirection + LightDirection);
+
+    vec3 F = fresnelSchlickRoughness(max(dot(Normal, H), 0.0), F0, Roughness);
+    float NDF = DistributionGGX(Normal, H, Roughness);
+    float G = GeometrySmith(Normal, ViewDirection, LightDirection, Roughness);
+
+    float NdotL = max(dot(Normal, LightDirection), 0.0);
+    float NdotV = max(dot(Normal, ViewDirection), 0.0);
+    return (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+}
+
+vec3 CookTorranceBRDF(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,vec3 LightColor,float Roughness,float Metallic,vec3 Albedo)
+{
+    vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
+    vec3 H = normalize(ViewDirection + LightDirection);
+
+    vec3 F = fresnelSchlickRoughness(max(dot(Normal, H), 0.0), F0, Roughness);
+    float NDF = DistributionGGX(Normal, H, Roughness);
+    float G = GeometrySmith(Normal, ViewDirection, LightDirection, Roughness);
+
+    float NdotL = max(dot(Normal, LightDirection), 0.0);
+    float NdotV = max(dot(Normal, ViewDirection), 0.0);
+    vec3 kD = (1.0 - F) * (1.0 - Metallic);
+
+    vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+  
+    return (kD * Albedo * Inv_PI + specular) * LightColor;
+}
+
+float PowerHeuristic(float pdf0,float pdf1)
+{
+    float pdf02 = pow(pdf0,2);
+    return pdf02 / (pdf02 + pow(pdf1,2));
+}
+
+float BSDFpdf(vec3 N,vec3 H,vec3 D,vec3 V,float Roughness,bool IsGGX)
+{
+   float NDF = DistributionGGX(N, H, Roughness);
+   float pdfGGX = (NDF * max(dot(N, H), 0.0f)) / (4.0f * max(dot(normalize(V + H), H), 0.0) + 0.0001); 
+   float pdfDiffuse = max(dot(N, D), 0.0) * Inv_PI;
+   //float pdfDiffuse = 1.0f / (2.0f * PI);
+
+   return IsGGX ? pdfGGX : pdfDiffuse;
+}
+
+vec3 EvaluateBRDF(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPos, vec3 Position,inout vec3 brdf) {
+    vec3 V = normalize(CameraPos - Position);
+    vec3 F0 = mix(vec3(0.04), Albedo, Metalic);
+    float NdotV = max(dot(N, V), 0.0);
+    
+    float pdfDiffuse = 1.0f;
+    float pdfGGX = 1.0f;
+
+    vec3 Lo = vec3(0.0f);
+    float isShadow = 0.0f;
+    for(int i=0;i < LightCount;i++)
+    {
+        vec3 L = normalize(Lights[i].Position.xyz);
+        float ndotl = dot(N, L);
+        float NdotL = max(ndotl, 0.0);
+        vec3 H = normalize(V + L);
+        vec3 F = fresnelSchlickRoughness(max(dot(N, H), 0.0), F0, roughness);
+
+        float NDF = DistributionGGX(N, H, roughness);
+
+        //pdfGGX += (NDF * max(dot(N, H), 0.0)) / (4.0f * max(dot(L, H), 0.0) + 0.0001); 
+        //pdfDiffuse += NdotL * Inv_PI;
+        float G = GeometrySmith(N, V, L, roughness);
+        //brdf += G;
+        isShadow = RayTraceShadows(Position,L,Epsilon * abs(ndotl));
+        //if(isShadow >= 1.0f) continue;
+
+
+        vec3 kS = F;
+        vec3 kD = (1.0 - kS) * (1.0 - Metalic);
+
+        vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+        vec3 radiance = Lights[i].Color.xyz;
+        Lo += (1.0f - isShadow) * (kD * Albedo * Inv_PI + specular) * radiance * Lights[i].Intensity * NdotL;
+        brdf += specular * Lights[i].Intensity * NdotL;
+    }
+    /*
+    pdfGGX *= max(1.0f,InvLightCount);
+    pdfDiffuse *= max(1.0f,InvLightCount);
+    vec3 AdjustedRoughness = mix(vec3(mix(roughness,0.0f,Metalic)),vec3(0.0f),F);
+    pdf = mix(pdfGGX,pdfDiffuse,AdjustedRoughness.x);
+    */
+    return Lo;
+}
+
+vec3 SampleGGX(vec2 InputSeed,vec3 Normal,float Roughness)
+{
+   float a = Roughness * Roughness;
+   float phi = 2.0f * PI * InputSeed.x;
+   float cosTheta = sqrt((1.0 - InputSeed.y) / (1.0 + (a * a - 1.0) * InputSeed.y));
+   float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+   vec3 SampledVector = vec3(cos(phi) * sinTheta,
+                             sin(phi) * sinTheta,
+                             cosTheta);
+
+   vec3 Tangent = abs(Normal.z) < 0.9999 ? normalize(cross(vec3(0.0, 0.0, 1.0), Normal)) 
+                                          : normalize(cross(vec3(1.0, 0.0, 0.0), Normal));   
+   vec3 Bitangent = normalize(cross(Tangent,Normal));
+                              
+   return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
+}
+
+vec3 SampleBSDF(in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,in float Roughness,in float Metallic,in float Alpha,in float F0,in vec3 H,in vec3 F,inout float pdf)
+{
+    float AdjustedRoughness = mix(Roughness,0.0f,Metallic);
     vec3 Reflection = reflect(Direction,Normal);
-    vec3 SampleVector = SampleGGX(vec2(Hash(seed),Hash(seed)),Reflection,AdjustedRoughness);
+    vec3 GGXsample = SampleGGX(vec2(Hash(seed),Hash(seed)),Reflection,Roughness);
+    vec3 LambertianSample = SampleSemiSphere(vec2(Hash(seed),Hash(seed)),Normal);
+    //brdf = CookTorranceBRDFspec(Normal, normalize(CameraPosition - Position), -Direction,Roughness,mix(vec3(0.04), Albedo, Metallic));
+    //brdf = CookTorranceBRDF(Normal,normalize(CameraPosition - Position),-Direction,vec3(1.0f),Roughness,Metallic,Albedo.xyz);
+
+    //vec3 F_res = F + (1.0 - F) * pow(1.0 - dot(Normal, -Direction), 5.0);
+    bool IsGGX = Hash(seed) > AdjustedRoughness;
+    //pdf = BSDFpdf(Normal,GGXsample,LambertianSample,Direction,AdjustedRoughness,IsGGX);
+    vec3 SampleVector = IsGGX ? GGXsample : LambertianSample;
+
+    //vec3 SampleVector = mix(LambertianSample,GGXsample,F_res);
 
     if(Alpha < 1.0f)
     {
-      vec3 Refraction = refract(Direction,Normal,F0);
-      SampleVector = Hash(seed) >= Alpha ? Refraction : SampleVector;
+      //vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
+      //vec3 F = fresnelSchlickRoughness(max(dot(Normal, Direction), 0.0), F0, Roughness);
+      vec3 Refraction = refract(normalize(Direction),Normal, 0.67);
+      vec3 GGXrefractionSample = SampleGGX(vec2(Hash(seed),Hash(seed)),Direction,Roughness);
+      SampleVector = Hash(seed) > Alpha ? Direction : SampleVector;
     }
     SampleVector = normalize(SampleVector);
     return SampleVector;
-    return vec3(AdjustedRoughness);
 }
 
 vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
@@ -547,62 +649,80 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
     vec3 InvRayDirection = 1.0f / rayDirection;
     
     vec3 brdf = vec3(0.0f);
-    float pdf = 1.0f / (2.0f * PI);
+    float pdf = 1.0f;
+    vec3 F;
+    
     /*
-    data = TraverseBVH(rayOrigin + Epsilon * distance(CameraPosition,rayOrigin) * rayDirection,rayDirection,InvRayDirection,ClosestDistance);
+    data = TraverseBVH(rayOrigin + Epsilon * distance(CameraPosition,rayOrigin) * rayDirection,rayDirection,InvRayDirection,ClosestDistance,true);
     if(ClosestDistance == pos_infinity)
     {
         return vec4(texture(EnvironmentCubeMap,rayDirection).xyz,1.0f);
     }
-    */
-    
-    //EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf);
-    //brdf = SampleBSDF(rayDirection,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,0.04f,brdf);
-    //return vec4(brdf,1.0f);
-    //return vec4(vec3(data.Roughness),1.0f);
+    float cosTheta = max(dot(data.Normal, rayDirection), 0.0);
 
+    vec3 H = -normalize(rayDirection + rayDirection);
+    //vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
+    //F = fresnelSchlickRoughness(max(dot(reflect(rayDirection,data.Normal),H), 0.0), F0, data.Roughness);
+
+    //brdf = EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf,pdf,F);
+   //brdf = SampleBSDF(rayDirection,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.0f,H,F,pdf);
+    //pdf = DistributionGGX(data.Normal, rayDirection, data.Roughness);
+    //return vec4((1.0 - F) * (1.0 - data.Metallic) * data.Albedo.xyz,1.0f);
+    //vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
+    
+    return vec4(vec3(CookTorranceBRDF(data.Normal,-rayDirection,-rayDirection,vec3(1.0f),0.7,data.Metallic,data.Albedo.xyz)),1.0f);
+    //return vec4(vec3(data.Alpha),1.0f);
+    */
+  
     vec4 Albedo = vec4(vec3(0.0f),1.0f);
 
     vec3 Origin = rayOrigin;
     vec3 Direction = rayDirection;
     float isShadow = 0.0f;
-    float EnvironmentIntensity = 0.4f;
+    float EnvironmentIntensity = 0.7f;
     vec3 SampleVector = vec3(0.0f);
 
     vec3 Throughput = vec3(1.0f);
     vec3 MaterialEvaluation = vec3(0.0f);
+    float NdotV;
     for(int i = 0;i < SampleCount;i++)
     {
-        data = TraverseBVH(Origin + Epsilon * distance(CameraPosition,Origin) * Direction,Direction,InvRayDirection,ClosestDistance);
+        data = TraverseBVH(Origin + Epsilon * distance(CameraPosition,Origin) * Direction,Direction,InvRayDirection,ClosestDistance,true);
         if(ClosestDistance == pos_infinity)
         {
-            if(i == 0)  return vec4(texture(EnvironmentCubeMap,Direction).xyz,1.0f);
-
-            Albedo.xyz += EnvironmentIntensity * texture(EnvironmentCubeMap,Direction).xyz * Throughput;
-            ClosestDistance = pos_infinity;
+            Albedo.xyz += Throughput * (i == 0 ? 1.0f : EnvironmentIntensity) * texture(EnvironmentCubeMap,Direction).xyz;
             break;
         }
-
-        isShadow = 0.0f;
-        for(int y = 0;y < LightCount;y++)
-        {
-           isShadow += RayTraceShadows(data.Position,normalize(Lights[y].Position.xyz),0.05f);
-        }
-        isShadow *= InvLightCount;
-
+        
+        float cosTheta = max(dot(data.Normal, -Direction), 0.0);
         MaterialEvaluation = EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf);
 
-        Albedo.xyz += data.Alpha * (1.0f - isShadow) * Throughput * MaterialEvaluation;
-        pdf = (1.0 - data.Metallic) * abs(dot(Direction, data.Normal)) * Inv_PI  + data.Metallic * DistributionGGX(data.Normal, Direction, data.Roughness);
+        if(length(data.Emissive) > 0.0f)
+        {
+            if(i == 0) 
+            {
+                return vec4(data.Emissive.xyz,1.0f);
+            }
+            else
+            {
+                Albedo.xyz += Throughput * (data.Emissive.xyz * 30.0f) * cosTheta / pdf;  
+                break;
+            }
+        }
+
+        vec3 H = -normalize(rayDirection + Direction);
+        vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
+        F = fresnelSchlickRoughness(max(dot(data.Normal,Direction), 0.0), F0, data.Roughness);
+        Albedo.xyz += Throughput * data.Alpha * (MaterialEvaluation) * cosTheta / pdf;                          
         
-        vec3 F = fresnelSchlickRoughness(max(dot(Direction, data.Normal), 0.0), vec3(0.04), data.Roughness);
-        Throughput *= mix(vec3(1.0f),mix(data.Albedo.xyz, F, data.Metallic) * pdf,data.Alpha);
-        Throughput = max(Throughput,EnvironmentIntensity * 0.1f);
+        //Throughput *= mix(vec3(1.0f),CookTorranceBRDF(data.Normal,-rayDirection,-Direction,vec3(1.0f),data.Roughness,data.Metallic,data.Albedo.xyz) * cosTheta / pdf,data.Alpha);
+        Throughput *= mix(vec3(1.0f),mix(data.Albedo.xyz,F,data.Metallic) / pdf,data.Alpha);
+   
 
         ClosestDistance = pos_infinity;
         Origin = data.Position;
-        Direction = SampleBSDF(Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.001f,brdf);
-        InvRayDirection = 1.0f / Direction;        
+        Direction = SampleBSDF(Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.0f,H,F,pdf);
+        InvRayDirection = 1.0f / Direction;
     }
     return vec4(Albedo.xyz,1.0f);
 }
@@ -610,7 +730,8 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
 void main()
 {
     ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
-    seed = pos.x * pos.y * uint(Time);
+    seed = uint(Time + ProgressiveRenderedFrameCount);
+    seed = pos.x * pos.y * uint(RandomSeed * Time * Time * max(Epsilon,Hash(seed)));
     vec2 uv = (vec2(pos)+vec2(Hash(seed),Hash(seed)))/WindowSize;
 
     vec2 uvND = uv * 2.0f - 1.0f;

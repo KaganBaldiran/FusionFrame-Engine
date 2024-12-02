@@ -1,5 +1,6 @@
 #pragma once
 #include "../../FusionUtility/Definitions.hpp"
+#include "../../FusionUtility/StopWatch.h"
 #include "../Buffer.h"
 #include "../Shader.h"
 #include "../Camera.h"
@@ -32,6 +33,8 @@ namespace FUSIONCORE
 	private:
 		void Denoise(void* ColorBuffer, void* outputBuffer);
 
+		FUSIONUTIL::Timer timer;
+
 		oidn::DeviceRef device;
 		oidn::FilterRef filter;
 		oidn::BufferRef colorBuf;
@@ -62,6 +65,12 @@ namespace FUSIONCORE
 
 		TBO MetallicData;
 		Texture2D MetallicTexture;
+
+		TBO AlphaData;
+		Texture2D AlphaTexture;
+
+		TBO EmissiveData;
+		Texture2D EmissiveTexture;
 
 		TBO TracerTriangleUVdata;
 		Texture2D TracerTriangleUVTexture;

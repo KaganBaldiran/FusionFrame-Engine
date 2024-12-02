@@ -2,7 +2,7 @@
 #include <glew.h>
 #include <glfw3.h>
 
-FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo,glm::vec3 Emission)
+FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo,glm::vec4 Emission)
 {
 	this->Roughness = roughness;
 	this->Metallic = metalic;
@@ -13,6 +13,7 @@ FUSIONCORE::Material::Material(float roughness, float metalic, glm::vec4 Albedo,
 
 void FUSIONCORE::Material::PushTextureMap(const char* Key,Texture2D* TextureMap)
 {
+	if (TextureMap->GetTextureState() == FF_TEXTURE_ERROR) return;
 	TextureMaps[Key] = TextureMap;
 	std::string KeyValue(Key);
 	if (KeyValue.find("diffuse") != std::string::npos)

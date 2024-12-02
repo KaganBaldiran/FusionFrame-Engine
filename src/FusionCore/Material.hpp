@@ -43,7 +43,7 @@ namespace FUSIONCORE
 	class FUSIONFRAME_EXPORT Material
 	{
 	public:
-		Material(float roughness = 0.5f, float metalic = 0.0f, glm::vec4 Albedo = { 1.0f, 1.0f, 1.0f, 1.0f },glm::vec3 Emission = {0.0f,0.0f,0.0f});
+		Material(float roughness = 0.5f, float metalic = 0.0f, glm::vec4 Albedo = { 1.0f, 1.0f, 1.0f, 1.0f },glm::vec4 Emission = {0.0f,0.0f,0.0f,0.0f});
 		
 		void PushTextureMap(const char* Key,Texture2D* TextureMap);
 		void PushTextureMap(const char* Key, const char* TextureMap, GLenum TextureType = FF_TEXTURE_TARGET_GL_TEXTURE_2D, GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_INT,
@@ -65,7 +65,7 @@ namespace FUSIONCORE
 		float TilingCoeff = 1.0f;
 		float Alpha = 1.0f;
 		float ClearCoat = 0.0f;
-		glm::vec3 Emission;
+		glm::vec4 Emission;
 		glm::vec4 Albedo;
 
 	private:

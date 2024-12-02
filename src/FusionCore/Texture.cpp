@@ -41,6 +41,10 @@ FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuin
 	{
 		format = GL_RED;
 	}
+	else if (channels == 2)
+	{
+		format = GL_RG;
+	}
 	else if (channels == 3)
 	{
 		format = GL_RGB;

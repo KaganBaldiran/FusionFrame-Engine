@@ -43,6 +43,8 @@ layout (location = 22) uniform int LightCount;
 layout (location = 23) uniform float CameraPlaneDistance;
 layout (location = 24) uniform float RandomSeed;
 
+layout (location = 25) uniform samplerBuffer EmissiveObjects;
+
 readonly layout(std430,binding=8) restrict buffer ModelMatricesData
 {
   mat4 ModelMatrices[]; 
@@ -72,7 +74,7 @@ const float neg_infinity = uintBitsToFloat(0xFF800000);
 const float PI = 3.14159265359;
 const float Inv_PI = 1.0f / PI;
 const vec3 UP_VECTOR = vec3(0.0f,1.0f,0.0f);
-const float Epsilon = 0.0001f;
+const float Epsilon = 1e-4;
 
 struct IntersectionData
 {
@@ -345,22 +347,6 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                                 data.Metallic = texelFetch(ModelMetallic,CurrentModelID).x;
                             }
                           
-                            TextureHandle = TexturesHandles[CurrentModelID * 6 + 5];
-                            if (TextureHandle != 0) {
-                                data.Emissive.xyzw = texture(sampler2D(TextureHandle),TriangleTextureUV).xyzw;
-                            }
-                            else
-                            {
-                                data.Emissive.xyzw = texelFetch(ModelEmissives,CurrentModelID).xyzw;
-                            }
-                            
-                            /*
-                            data.Light = vec3(0.0f);
-                            for(int y = 0;y < LightCount;y++)
-                            {
-                                data.Light += max(0.0f,dot(normalize(Lights[y].Position.xyz),Normal)) * Lights[y].Color.xyz * Lights[y].Intensity;
-                            }
-                            */
 
                             data.uv = TriangleTextureUV;
                         }  
@@ -372,6 +358,15 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                         else
                         {
                             data.Alpha = texelFetch(ModelAlphas,CurrentModelID).x;
+                        }
+
+                        TextureHandle = TexturesHandles[CurrentModelID * 6 + 5];
+                        if (TextureHandle != 0) {
+                            data.Emissive.xyzw = texture(sampler2D(TextureHandle),TriangleTextureUV).xyzw;
+                        }
+                        else
+                        {
+                            data.Emissive.xyzw = texelFetch(ModelEmissives,CurrentModelID).xyzw;
                         }
                         ClosestDistance = result.t;
                     }  
@@ -456,10 +451,16 @@ vec3 FresnelSchlick(float cosTheta , vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta,0.0,1.0),5.0);
 }
 
+float FresnelSchlick(float cosTheta , float F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta,0.0,1.0),5.0);
+}
+
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 } 
+
 
 vec3 SampleSemiSphere(vec2 InputSeed,vec3 Normal)
 {
@@ -504,10 +505,42 @@ float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float Li
      return min(1.0f,Shadow);
 }
 
-vec3 CookTorranceBRDFspec(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,float Roughness,vec3 F0)
+float RayTracePointShadows(in vec3 CurrentPosition,in vec3 LightDirection,in vec3 LightPosition,inout vec4 HitEmissive)
 {
-    vec3 H = normalize(ViewDirection + LightDirection);
+     vec3 SampleLightDirection = vec3(0.0f);
+     float Shadow = 0.0f;
+     float ClosestDistance = 0.0f;
+     RayData data;
+     float HitAlpha = 0.0f;
+     vec3 Position = CurrentPosition;
+     vec3 InvRayDirection;
+     while(HitAlpha < 1.0f && Shadow < 1.0f)
+     {
+         ClosestDistance = pos_infinity;
+         SampleLightDirection = LightDirection;
+         InvRayDirection = 1.0f / (SampleLightDirection);
+         data = TraverseBVH(Position + Epsilon * distance(CameraPosition,Position) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance,false);
+         HitAlpha = data.Alpha;
+         if(ClosestDistance != pos_infinity)
+         {
+            if(length(data.Emissive.xyz) > 0.0f) 
+            {
+               HitEmissive = data.Emissive;
+               return min(1.0f,Shadow);
+            }
+            if(distance(CurrentPosition,LightPosition) <= distance(CurrentPosition,data.Position)) return 0.0f;
+            Shadow += HitAlpha; 
+         }
+         Position = data.Position;
+     }
+   
+     return min(1.0f,Shadow);
+}
 
+vec3 CookTorranceBRDFspec(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,float Roughness,float Metallic,vec3 Albedo)
+{
+    vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
+    vec3 H = normalize(ViewDirection + LightDirection);
     vec3 F = fresnelSchlickRoughness(max(dot(Normal, H), 0.0), F0, Roughness);
     float NDF = DistributionGGX(Normal, H, Roughness);
     float G = GeometrySmith(Normal, ViewDirection, LightDirection, Roughness);
@@ -532,23 +565,13 @@ vec3 CookTorranceBRDF(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,vec3 
 
     vec3 specular = (NDF * G * F) / (4.0 * NdotV * NdotL + 0.0001);
   
-    return (kD * Albedo * Inv_PI + specular) * LightColor;
+    return max(vec3(0.0f),(kD * Albedo * Inv_PI + specular) * LightColor);
 }
 
 float PowerHeuristic(float pdf0,float pdf1)
 {
     float pdf02 = pow(pdf0,2);
     return pdf02 / (pdf02 + pow(pdf1,2));
-}
-
-float BSDFpdf(vec3 N,vec3 H,vec3 D,vec3 V,float Roughness,bool IsGGX)
-{
-   float NDF = DistributionGGX(N, H, Roughness);
-   float pdfGGX = (NDF * max(dot(N, H), 0.0f)) / (4.0f * max(dot(normalize(V + H), H), 0.0) + 0.0001); 
-   float pdfDiffuse = max(dot(N, D), 0.0) * Inv_PI;
-   //float pdfDiffuse = 1.0f / (2.0f * PI);
-
-   return IsGGX ? pdfGGX : pdfDiffuse;
 }
 
 vec3 EvaluateBRDF(vec3 N, vec3 Albedo, float roughness, float Metalic, vec3 CameraPos, vec3 Position,inout vec3 brdf) {
@@ -614,32 +637,71 @@ vec3 SampleGGX(vec2 InputSeed,vec3 Normal,float Roughness)
    return normalize(SampledVector.x * Tangent + SampledVector.y * Bitangent + SampledVector.z * Normal);
 }
 
-vec3 SampleBSDF(in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,in float Roughness,in float Metallic,in float Alpha,in float F0,in vec3 H,in vec3 F,inout float pdf)
+vec3 BSDFpdf(vec3 N,vec3 Outgoing,vec3 V,float Roughness,in float Metallic,in vec3 Albedo,vec3 F)
 {
-    float AdjustedRoughness = mix(Roughness,0.0f,Metallic);
-    vec3 Reflection = reflect(Direction,Normal);
-    vec3 GGXsample = SampleGGX(vec2(Hash(seed),Hash(seed)),Reflection,Roughness);
-    vec3 LambertianSample = SampleSemiSphere(vec2(Hash(seed),Hash(seed)),Normal);
-    //brdf = CookTorranceBRDFspec(Normal, normalize(CameraPosition - Position), -Direction,Roughness,mix(vec3(0.04), Albedo, Metallic));
-    //brdf = CookTorranceBRDF(Normal,normalize(CameraPosition - Position),-Direction,vec3(1.0f),Roughness,Metallic,Albedo.xyz);
+   vec3 H = normalize(V + Outgoing);
+   float NDF = DistributionGGX(N, H, Roughness);
+   float pdfGGX = (NDF * max(dot(N, H), 0.0f)) / (4.0f * max(dot(H, Outgoing), 0.0) + 0.0001); 
+   float pdfDiffuse = max(dot(N, Outgoing),0.0f) * Inv_PI;
+   vec3 kd = (1.0f - Metallic) * (1.0f - F);
 
-    //vec3 F_res = F + (1.0 - F) * pow(1.0 - dot(Normal, -Direction), 5.0);
-    bool IsGGX = Hash(seed) > AdjustedRoughness;
-    //pdf = BSDFpdf(Normal,GGXsample,LambertianSample,Direction,AdjustedRoughness,IsGGX);
+   return kd * pdfDiffuse + pdfGGX;
+}
+
+vec3 SampleBSDF(in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,in float Roughness,in float Metallic,in float Alpha,inout float pdf)
+{
+    vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
+    vec3 F = fresnelSchlickRoughness(max(dot(Normal, -Direction), 0.0), F0, Roughness);
+    float AveragedFresnel = (F.x * 0.30f + F.y * 0.59f + F.z * 0.11f);
+    vec3 H = SampleGGX(vec2(Hash(seed),Hash(seed)),Normal,Roughness);
+    vec3 GGXsample = reflect(Direction,H);
+    vec3 LambertianSample = SampleSemiSphere(vec2(Hash(seed),Hash(seed)),Normal);
+    
+    bool IsGGX = Hash(seed) < mix(AveragedFresnel,1.0f,Metallic);
     vec3 SampleVector = IsGGX ? GGXsample : LambertianSample;
 
-    //vec3 SampleVector = mix(LambertianSample,GGXsample,F_res);
+    vec3 h = normalize(-Direction + GGXsample);
+    float NDF = DistributionGGX(Normal, h, Roughness);
+    float pdfGGX = (NDF * max(dot(Normal, h), 0.0f)) / (4.0f * max(dot(h, GGXsample), 0.0) + 0.0001); 
+    //GGXsample = CookTorranceBRDFspec(Normal,-Direction,GGXsample,H,Roughness,F0);
+   
+    
+    float pdfDiffuse = max(dot(Normal, LambertianSample),0.0f) * Inv_PI;
+    //pdf = mix(pdfDiffuse,pdfGGX,mix(AveragedFresnel,1.0f,Metallic));
+    pdf = IsGGX ? pdfGGX : pdfDiffuse;
 
     if(Alpha < 1.0f)
     {
-      //vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
-      //vec3 F = fresnelSchlickRoughness(max(dot(Normal, Direction), 0.0), F0, Roughness);
-      vec3 Refraction = refract(normalize(Direction),Normal, 0.67);
-      vec3 GGXrefractionSample = SampleGGX(vec2(Hash(seed),Hash(seed)),Direction,Roughness);
-      SampleVector = Hash(seed) > Alpha ? Direction : SampleVector;
+      vec3 Refraction = refract(normalize(Direction),Normal, 1.0f);
+      SampleVector = Hash(seed) > (AveragedFresnel * (1.0f - Alpha)) ? Direction : SampleVector;
     }
-    SampleVector = normalize(SampleVector);
-    return SampleVector;
+    return normalize(SampleVector);
+}
+
+
+vec3 SampleEmissiveObjects(in vec3 Direction,in vec3 Position,in vec3 Normal,in float Roughness,in float Metallic,in vec3 Albedo)
+{
+     int EmissiveTriangleCount = textureSize(EmissiveObjects);
+     int SampledIndex = int(texelFetch(EmissiveObjects,int(Hash(seed) * EmissiveTriangleCount)).x) * 3;
+
+     vec4 v0 = texelFetch(TrianglePositions,SampledIndex).xyzw;
+     vec3 v1 = texelFetch(TrianglePositions,SampledIndex + 1).xyz;
+     vec3 v2 = texelFetch(TrianglePositions,SampledIndex + 2).xyz;
+
+     vec2 uv = vec2(Hash(seed),Hash(seed));
+     vec3 SampledPosition = (1.0f - uv.x - uv.y) * v0.xyz + uv.x * v1 + uv.y * v2;
+
+     vec3 L = normalize(SampledPosition - Position);
+
+     vec4 Emissive = vec4(0.0f);
+     float IsVisible = RayTracePointShadows(Position,L,SampledPosition,Emissive);
+     IsVisible = max(dot(L,Normal),0.0f) * (1.0f - IsVisible);
+     if(IsVisible <= 0.0f) return vec3(IsVisible);
+
+     float Distance = length(L);
+     float Attenuation = 1.0 / (Distance * Distance);
+     vec3 Radiance = Emissive.xyz * Attenuation;
+     return IsVisible * CookTorranceBRDF(Normal,normalize(CameraPosition - Position),L,Radiance,Roughness,Metallic,Albedo);
 }
 
 vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
@@ -653,25 +715,18 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
     vec3 F;
     
     /*
-    data = TraverseBVH(rayOrigin + Epsilon * distance(CameraPosition,rayOrigin) * rayDirection,rayDirection,InvRayDirection,ClosestDistance,true);
+    data = TraverseBVH(rayOrigin + clamp(Epsilon * distance(CameraPosition,rayOrigin),0.001f, 0.1f) * rayDirection,rayDirection,InvRayDirection,ClosestDistance,true);
     if(ClosestDistance == pos_infinity)
     {
         return vec4(texture(EnvironmentCubeMap,rayDirection).xyz,1.0f);
     }
-    float cosTheta = max(dot(data.Normal, rayDirection), 0.0);
-
-    vec3 H = -normalize(rayDirection + rayDirection);
-    //vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
-    //F = fresnelSchlickRoughness(max(dot(reflect(rayDirection,data.Normal),H), 0.0), F0, data.Roughness);
-
-    //brdf = EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf,pdf,F);
-   //brdf = SampleBSDF(rayDirection,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.0f,H,F,pdf);
-    //pdf = DistributionGGX(data.Normal, rayDirection, data.Roughness);
-    //return vec4((1.0 - F) * (1.0 - data.Metallic) * data.Albedo.xyz,1.0f);
-    //vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
-    
-    return vec4(vec3(CookTorranceBRDF(data.Normal,-rayDirection,-rayDirection,vec3(1.0f),0.7,data.Metallic,data.Albedo.xyz)),1.0f);
-    //return vec4(vec3(data.Alpha),1.0f);
+    //return vec4(vec3(data.Position),1.0f);
+    if(length(data.Emissive.xyz) > 0.0f)
+    {
+       return vec4(vec3(0.0f),1.0f);
+    }
+    return vec4(vec3(SampleEmissiveObjects(rayDirection,data.Position,data.Normal,data.Roughness,data.Metallic,data.Albedo.xyz)),1.0f);
+    return vec4(vec3(CookTorranceBRDF(data.Normal,-rayDirection,-brdf,vec3(1.0f),0.7,data.Metallic,data.Albedo.xyz)),1.0f);
     */
   
     vec4 Albedo = vec4(vec3(0.0f),1.0f);
@@ -679,25 +734,22 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
     vec3 Origin = rayOrigin;
     vec3 Direction = rayDirection;
     float isShadow = 0.0f;
-    float EnvironmentIntensity = 0.7f;
+    float EnvironmentIntensity = 0.0f;
     vec3 SampleVector = vec3(0.0f);
 
     vec3 Throughput = vec3(1.0f);
     vec3 MaterialEvaluation = vec3(0.0f);
     float NdotV;
     for(int i = 0;i < SampleCount;i++)
-    {
-        data = TraverseBVH(Origin + Epsilon * distance(CameraPosition,Origin) * Direction,Direction,InvRayDirection,ClosestDistance,true);
+    { 
+        data = TraverseBVH(Origin + clamp(Epsilon * distance(CameraPosition,Origin),0.001f, 0.1f) * Direction,Direction,InvRayDirection,ClosestDistance,true);
         if(ClosestDistance == pos_infinity)
         {
             Albedo.xyz += Throughput * (i == 0 ? 1.0f : EnvironmentIntensity) * texture(EnvironmentCubeMap,Direction).xyz;
             break;
         }
         
-        float cosTheta = max(dot(data.Normal, -Direction), 0.0);
-        MaterialEvaluation = EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf);
-
-        if(length(data.Emissive) > 0.0f)
+        if(length(data.Emissive.xyz) > 0.0f)
         {
             if(i == 0) 
             {
@@ -705,24 +757,31 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
             }
             else
             {
-                Albedo.xyz += Throughput * (data.Emissive.xyz * 30.0f) * cosTheta / pdf;  
+                Albedo.xyz += Throughput * (data.Emissive.xyz);  
                 break;
-            }
+            }   
+        }
+       
+        float cosTheta = max(dot(data.Normal, Direction), 0.0);
+        Albedo.xyz += Throughput * data.Alpha * EvaluateBRDF(data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic,CameraPosition, data.Position,brdf);                          
+        Albedo.xyz += Throughput * data.Alpha * SampleEmissiveObjects(Direction,data.Position,data.Normal,data.Roughness,data.Metallic,data.Albedo.xyz);
+        
+        SampleVector = SampleBSDF(Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,pdf);
+
+        Throughput *= mix(vec3(1.0f),CookTorranceBRDF(data.Normal,-Direction,SampleVector,vec3(1.0f),data.Roughness,data.Metallic,data.Albedo.xyz),data.Alpha);
+        Direction = SampleVector;
+
+        float p = max(Throughput.x,max(Throughput.y,Throughput.z));
+        if(Hash(seed) > p)
+        {
+          break;
         }
 
-        vec3 H = -normalize(rayDirection + Direction);
-        vec3 F0 = mix(vec3(0.04), data.Albedo.xyz, data.Metallic);
-        F = fresnelSchlickRoughness(max(dot(data.Normal,Direction), 0.0), F0, data.Roughness);
-        Albedo.xyz += Throughput * data.Alpha * (MaterialEvaluation) * cosTheta / pdf;                          
-        
-        //Throughput *= mix(vec3(1.0f),CookTorranceBRDF(data.Normal,-rayDirection,-Direction,vec3(1.0f),data.Roughness,data.Metallic,data.Albedo.xyz) * cosTheta / pdf,data.Alpha);
-        Throughput *= mix(vec3(1.0f),mix(data.Albedo.xyz,F,data.Metallic) / pdf,data.Alpha);
-   
+        Throughput *= 1.0f / p; 
 
         ClosestDistance = pos_infinity;
         Origin = data.Position;
-        Direction = SampleBSDF(Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.0f,H,F,pdf);
-        InvRayDirection = 1.0f / Direction;
+        InvRayDirection = 1.0 / max(abs(Direction), vec3(1e-5)) * sign(Direction);
     }
     return vec4(Albedo.xyz,1.0f);
 }
@@ -730,8 +789,8 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount)
 void main()
 {
     ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
-    seed = uint(Time + ProgressiveRenderedFrameCount);
-    seed = pos.x * pos.y * uint(RandomSeed * Time * Time * max(Epsilon,Hash(seed)));
+    seed = uint(Time + ProgressiveRenderedFrameCount + 1);
+    seed = uint(RandomSeed + pos.x * pos.y + pos.x * pos.y * RandomSeed * Time * Time * max(Epsilon,Hash(seed)));
     vec2 uv = (vec2(pos)+vec2(Hash(seed),Hash(seed)))/WindowSize;
 
     vec2 uvND = uv * 2.0f - 1.0f;
@@ -741,7 +800,7 @@ void main()
     rayDir4 = vec4(rayDir4.xyz / rayDir4.w,1.0f);
     vec3 rayDirection = normalize(rayDir4.xyz - rayOrigin.xyz);
 
-    vec3 result = TraceRay(rayOrigin,rayDirection.xyz,min(7,max(2,int(0.7f * ProgressiveRenderedFrameCount)))).xyz;
+    vec3 result = TraceRay(rayOrigin,rayDirection.xyz,min(15,max(2,int(0.7f * ProgressiveRenderedFrameCount)))).xyz;
     /*
     for(int i = 0;i < 3;i++)
     {

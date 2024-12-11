@@ -729,10 +729,7 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
         TempMaterial.Emission.x = color.r;
         TempMaterial.Emission.y = color.g;
         TempMaterial.Emission.z = color.b;
-
-        if (aiReturn_SUCCESS == material->Get(AI_MATKEY_EMISSIVE_INTENSITY, value)) {
-            TempMaterial.Emission.w = value;
-        }
+        TempMaterial.Emission.w = color.a;
         //std::cout << "Emissive Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {

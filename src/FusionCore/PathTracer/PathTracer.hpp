@@ -72,6 +72,9 @@ namespace FUSIONCORE
 		TBO EmissiveData;
 		Texture2D EmissiveTexture;
 
+		TBO EmissiveObjectsData;
+		Texture2D EmissiveObjectsTexture;
+
 		TBO TracerTriangleUVdata;
 		Texture2D TracerTriangleUVTexture;
 
@@ -93,6 +96,7 @@ namespace FUSIONCORE
 		size_t ModelCount;
 		bool IsInitialized;
 		bool ShouldPathTrace;
+		int EmissiveObjectCount;
 
 		int ProgressiveRenderedFrameCount;
 
@@ -100,6 +104,7 @@ namespace FUSIONCORE
 		std::vector<BVHnode> BottomUpBVHNodes;
 
 		std::vector<Model*> Models;
+
 	};
 
 }

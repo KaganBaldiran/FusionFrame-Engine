@@ -1194,14 +1194,14 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
 	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(13.1f, 14.0f);
+	std::uniform_real_distribution<float> RandomIntensity(20.1f, 30.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
 
 	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
 	//Lights.emplace_back(glm::vec3(-0.3f,1.0f,0.2f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	/*
 	for (size_t i = 0; i < 2; i++)aa
@@ -1230,7 +1230,8 @@ int Application::PathTracer()
 	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
+	//FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/dam_bridge_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1279,10 +1280,12 @@ int Application::PathTracer()
 	FUSIONCORE::Model Chess("Resources\\models\\chess\\chess_set_2k.obj");
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	*/
-	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Original.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Glossy.obj");
 	FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\Bathroom\\Bathroom.fbx");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Documents\\CodeProjects\\FusionFrame-Engine\\src\\Resources\\models\\Bistro\\Interior\\interior.obj");
-	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
 	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");

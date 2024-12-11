@@ -285,6 +285,7 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 						AlignedBuffer<glm::vec2>& TriangleUVs,
 						AlignedBuffer<glm::vec3> &TriangleCenters,
 						AlignedBuffer<glm::vec3> &TriangleTangentsBitangents,
+						std::map<unsigned int, unsigned int> &EmissiveObjectIndices,
 						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
 {
@@ -341,6 +342,28 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 
 				std::swap(TriangleCenters[i], TriangleCenters[swap]);
 				std::swap(TriangleMinMax[i], TriangleMinMax[swap]);
+
+				auto Indexi = EmissiveObjectIndices.find(i) != EmissiveObjectIndices.end();
+				auto IndexSwap = EmissiveObjectIndices.find(swap) != EmissiveObjectIndices.end();
+				if (Indexi || IndexSwap)
+				{
+					//LOG(swap << " " << i);
+					if (Indexi && IndexSwap)
+					{
+						
+					}
+					else if (Indexi)
+					{
+						EmissiveObjectIndices[swap] = swap;
+						EmissiveObjectIndices.erase(i);
+					}
+					else if (IndexSwap)
+					{
+						EmissiveObjectIndices[i] = i;
+						EmissiveObjectIndices.erase(swap);
+					}
+					
+				}
 				Child1.TriangleIndex++;
 			}
 		}
@@ -436,7 +459,7 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 	}
 }
 
-void ProcessMaterial(FUSIONCORE::Material*& material,
+bool ProcessMaterial(FUSIONCORE::Material*& material,
 					AlignedBuffer<GLuint64> &TextureHandles,
 					AlignedBuffer<glm::vec4> &ModelAlbedos,
 					AlignedBuffer<float> &ModelRoughness,
@@ -461,6 +484,8 @@ void ProcessMaterial(FUSIONCORE::Material*& material,
 	ModelMetallic.push_back(material->Metallic);
 	ModelAlphas.push_back(material->Alpha);
 	ModelEmissives.push_back(material->Emission);
+	//LOG_PARAMETERS(glm::vec3(material->Emission).length());
+	return ((material->Emission.x + material->Emission.y + material->Emission.z) / 3.0f) > 0.0f || EmissiveTexture != nullptr;
 }
 
 FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace)
@@ -518,6 +543,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<float> ModelMetallic;
 	AlignedBuffer<float> ModelAlphas;
 	AlignedBuffer<glm::vec4> ModelEmissives;
+	std::map<unsigned int,unsigned int> EmissiveObjectIndices;
 	int MaterialIndex = -1;
 
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
@@ -561,16 +587,18 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	TriangleCenters.reserve(ReserveCount / 3);
 	TriangleMinMax.reserve(ReserveCount / 3);
 	
+	int CurrentVertexIndex = 0;
+
 	for (int i = 0; i < ModelCount; i++)
 	{
 		auto& ModelWithMaterial = ModelsToTrace[i];
 		auto& model = ModelWithMaterial.first;
 		auto& material = ModelWithMaterial.second;
-
+		
 		if (material != nullptr)
 		{
 			MaterialIndex++;
-			ProcessMaterial(material,TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
+			ProcessMaterial(material, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
 		}
 
 		Models.push_back(model);
@@ -585,14 +613,17 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 			auto& mesh = model->Meshes[MeshIndex];
 			auto& indices = mesh.GetIndices();
 			auto& vertices = mesh.GetVertices();
-			CurrentModelTriangleCount += indices.size() / 3;
+			int MeshTriangleCount = indices.size() / 3;
+			CurrentModelTriangleCount += MeshTriangleCount;
+			bool IsMaterialEmissive = false;
 
 			if (material == nullptr)
 			{
 				MaterialIndex++;
 				auto MeshMaterial = &mesh.ImportedMaterial;
 				MeshMaterial->MakeMaterialBindlessResident();
-				ProcessMaterial(MeshMaterial,TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
+				IsMaterialEmissive = ProcessMaterial(MeshMaterial, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
+				//LOG_PARAMETERS(IsMaterialEmissive);
 			}
 			
 			for (size_t y = 0; y < indices.size(); y += 3)
@@ -601,6 +632,11 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				auto& index1 = indices[y + 1];
 				auto& index2 = indices[y + 2];
 				auto& Vertex0 = vertices[index0];
+
+				if (IsMaterialEmissive)
+				{
+					EmissiveObjectIndices[CurrentVertexIndex] = CurrentVertexIndex;
+				}
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex0->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
@@ -644,6 +680,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				TriangleMin = glm::vec3(std::numeric_limits<float>::max());
 				TriangleMax = glm::vec3(std::numeric_limits<float>::lowest());
 				TriangleCenter = glm::vec3(0.0f);
+
+				CurrentVertexIndex += 1;
 			}
 		}
 		
@@ -655,6 +693,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		CurrentModelTriangleCount = 0;
 	}
 
+	this->EmissiveObjectCount = EmissiveObjectIndices.size();
+
 	ConstructBottomUpBVH(BottomUpBVHNodes, BoundingBoxes, min, max);
 
 	TopDownBVHnodes.insert(TopDownBVHnodes.end(), BottomUpBVHNodes.begin(), BottomUpBVHNodes.end());
@@ -665,7 +705,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		{
 		   ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals,
 			                   TriangleUVs,TriangleCenters,TriangleTangentsBitangents,
-			                   TriangleMinMax, 27);
+			                   EmissiveObjectIndices,TriangleMinMax, 27);
 		}
 	}
 	ModelNodeCount = BoundingBoxes.size();
@@ -676,6 +716,13 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	std::vector<float> ChildIndicies;
 	std::vector<float> TriangleIndicies;
 	std::vector<float> TriangleCounts;
+
+	std::vector<float> EmissiveIndices;
+
+	EmissiveIndices.reserve(EmissiveObjectIndices.size());
+	for (const auto& index : EmissiveObjectIndices) {
+		EmissiveIndices.push_back(index.second);
+	}
 
 	size_t sizeOfMinBounds = NodeCount * sizeof(glm::vec3);
 	size_t sizeOfMaxBounds = NodeCount * sizeof(glm::vec3);
@@ -768,6 +815,15 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		ModelEmissives.data(),
 		GL_STATIC_DRAW);
 
+	if (EmissiveObjectCount > 0)
+	{
+		SetTBObindlessTextureData(EmissiveObjectsData,
+			EmissiveObjectsTexture,
+			GL_R32F,
+			EmissiveIndices.size() * sizeof(float),
+			EmissiveIndices.data(),
+			GL_STATIC_DRAW);
+	}
 	SetTBObindlessTextureData(TracerTriangleUVdata,
 		TracerTriangleUVTexture,
 		GL_RG32F,
@@ -850,9 +906,6 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	{
 		ProgressiveRenderedFrameCount = -1;
 		IsDenoised = false;
-		shader.setVec2("WindowSize", WindowSize);
-		shader.setVec3("CameraPosition", camera.Position);
-		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
 		timer.Set();
 	}
 	else ProgressiveRenderedFrameCount++;
@@ -871,6 +924,7 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		this->MetallicTexture.SendBindlessHandle(shader.GetID(), "ModelMetallic");
 		this->AlphaTexture.SendBindlessHandle(shader.GetID(), "ModelAlphas");
 		this->EmissiveTexture.SendBindlessHandle(shader.GetID(), "ModelEmissives");
+		if (EmissiveObjectCount > 0) this->EmissiveObjectsTexture.SendBindlessHandle(shader.GetID(), "EmissiveObjects");
 		this->TracerTriangleUVTexture.SendBindlessHandle(shader.GetID(), "TriangleUVS");
 		this->TracerTriangleNormalsTexture.SendBindlessHandle(shader.GetID(), "TriangleNormals");
 		this->TracerTrianglePositionsTexture.SendBindlessHandle(shader.GetID(), "TrianglePositions");
@@ -890,6 +944,9 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		shader.setFloat("CameraPlaneDistance", camera.FarPlane - camera.NearPlane);
 		shader.setFloat("RandomSeed", RandomSeed(engine));
 		shader.setInt("ModelCount", ModelCount);
+		shader.setVec2("WindowSize", WindowSize);
+		shader.setVec3("CameraPosition", camera.Position);
+		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
 
 		if (Cubemap != nullptr)
 		{

@@ -175,55 +175,38 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 	{
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		{
-
 			Position += speed * Orientation;
-
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		{
-
 			Position += speed * -glm::normalize(glm::cross(Orientation, Up));
-
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		{
-
 			Position += speed * -Orientation;
-
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		{
-
 			Position += speed * glm::normalize(glm::cross(Orientation, Up));;
-
 		}
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 		{
-
 			Position += speed * Up;
-
 		}
 		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 		{
-
 			Position += speed * -Up;
-
 		}
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
-
 			speed = 0.07f;
-
 		}
 		else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE)
 		{
-
 			speed = 0.03f;
-
 		}
-
 
 		if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS))
 		{

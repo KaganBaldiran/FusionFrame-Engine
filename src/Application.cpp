@@ -1201,7 +1201,7 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 	float LightIntensity;
 
 	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
+	//Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
 	//Lights.emplace_back(glm::vec3(-0.3f,1.0f,0.2f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	/*
 	for (size_t i = 0; i < 2; i++)aa
@@ -1231,7 +1231,7 @@ int Application::PathTracer()
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
 	//FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
-	FUSIONCORE::ImportCubeMap("Resources/dam_bridge_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/kiara_5_noon_2k.hdr", 512, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1281,11 +1281,12 @@ int Application::PathTracer()
 	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
 	*/
 	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Glossy.obj");
-	FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\Bathroom\\Bathroom.fbx");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Documents\\CodeProjects\\FusionFrame-Engine\\src\\Resources\\models\\Bistro\\Interior\\interior.obj");
-	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
+	FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
 	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");
@@ -1450,7 +1451,7 @@ int Application::PathTracer()
 		//eventmanager.Publish<NewEvent>(event);
 
 
-		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
+		camera3d.UpdateCameraMatrix(75.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
 		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.06f * DeltaTime);
 		
 		Gbuffer.Bind();

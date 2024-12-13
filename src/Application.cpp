@@ -1201,15 +1201,15 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 	float LightIntensity;
 
 	LightIntensity = RandomIntensity(engine);
-	//Lights.emplace_back(glm::vec3(1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
-	//Lights.emplace_back(glm::vec3(-0.3f,1.0f,0.2f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
-	/*
-	for (size_t i = 0; i < 2; i++)aa
+	Lights.emplace_back(glm::vec3(-1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
+	Lights.emplace_back(glm::vec3(1.0f, 0.4f, -0.3f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
+	
+	for (size_t i = 0; i < 100; i++)
 	{
 		LightIntensity = RandomIntensity(engine);
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	}
-	*/
+	
 	FUSIONCORE::UploadLightsShader(Destination);
 }
 
@@ -1248,46 +1248,16 @@ int Application::PathTracer()
 	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
 	RandomizeLights(Shaders,PathTraceComputeShader);
-	/*
-	FUSIONCORE::Texture2D SofaDiffuse("Resources\\models\\sofa\\textures\\sofa_03_diff_2k.jpg");
-	FUSIONCORE::Texture2D SofaNormal("Resources\\models\\sofa\\textures\\sofa_03_nor_gl_2k.jpg");
-	FUSIONCORE::Texture2D SofaSpecular("Resources\\models\\sofa\\textures\\sofa_03_rough_2k.jpg");
-	FUSIONCORE::Texture2D SofaOpacity("Resources\\models\\sofa\\textures\\sofa_03_opacity_2k.png");
-
-	FUSIONCORE::Texture2D StoveDiffuse("Resources\\models\\stove\\textures\\electric_stove_diff_2k.jpg");
-	FUSIONCORE::Texture2D StoveNormal("Resources\\models\\stove\\textures\\electric_stove_nor_gl_2k.jpg");
-	FUSIONCORE::Texture2D StoveSpecular("Resources\\models\\stove\\textures\\electric_stove_rough_2k.jpg");
-	FUSIONCORE::Texture2D StoveMetalic("Resources\\models\\stove\\textures\\electric_stove_metal_2k.jpg");
-	FUSIONCORE::Texture2D StoveOpacity("Resources\\models\\stove\\textures\\electric_stove_opacity_2k.png");
-
-	FUSIONCORE::Texture2D ShovelDiffuse("Resources/texture_diffuse.png");
-	FUSIONCORE::Texture2D ShovelNormal("Resources/texture_normal.png");
-	FUSIONCORE::Texture2D ShovelSpecular("Resources/texture_specular.png");
-
-	FUSIONCORE::Texture2D FloorAlbedo("Resources/floor/patterned_cobblestone_02_diff_2k.jpg", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
-	FUSIONCORE::Texture2D FloorNormal("Resources/floor/patterned_cobblestone_02_nor_gl_2k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
-	FUSIONCORE::Texture2D FloorSpecular("Resources/floor/patterned_cobblestone_02_rough_2k.png", FF_TEXTURE_WRAP_MODE_GL_REPEAT, FF_TEXTURE_WRAP_MODE_GL_REPEAT);
-
-	std::unique_ptr<FUSIONCORE::Model> MainCharac = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");
-	std::unique_ptr<FUSIONCORE::Model> model1 = std::make_unique<FUSIONCORE::Model>("Resources\\shovel2.obj");;
-	std::unique_ptr<FUSIONCORE::Model> Stove = std::make_unique<FUSIONCORE::Model>("Resources\\models\\stove\\stove.obj");;
-	std::unique_ptr<FUSIONCORE::Model> grid = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	std::unique_ptr<FUSIONCORE::Model> grid1 = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	std::unique_ptr<FUSIONCORE::Model> grid2 = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	std::unique_ptr<FUSIONCORE::Model> sofa = std::make_unique<FUSIONCORE::Model>("Resources\\models\\sofa\\model\\sofa.obj");
-	std::unique_ptr<FUSIONCORE::Model> wall = std::make_unique<FUSIONCORE::Model>("Resources\\floor\\grid.obj");
-	FUSIONCORE::Model Rock("Resources\\models\\RockFormation\\RockFormation.obj");
-	FUSIONCORE::Model Chess("Resources\\models\\chess\\chess_set_2k.obj");
-	std::unique_ptr<FUSIONCORE::Model> Cliff = std::make_unique<FUSIONCORE::Model>("Resources\\models\\Cliff\\Cliff.obj");
-	*/
 	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Glossy.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\Bathroom\\Bathroom.fbx");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Documents\\CodeProjects\\FusionFrame-Engine\\src\\Resources\\models\\Bistro\\Interior\\interior.obj");
-	FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
+    FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\chess\\chess_set_2k.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\Garage\\scene.fbx");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
 	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");
 	//Car.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
@@ -1419,8 +1389,8 @@ int Application::PathTracer()
 	{
 		timer.Set();
 		WindowSize = ApplicationWindow.GetWindowSize();
-	    //FUSIONUTIL::CreateFrameImguiGLFW();
-		//pathtracer.PathTracerDashBoard();
+	//    FUSIONUTIL::CreateFrameImguiGLFW();
+	//	pathtracer.PathTracerDashBoard();
 
 
 		PrevMousePos = CurrentMousePos;
@@ -1452,7 +1422,7 @@ int Application::PathTracer()
 
 
 		camera3d.UpdateCameraMatrix(75.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
-		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.06f * DeltaTime);
+		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
 		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
@@ -1509,7 +1479,6 @@ int Application::PathTracer()
 		{
 			
 		}
-
 		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);

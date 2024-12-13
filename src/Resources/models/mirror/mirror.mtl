@@ -10,5 +10,5 @@ d 1.000000
 illum 2
 map_Kd textures/ornate_mirror_01_diff_2k.jpg
 map_Ns textures/ornate_mirror_01_roughness_2k.jpg
-map_refl textures/ornate_mirror_01_metallic_2k.exr
-map_Bump -bm 1.000000 textures/ornate_mirror_01_nor_gl_2k.exr
+map_Pm textures/ornate_mirror_01_metallic_2k.jpg
+map_Bump -bm 1.000000 textures/ornate_mirror_01_nor_gl_2k.jpg

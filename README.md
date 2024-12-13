@@ -38,6 +38,7 @@ Here are quick demo scenes and visualization of the BVH structure.
 Scenes don't belong to me.
 ![image](https://github.com/user-attachments/assets/4f5785e5-0c81-4bd8-a713-64ac9c3f3796)
 ![image](https://github.com/user-attachments/assets/0f725d73-29db-40ea-abf1-ddb1008e249a)
+![image](https://github.com/user-attachments/assets/bf8c5667-1124-4382-b864-bf2ba2267906)
 ![image](https://github.com/user-attachments/assets/cc19a757-28da-4a26-8dcc-73fceb96fd68)
 
 ## Documentation

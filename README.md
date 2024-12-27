@@ -38,9 +38,11 @@ Here are quick demo scenes and visualization of the BVH structure.
 Scenes don't belong to me.
 ![image](https://github.com/user-attachments/assets/69ba895c-a407-4c0a-a124-00c7d0a0abc4)
 ![image](https://github.com/user-attachments/assets/53e95db2-2a57-4b3d-abca-3d53caf5c624)
+![image](https://github.com/user-attachments/assets/33afa8e7-f430-4d66-a487-e9af56e1154a)
+![image](https://github.com/user-attachments/assets/28aa68e8-fe4c-4787-aeb1-7ae0d07a0ed8)
 ![image](https://github.com/user-attachments/assets/f439d903-ac1a-4482-8e88-fa30145dac7e)
 ![image](https://github.com/user-attachments/assets/bf8c5667-1124-4382-b864-bf2ba2267906)
-![image](https://github.com/user-attachments/assets/cc19a757-28da-4a26-8dcc-73fceb96fd68)
+
 
 ## Documentation
 The overall API is pretty simple and user friendly.

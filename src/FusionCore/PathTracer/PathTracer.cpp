@@ -14,6 +14,7 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_internal.h"
+#include <omp.h>
 
 template <typename T>
 using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
@@ -249,7 +250,7 @@ inline void SplitTopDown(int &BestAxis,float& BestPos,float& BestCost,BVHnode& N
 inline void SplitBottomUp(int& BestAxis, float& BestPos, float& BestCost, BVHnode& Node,
 	                      std::vector<BVHnode>& BoundingBoxes)
 {
-	constexpr int TestCountPerAXis = 7;
+	constexpr int TestCountPerAXis = 15;
 
 	float BoundMin = 0;
 	float BoundMax = 0;
@@ -625,7 +626,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				IsMaterialEmissive = ProcessMaterial(MeshMaterial, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
 				//LOG_PARAMETERS(IsMaterialEmissive);
 			}
-			
+
 			for (size_t y = 0; y < indices.size(); y += 3)
 			{
 				auto& index0 = indices[y];
@@ -902,17 +903,21 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	static bool IsDenoised = false;
 	shader.use();
 
-	if (camera.IsCameraMovedf() || window.IsWindowResizedf())
+	if (camera.IsCameraMovedf() || window.IsWindowResizedf() || shader.IsRecompiled())
 	{
 		ProgressiveRenderedFrameCount = -1;
 		IsDenoised = false;
+		shader.setVec2("WindowSize", WindowSize);
+		shader.setVec3("CameraPosition", camera.Position);
+		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
+		shader.setInt("ModelCount", ModelCount);
 		timer.Set();
 	}
 	else ProgressiveRenderedFrameCount++;
 	
 	shader.setInt("ProgressiveRenderedFrameCount", ProgressiveRenderedFrameCount);
 
-	if (!IsInitialized)
+	if (!IsInitialized || shader.IsRecompiled())
 	{
 		this->MinBoundTexture.SendBindlessHandle(shader.GetID(), "MinBounds");
 		this->MaxBoundTexture.SendBindlessHandle(shader.GetID(), "MaxBounds");
@@ -933,20 +938,17 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		IsInitialized = true;
 	}
 	
-	const int SampleCount = 10000;
+	const int SampleCount = 1000;
 
 	if (ProgressiveRenderedFrameCount <= SampleCount)
 	{
-		std::uniform_real_distribution<float> RandomSeed(0.0001f, 1.0f);
-		std::default_random_engine engine(glfwGetTime());
+		float Time = glfwGetTime();
+		std::uniform_real_distribution<float> RandomSeed(0.01f, 1.0f);
+		std::default_random_engine engine(Time);
 
-		shader.setFloat("Time", glfwGetTime());
+		shader.setFloat("Time", Time);
 		shader.setFloat("CameraPlaneDistance", camera.FarPlane - camera.NearPlane);
 		shader.setFloat("RandomSeed", RandomSeed(engine));
-		shader.setInt("ModelCount", ModelCount);
-		shader.setVec2("WindowSize", WindowSize);
-		shader.setVec3("CameraPosition", camera.Position);
-		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
 
 		if (Cubemap != nullptr)
 		{

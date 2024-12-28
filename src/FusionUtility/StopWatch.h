@@ -8,7 +8,6 @@ namespace FUSIONUTIL
 	class FUSIONFRAME_EXPORT Timer
 	{
 	public:
-
 		void Set();
 
 		template<typename T>

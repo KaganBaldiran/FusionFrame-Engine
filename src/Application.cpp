@@ -15,6 +15,7 @@
 const float BlendAmount = 0.04f;
 const float InterBlendAmount = 0.04f;
 
+
 void PrintError() {
 	GLenum err;
 	for (;;) {
@@ -23,8 +24,6 @@ void PrintError() {
 		printf("Error: %s\n", glewGetErrorString(err));
 	}
 }
-
-
 
 int Application::Run()
 {
@@ -1194,21 +1193,23 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
 	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(20.1f, 30.0f);
+	std::uniform_real_distribution<float> RandomIntensity(15.0f, 20.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
-
-	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(-1.0f,0.4f,0.0f), FF_COLOR_TAN, LightIntensity, FF_POINT_LIGHT, LightIntensity);
-	Lights.emplace_back(glm::vec3(1.0f, 0.4f, -0.3f), FF_COLOR_TITANIUM_GRAY, LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	
-	for (size_t i = 0; i < 100; i++)
+	LightIntensity = RandomIntensity(engine);
+	Lights.emplace_back(glm::vec3(0.0f,7.0f,10.0f), FF_COLOR_TAN, LightIntensity, FF_DIRECTIONAL_LIGHT, LightIntensity);
+	//Lights.emplace_back(glm::vec3(1.0f, 0.4f, -0.3f), FF_COLOR_BURNT_SIENNA, LightIntensity, FF_POINT_LIGHT, LightIntensity);
+	
+	/*
+	for (size_t i = 0; i < 50; i++)
 	{
 		LightIntensity = RandomIntensity(engine);
 		Lights.emplace_back(glm::vec3(RandomFloats(engine), RandomFloatsY(engine), RandomFloats(engine)), glm::vec3(RandomColor(engine), RandomColor(engine), RandomColor(engine)), LightIntensity, FF_POINT_LIGHT, LightIntensity / 30.0f);
 	}
+	*/
 	
 	FUSIONCORE::UploadLightsShader(Destination);
 }
@@ -1231,7 +1232,7 @@ int Application::PathTracer()
 
 	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
 	//FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
-	FUSIONCORE::ImportCubeMap("Resources/kiara_5_noon_2k.hdr", 512, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/boma_4k.hdr", 4098, cubemap, Shaders);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1248,23 +1249,30 @@ int Application::PathTracer()
 	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
 	RandomizeLights(Shaders,PathTraceComputeShader);
-	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Glossy.obj");
+	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Original.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\Bathroom\\Bathroom.fbx");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
-    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Documents\\CodeProjects\\FusionFrame-Engine\\src\\Resources\\models\\Bistro\\Interior\\interior.obj");
-    FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
+    //FUSIONCORE::Model Car("Resources\\models\\Bistro\\Exterior\\exterior.obj");
+    //FUSIONCORE::Model Car("Resources\\models\\Bistro\\Interior\\interior.obj");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\lamborghini_centenario_lp-770_interior_sdc.glb");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\lambo\\lambo.gltf");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\sphere.glb");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\dragon.glb");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\chess\\chess_set_2k.obj");
-	//FUSIONCORE::Model Car("Resources\\models\\Garage\\scene.fbx");
+	//FUSIONCORE::Model Car("Resources\\models\\Sponza\\sponza.obj");
+	FUSIONCORE::Model Car("Resources\\models\\CannonBall\\ShaderBalls.gltf");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\GutsSword\\sword.gltf");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
 	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");
 	//Car.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
 	//Curtain.GetTransformation().TranslateNoTraceBack({ 20.0f,0.0f,25.0f });
-	//Curtain.GetTransformation().ScaleNoTraceBack(glm::vec3(40.0f));
+	//helmet.GetTransformation().ScaleNoTraceBack(glm::vec3(0.7f));
+	//helmet.GetTransformation().TranslateNoTraceBack({ 0.0f,7.0f,0.0f });
 	/*
-	Chess.GetTransformation().TranslateNoTraceBack({ 0.0f,0.0f,25.0f });
 	Chess.GetTransformation().Scale(glm::vec3(9.0f));
 
 	//Car.GetTransformation().Scale(glm::vec3(9.0f));
@@ -1366,6 +1374,7 @@ int Application::PathTracer()
 	models.push_back({Cliff.get(),nullptr });
 	*/
     models.push_back({&Car,nullptr });
+    //models.push_back({&helmet,nullptr });
 	//models.push_back({&Curtain,nullptr });
 
 	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models);
@@ -1392,6 +1401,7 @@ int Application::PathTracer()
 	//    FUSIONUTIL::CreateFrameImguiGLFW();
 	//	pathtracer.PathTracerDashBoard();
 
+		PathTraceComputeShader.HotReload(3000);
 
 		PrevMousePos = CurrentMousePos;
 		FUSIONUTIL::GetCursorPosition(window, CurrentMousePos.x, CurrentMousePos.y);
@@ -1421,8 +1431,8 @@ int Application::PathTracer()
 		//eventmanager.Publish<NewEvent>(event);
 
 
-		camera3d.UpdateCameraMatrix(75.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
-		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.1f * DeltaTime);
+		camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, 2000.0f, WindowSize);
+		camera3d.HandleInputs(ApplicationWindow.GetWindow(), WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON, 0.07f * DeltaTime);
 		
 		Gbuffer.Bind();
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);

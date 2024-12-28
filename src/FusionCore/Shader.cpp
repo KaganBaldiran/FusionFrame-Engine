@@ -11,6 +11,7 @@
 #include "gtx/rotate_vector.hpp"
 #include "gtx/vector_angle.hpp"
 #include "../FusionUtility/Log.h"
+#include <omp.h>
 
 std::string FUSIONCORE::ReadTextFile(const char* filepath)
 {
@@ -45,7 +46,6 @@ GLuint FUSIONCORE::CompileVertShader(const char* vertexsource)
 	}
 
 	return vertexshader;
-
 }
 
 GLuint FUSIONCORE::CompileGeoShader(const char* Geosource)
@@ -182,22 +182,30 @@ void FUSIONCORE::DeleteShaderProgram(GLuint program)
 FUSIONCORE::Shader::Shader(const char* ComputeShaderSourcePath)
 {
 	std::string ComputeSource = ReadTextFile(ComputeShaderSourcePath);
-	ShaderSources[FF_COMPUTE_SHADER_SOURCE] = ComputeSource;
+
+	ShaderData ComputeShaderData(FF_COMPUTE_SHADER_SOURCE, std::filesystem::last_write_time(ComputeShaderSourcePath), ComputeShaderSourcePath, ComputeSource);
+	ShaderDatas[FF_COMPUTE_SHADER_SOURCE] = std::move(ComputeShaderData);
 
 	GLuint ComputeShader = CompileComputeShader(ComputeSource.c_str());
 	shaderID = CompileShaderProgram(ComputeShader);
+	IsRecompiledFlag = false;
 }
 
 FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* fragsourcepath)
 {
 	std::string vertsource = ReadTextFile(vertsourcepath);
 	std::string fragsource = ReadTextFile(fragsourcepath);
-	ShaderSources[FF_VERTEX_SHADER_SOURCE] = vertsource;
-	ShaderSources[FF_FRAGMENT_SHADER_SOURCE] = fragsource;
+
+	ShaderData VertexShaderData(FF_VERTEX_SHADER_SOURCE, std::filesystem::last_write_time(vertsourcepath), vertsourcepath, vertsource);
+	ShaderData FragmentShaderData(FF_FRAGMENT_SHADER_SOURCE, std::filesystem::last_write_time(fragsourcepath), fragsourcepath, fragsource);
+	ShaderDatas[FF_VERTEX_SHADER_SOURCE] = std::move(VertexShaderData);
+	ShaderDatas[FF_FRAGMENT_SHADER_SOURCE] = std::move(FragmentShaderData);
 
 	GLuint vertexshader = CompileVertShader(vertsource.c_str());
 	GLuint fragmentshader = CompileFragShader(fragsource.c_str());
 	shaderID = CompileShaderProgram(vertexshader, fragmentshader);
+
+	IsRecompiledFlag = false;
 }
 
 FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* geosourcepath, const char* fragsourcepath)
@@ -205,14 +213,20 @@ FUSIONCORE::Shader::Shader(const char* vertsourcepath, const char* geosourcepath
 	std::string vertsource = ReadTextFile(vertsourcepath);
 	std::string geosource = ReadTextFile(geosourcepath);
 	std::string fragsource = ReadTextFile(fragsourcepath);
-	ShaderSources[FF_VERTEX_SHADER_SOURCE] = vertsource;
-	ShaderSources[FF_FRAGMENT_SHADER_SOURCE] = fragsource;
-	ShaderSources[FF_GEOMETRY_SHADER_SOURCE] = geosource;
+
+	ShaderData VertexShaderData(FF_VERTEX_SHADER_SOURCE, std::filesystem::last_write_time(vertsourcepath), vertsourcepath, vertsource);
+	ShaderData FragmentShaderData(FF_FRAGMENT_SHADER_SOURCE, std::filesystem::last_write_time(fragsourcepath), fragsourcepath, fragsource);
+	ShaderData GeometryShaderData(FF_GEOMETRY_SHADER_SOURCE, std::filesystem::last_write_time(geosourcepath), geosourcepath, geosource);
+	ShaderDatas[FF_VERTEX_SHADER_SOURCE] = std::move(VertexShaderData);
+	ShaderDatas[FF_FRAGMENT_SHADER_SOURCE] = std::move(FragmentShaderData);
+	ShaderDatas[FF_GEOMETRY_SHADER_SOURCE] = std::move(GeometryShaderData);
 
 	GLuint vertexshader = CompileVertShader(vertsource.c_str());
 	GLuint fragmentshader = CompileFragShader(fragsource.c_str());
 	GLuint geoshader = CompileGeoShader(geosource.c_str());
 	shaderID = CompileShaderProgram(vertexshader, geoshader, fragmentshader);
+
+	IsRecompiledFlag = false;
 }
 
 void FUSIONCORE::Shader::Clear()
@@ -224,6 +238,9 @@ void FUSIONCORE::Shader::Compile(const char* ComputeShaderSourcePath)
 {
 	std::string ComputeSource = ReadTextFile(ComputeShaderSourcePath);
 
+	ShaderData ComputeShaderData(FF_COMPUTE_SHADER_SOURCE, std::filesystem::last_write_time(ComputeShaderSourcePath), ComputeShaderSourcePath, ComputeSource);
+	ShaderDatas[FF_COMPUTE_SHADER_SOURCE] = std::move(ComputeShaderData);
+
 	GLuint ComputeShader = CompileComputeShader(ComputeSource.c_str());
 	shaderID = CompileShaderProgram(ComputeShader);
 }
@@ -232,6 +249,11 @@ void FUSIONCORE::Shader::Compile(const char* vertsourcepath, const char* fragsou
 {
 	std::string vertsource = ReadTextFile(vertsourcepath);
 	std::string fragsource = ReadTextFile(fragsourcepath);
+
+	ShaderData VertexShaderData(FF_VERTEX_SHADER_SOURCE, std::filesystem::last_write_time(vertsourcepath), vertsourcepath, vertsource);
+	ShaderData FragmentShaderData(FF_FRAGMENT_SHADER_SOURCE, std::filesystem::last_write_time(fragsourcepath), fragsourcepath, fragsource);
+	ShaderDatas[FF_VERTEX_SHADER_SOURCE] = std::move(VertexShaderData);
+	ShaderDatas[FF_FRAGMENT_SHADER_SOURCE] = std::move(FragmentShaderData);
 
 	GLuint vertexshader = CompileVertShader(vertsource.c_str());
 	GLuint fragmentshader = CompileFragShader(fragsource.c_str());
@@ -243,6 +265,13 @@ void FUSIONCORE::Shader::Compile(const char* vertsourcepath, const char* geosour
 	std::string vertsource = ReadTextFile(vertsourcepath);
 	std::string geosource = ReadTextFile(geosourcepath);
 	std::string fragsource = ReadTextFile(fragsourcepath);
+
+	ShaderData VertexShaderData(FF_VERTEX_SHADER_SOURCE, std::filesystem::last_write_time(vertsourcepath), vertsourcepath, vertsource);
+	ShaderData FragmentShaderData(FF_FRAGMENT_SHADER_SOURCE, std::filesystem::last_write_time(fragsourcepath), fragsourcepath, fragsource);
+	ShaderData GeometryShaderData(FF_GEOMETRY_SHADER_SOURCE, std::filesystem::last_write_time(geosourcepath), geosourcepath, geosource);
+	ShaderDatas[FF_VERTEX_SHADER_SOURCE] = std::move(VertexShaderData);
+	ShaderDatas[FF_FRAGMENT_SHADER_SOURCE] = std::move(FragmentShaderData);
+	ShaderDatas[FF_GEOMETRY_SHADER_SOURCE] = std::move(GeometryShaderData);
 
 	GLuint vertexshader = CompileVertShader(vertsource.c_str());
 	GLuint fragmentshader = CompileFragShader(fragsource.c_str());
@@ -271,16 +300,51 @@ void FUSIONCORE::Shader::Compile(std::string VertexShaderSource, std::string Geo
 	shaderID = CompileShaderProgram(vertexshader, geoshader, fragmentshader);
 }
 
-void FUSIONCORE::Shader::PushShaderSource(FF_SHADER_SOURCE Usage, const char* ShaderSourcePath)
+void FUSIONCORE::Shader::HotReload(int CheckGapInMiliseconds)
 {
-	this->ShaderSources[Usage] = ReadTextFile(ShaderSourcePath);
+	auto Now = std::chrono::steady_clock::now();
+	if (Now - LastTimeChecked < std::chrono::milliseconds(CheckGapInMiliseconds)) return;
+	LastTimeChecked = Now;
+	
+	std::atomic<bool> ShouldRecompile = false;
+	IsRecompiledFlag = false;
+    #pragma omp parallel
+	for (auto& data : ShaderDatas)
+	{
+		auto& CurrentData = data.second;
+		auto LastModifiedTime = std::filesystem::last_write_time(CurrentData.FilePath);
+		if (CurrentData.LastModified != LastModifiedTime)
+		{
+			std::string NewSource = ReadTextFile(CurrentData.FilePath.c_str());
+			CurrentData.LastModified = LastModifiedTime;
+			CurrentData.SourceData = NewSource;
+			ShouldRecompile.store(true, std::memory_order_relaxed);
+		}
+	}
+	if (ShouldRecompile)
+	{   
+		DeleteShaderProgram(this->shaderID);
+		Shader::Compile();
+		IsRecompiledFlag = true;
+	}
 }
 
-std::string FUSIONCORE::Shader::GetShaderSource(FF_SHADER_SOURCE Usage)
+bool FUSIONCORE::Shader::IsRecompiled()
 {
-	if (ShaderSources.find(Usage) != ShaderSources.end())
+	return this->IsRecompiledFlag;
+}
+
+void FUSIONCORE::Shader::PushShaderSource(FF_SHADER_SOURCE Usage, const char* ShaderSourcePath)
+{
+	ShaderData NewShaderData(Usage, std::filesystem::last_write_time(ShaderSourcePath), ShaderSourcePath,ReadTextFile(ShaderSourcePath));
+	this->ShaderDatas[Usage] = NewShaderData;
+}
+
+FUSIONCORE::ShaderData FUSIONCORE::Shader::GetShaderSource(FF_SHADER_SOURCE Usage)
+{
+	if (ShaderDatas.find(Usage) != ShaderDatas.end())
 	{
-		return this->ShaderSources[Usage];
+		return this->ShaderDatas[Usage];
 	}
 	LOG_ERR("Invalid shader usage! Make sure its one of the four core usages : \n"
 		"FF_VERTEX_SHADER_SOURCE,\n"
@@ -304,9 +368,10 @@ size_t FindSubString(std::string Source, std::string SubString)
 
 void FUSIONCORE::Shader::AlterShaderUniformArrayValue(FF_SHADER_SOURCE ShaderUsage, std::string uniformName, int ArrayCount)
 {
-	if (ShaderSources.find(ShaderUsage) != ShaderSources.end())
+	if (ShaderDatas.find(ShaderUsage) != ShaderDatas.end())
 	{
-		std::string& Source = ShaderSources[ShaderUsage];
+		ShaderData& Data = ShaderDatas[ShaderUsage];
+		std::string Source = Data.SourceData;
 		size_t UniformPos = Source.find(uniformName);
 		std::string ArrayCountStr = std::to_string(ArrayCount);
 		if (UniformPos != std::string::npos)
@@ -354,9 +419,10 @@ void FUSIONCORE::Shader::AlterShaderUniformArrayValue(FF_SHADER_SOURCE ShaderUsa
 
 void FUSIONCORE::Shader::AlterShaderMacroDefinitionValue(FF_SHADER_SOURCE ShaderUsage, std::string MacroName, std::string Value)
 {
-	if(ShaderSources.find(ShaderUsage) != ShaderSources.end())
+	if(ShaderDatas.find(ShaderUsage) != ShaderDatas.end())
 	{
-		std::string& Source = ShaderSources[ShaderUsage];
+		ShaderData& Data = ShaderDatas[ShaderUsage];
+		std::string Source = Data.SourceData;
 		size_t MacroPos = Source.find(MacroName);
 		size_t ValueStrLength = Value.size();
 		
@@ -411,8 +477,8 @@ void FUSIONCORE::Shader::AlterShaderLayoutQualifierValue(FF_SHADER_SOURCE Shader
 
 void FUSIONCORE::Shader::Compile()
 {
-	auto VertexShaderFound = ShaderSources.find(FF_VERTEX_SHADER_SOURCE) != ShaderSources.end();
-	auto FragmentShaderFound = ShaderSources.find(FF_FRAGMENT_SHADER_SOURCE) != ShaderSources.end();
+	auto VertexShaderFound = ShaderDatas.find(FF_VERTEX_SHADER_SOURCE) != ShaderDatas.end();
+	auto FragmentShaderFound = ShaderDatas.find(FF_FRAGMENT_SHADER_SOURCE) != ShaderDatas.end();
 
 	if (VertexShaderFound || FragmentShaderFound)
 	{
@@ -429,18 +495,18 @@ void FUSIONCORE::Shader::Compile()
 			throw FFexception(ErrorMessage);
 		}
 
-		if (ShaderSources.find(FF_GEOMETRY_SHADER_SOURCE) != ShaderSources.end())
+		if (ShaderDatas.find(FF_GEOMETRY_SHADER_SOURCE) != ShaderDatas.end())
 		{
-			Compile(ShaderSources[FF_VERTEX_SHADER_SOURCE], ShaderSources[FF_FRAGMENT_SHADER_SOURCE], ShaderSources[FF_GEOMETRY_SHADER_SOURCE]);
+			Compile(ShaderDatas[FF_VERTEX_SHADER_SOURCE].SourceData , ShaderDatas[FF_FRAGMENT_SHADER_SOURCE].SourceData, ShaderDatas[FF_GEOMETRY_SHADER_SOURCE].SourceData);
 		}
 		else
 		{
-			Compile(ShaderSources[FF_VERTEX_SHADER_SOURCE], ShaderSources[FF_FRAGMENT_SHADER_SOURCE]);
+			Compile(ShaderDatas[FF_VERTEX_SHADER_SOURCE].SourceData, ShaderDatas[FF_FRAGMENT_SHADER_SOURCE].SourceData);
 		}
 	}
-	else if (ShaderSources.find(FF_COMPUTE_SHADER_SOURCE) != ShaderSources.end())
+	else if (ShaderDatas.find(FF_COMPUTE_SHADER_SOURCE) != ShaderDatas.end())
 	{
-		Compile(ShaderSources[FF_COMPUTE_SHADER_SOURCE]);
+		Compile(ShaderDatas[FF_COMPUTE_SHADER_SOURCE].SourceData);
 	}
 	else
 	{

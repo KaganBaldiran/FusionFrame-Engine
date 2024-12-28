@@ -7,7 +7,8 @@ namespace FUSIONCORE
 	std::unique_ptr<FUSIONCORE::Model> LightIcon;
 
 	std::map<int, LightData> LightDatas;
-	int LightCount;
+	int LightCount = 0;
+	float TotalLightEnergy = 0.0f;
 	std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
 }
 static int itr = 0;
@@ -20,6 +21,7 @@ FUSIONCORE::Light::Light():LightColor(1.0f,1.0f,1.0f),LightIntensity(1.0f),Light
 	
 	transformation = std::make_unique<WorldTransformForLights>(&FUSIONCORE::LightDatas[LightID], LightID);
 	transformation->Scale({ 0.1f,0.1f,0.1f });
+	TotalLightEnergy += LightIntensity;
 
 	LightCount++;
 }
@@ -66,6 +68,7 @@ FUSIONCORE::Light::Light(glm::vec3 Position_Direction, glm::vec3 Color, float in
 	}
 
 	this->LightState = true;
+	TotalLightEnergy += intensity;
 	LightCount++;
 }
 
@@ -102,6 +105,7 @@ void FUSIONCORE::Light::PopLight()
 	{
 		LightDatas.erase(LightID);
 		LightCount--;
+		TotalLightEnergy -= this->LightIntensity;
 		this->LightState = false;
 	}
 }
@@ -113,6 +117,7 @@ void FUSIONCORE::Light::PushBackLight()
 		InsertLightData(this->GetLightDirectionPosition(),LightRadius,LightColor, LightIntensity, LightType, LightID);
 		this->LightState = true;
 		LightCount++;
+		TotalLightEnergy += this->LightIntensity;
 	}
 }
 
@@ -143,6 +148,7 @@ void FUSIONCORE::UploadLightsShader(FUSIONCORE::Shader& DestShader)
 void FUSIONCORE::SendLightsShader(Shader& shader)
 {
 	shader.setInt("LightCount", LightCount);
+	shader.setFloat("TotalLightIntensity", TotalLightEnergy);
 	LightsShaderStorageBufferObject->BindSSBO(4);
 }
 

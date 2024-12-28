@@ -5,9 +5,14 @@
 #include "../FusionUtility/VectorMath.h"
 #include "../FusionUtility/FusionDLLExport.h"
 #include <unordered_map>
+#include <filesystem>
 
 #ifndef SHADER
 #define SHADER 1
+
+#define FF_ALTERED 0x24001
+#define FF_NO_LONGER_EXIST 0x24002
+#define FF_NOT_ALTERED 0x24003
 
 #if SHADER
 
@@ -18,6 +23,22 @@ namespace FUSIONCORE
         FF_VERTEX_SHADER_SOURCE = 0x9002,
         FF_FRAGMENT_SHADER_SOURCE = 0x9003,
         FF_COMPUTE_SHADER_SOURCE = 0x9004
+    };
+
+    class FUSIONFRAME_EXPORT ShaderData
+    {
+    public:
+        ShaderData(const ShaderData&) = default;
+        ShaderData() = default;
+        ShaderData(const FF_SHADER_SOURCE& ShaderType, const std::filesystem::file_time_type& LastModifed,
+            const std::string& FilePath = std::string(), const std::string& SourceData = std::string()) : ShaderType(ShaderType), LastModified(LastModifed),
+                                                                          FilePath(FilePath), SourceData(SourceData)
+        {}
+        ~ShaderData() = default; 
+        FF_SHADER_SOURCE ShaderType;
+        std::filesystem::file_time_type LastModified;
+        std::string FilePath;
+        std::string SourceData;
     };
 
     enum FUSIONFRAME_EXPORT FF_SHADER_LAYOUT_QUALIFIER {
@@ -80,8 +101,12 @@ namespace FUSIONCORE
         void Compile(std::string VertexShaderSource,std::string FragmentShaderSource);
         void Compile(std::string VertexShaderSource,std::string GeometryShaderSource,std::string FragmentShaderSource);
 
+        //Recompiles the shader in case any of the source files is altered.
+        void HotReload(int CheckGapInMiliseconds);
+        bool IsRecompiled();
+
         void PushShaderSource(FF_SHADER_SOURCE Usage,const char* ShaderSourcePath);
-        std::string GetShaderSource(FF_SHADER_SOURCE Usage);
+        ShaderData GetShaderSource(FF_SHADER_SOURCE Usage);
 
         void AlterShaderUniformArrayValue(FF_SHADER_SOURCE ShaderUsage, std::string uniformName, int ArrayCount);
         void AlterShaderMacroDefinitionValue(FF_SHADER_SOURCE ShaderUsage, std::string MacroName,std::string Value);
@@ -119,8 +144,10 @@ namespace FUSIONCORE
         void setMat4(const std::string& name, const glm::mat4& mat) const;
     private:
 
+        std::chrono::steady_clock::time_point LastTimeChecked;
         GLuint shaderID;
-        std::unordered_map<int,std::string> ShaderSources;
+        std::unordered_map<int, ShaderData> ShaderDatas;
+        bool IsRecompiledFlag;
     };
 
 }

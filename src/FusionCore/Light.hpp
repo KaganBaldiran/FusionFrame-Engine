@@ -8,7 +8,7 @@
 #include "../FusionUtility/FusionDLLExport.h"
 
 #ifndef MAX_LIGHT_COUNT
-#define MAX_LIGHT_COUNT 110
+#define MAX_LIGHT_COUNT 1000
 #endif // !MAX_LIGHT_COUNT
 
 #define FF_POINT_LIGHT 0x56400

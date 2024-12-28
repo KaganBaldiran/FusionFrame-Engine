@@ -19,7 +19,7 @@ T FUSIONUTIL::Timer::GetCurrentTime()
 int FUSIONUTIL::Timer::GetSeconds()
 {
 	auto duration = std::chrono::steady_clock::now() - start;
-	seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count() % 60;
+	seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 	return seconds;
 }
 

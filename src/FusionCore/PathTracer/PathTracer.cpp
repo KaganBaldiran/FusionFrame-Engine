@@ -466,7 +466,8 @@ bool ProcessMaterial(FUSIONCORE::Material*& material,
 					AlignedBuffer<float> &ModelRoughness,
 					AlignedBuffer<float> &ModelMetallic,
 					AlignedBuffer<float> &ModelAlphas,
-					AlignedBuffer<glm::vec4>& ModelEmissives)
+					AlignedBuffer<glm::vec4>& ModelEmissives,
+	                AlignedBuffer<glm::vec2>& ModelClearCoats)
 {
 	auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
 	auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
@@ -485,7 +486,7 @@ bool ProcessMaterial(FUSIONCORE::Material*& material,
 	ModelMetallic.push_back(material->Metallic);
 	ModelAlphas.push_back(material->Alpha);
 	ModelEmissives.push_back(material->Emission);
-	//LOG_PARAMETERS(glm::vec3(material->Emission).length());
+	ModelClearCoats.push_back({ material->ClearCoat , material->ClearCoatRoughness });
 	return ((material->Emission.x + material->Emission.y + material->Emission.z) / 3.0f) > 0.0f || EmissiveTexture != nullptr;
 }
 
@@ -544,6 +545,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<float> ModelMetallic;
 	AlignedBuffer<float> ModelAlphas;
 	AlignedBuffer<glm::vec4> ModelEmissives;
+	AlignedBuffer<glm::vec2> ModelClearCoats;
 	std::map<unsigned int,unsigned int> EmissiveObjectIndices;
 	int MaterialIndex = -1;
 
@@ -599,7 +601,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		if (material != nullptr)
 		{
 			MaterialIndex++;
-			ProcessMaterial(material, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
+			ProcessMaterial(material, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives, ModelClearCoats);
 		}
 
 		Models.push_back(model);
@@ -623,7 +625,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 				MaterialIndex++;
 				auto MeshMaterial = &mesh.ImportedMaterial;
 				MeshMaterial->MakeMaterialBindlessResident();
-				IsMaterialEmissive = ProcessMaterial(MeshMaterial, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives);
+				IsMaterialEmissive = ProcessMaterial(MeshMaterial, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives,ModelClearCoats);
 				//LOG_PARAMETERS(IsMaterialEmissive);
 			}
 
@@ -825,6 +827,14 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 			EmissiveIndices.data(),
 			GL_STATIC_DRAW);
 	}
+
+	SetTBObindlessTextureData(ClearCoatData,
+		ClearCoatTexture,
+		GL_RG32F,
+		ModelClearCoats.size() * sizeof(glm::vec2),
+		ModelClearCoats.data(),
+		GL_STATIC_DRAW);
+
 	SetTBObindlessTextureData(TracerTriangleUVdata,
 		TracerTriangleUVTexture,
 		GL_RG32F,
@@ -930,6 +940,7 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		this->AlphaTexture.SendBindlessHandle(shader.GetID(), "ModelAlphas");
 		this->EmissiveTexture.SendBindlessHandle(shader.GetID(), "ModelEmissives");
 		if (EmissiveObjectCount > 0) this->EmissiveObjectsTexture.SendBindlessHandle(shader.GetID(), "EmissiveObjects");
+		this->ClearCoatTexture.SendBindlessHandle(shader.GetID(), "ModelClearCoats");
 		this->TracerTriangleUVTexture.SendBindlessHandle(shader.GetID(), "TriangleUVS");
 		this->TracerTriangleNormalsTexture.SendBindlessHandle(shader.GetID(), "TriangleNormals");
 		this->TracerTrianglePositionsTexture.SendBindlessHandle(shader.GetID(), "TrianglePositions");

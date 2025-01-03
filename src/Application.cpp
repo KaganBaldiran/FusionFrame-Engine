@@ -1190,17 +1190,17 @@ public:
 void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Destination)
 {
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	std::uniform_real_distribution<float> RandomFloats(-10.0f, 10.0f);
-	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 30.0f);
+	std::uniform_real_distribution<float> RandomFloats(-100.0f, 100.0f);
+	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 300.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(15.0f, 20.0f);
+	std::uniform_real_distribution<float> RandomIntensity(15.0f, 40.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
 	
 	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(0.0f,7.0f,10.0f), FF_COLOR_TAN, LightIntensity, FF_DIRECTIONAL_LIGHT, LightIntensity);
+	Lights.emplace_back(glm::vec3(0.4f,1.0f,-0.2f), FF_COLOR_TAN, LightIntensity, FF_DIRECTIONAL_LIGHT, LightIntensity);
 	//Lights.emplace_back(glm::vec3(1.0f, 0.4f, -0.3f), FF_COLOR_BURNT_SIENNA, LightIntensity, FF_POINT_LIGHT, LightIntensity);
 	
 	/*
@@ -1255,8 +1255,8 @@ int Application::PathTracer()
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
     //FUSIONCORE::Model Car("Resources\\models\\Bistro\\Exterior\\exterior.obj");
     //FUSIONCORE::Model Car("Resources\\models\\Bistro\\Interior\\interior.obj");
-    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\lamborghini_centenario_lp-770_interior_sdc.glb");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\lambo\\lambo.gltf");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\barbie\\barbie.gltf");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\sphere.glb");

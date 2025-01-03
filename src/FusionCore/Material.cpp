@@ -115,6 +115,32 @@ void FUSIONCORE::Material::MakeMaterialBindlessNonResident()
 	}
 }
 
+void FUSIONCORE::Material::PrintMaterialAttributes()
+{
+	LOG("Material Name: " << MaterialName << "\n"
+	<<
+		"Albedo: {" << Albedo.x << "," << Albedo.y << "," << Albedo.z << "," << Albedo.w << "} " << "\n" 
+	<<
+		"Emission: {" << Emission.x << "," << Emission.y << "," << Emission.z << "," << Emission.w << "} " << "\n"
+	<<
+	    "Alpha: " << Alpha << "\n"
+	<<
+		"Roughness: " << Roughness << "\n"
+	<<
+		"Metallic: " << Metallic<< "\n"
+	<<
+		"ClearCoat: " << ClearCoat << "\n"
+	<<
+		"ClearCoat Roughness: " << ClearCoatRoughness << "\n"
+	<<
+		"Sheen: " << Sheen << "\n"
+	<<
+		"Sheen Tint: " << SheenTint << "\n"
+	<<
+		"Anisotropy: " << Anisotropy << "\n"
+	);
+}
+
 void FUSIONCORE::SetEnvironment(Shader& shader, float FogIntesity, glm::vec3 FogColor, glm::vec3 EnvironmentRadiance)
 {
 	shader.setFloat("FogIntesityUniform", FogIntesity);

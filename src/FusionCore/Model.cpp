@@ -718,48 +718,57 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
     else if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS) {
         LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", FF_TEXTURE_SPECULAR, TempMaterial);
     }
-    LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", FF_TEXTURE_NORMAL, TempMaterial);
+    LoadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal", FF_TEXTURE_NORMAL, TempMaterial);
     LoadMaterialTextures(material, aiTextureType_METALNESS, "texture_metalic", FF_TEXTURE_METALLIC, TempMaterial);
     LoadMaterialTextures(material, aiTextureType_OPACITY, "texture_alpha", FF_TEXTURE_ALPHA, TempMaterial);
     LoadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emissive", FF_TEXTURE_EMISSIVE, TempMaterial);
     
     aiColor4D color;
     float value;
+    aiString name;
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, color)) {
         TempMaterial.Emission.x = color.r;
         TempMaterial.Emission.y = color.g;
         TempMaterial.Emission.z = color.b;
         TempMaterial.Emission.w = color.a;
-        //std::cout << "Emissive Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {
         TempMaterial.Albedo.x = color.r;
         TempMaterial.Albedo.y = color.g;
         TempMaterial.Albedo.z = color.b;
         TempMaterial.Albedo.w = color.a;
-
-        //std::cout << "Albedo Color: (" << color.r << ", " << color.g << ", " << color.b << ")\n";
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_METALLIC_FACTOR, value)) {
         TempMaterial.Metallic = value;
-        //LOG_PARAMETERS(TempMaterial.Metallic);
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_ROUGHNESS_FACTOR, value)) {
         TempMaterial.Roughness = value;
-        //LOG_PARAMETERS(TempMaterial.Roughness);
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_SPECULAR_FACTOR, value)) {
         TempMaterial.Roughness = value;
-        //LOG_PARAMETERS(TempMaterial.Roughness);
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_CLEARCOAT_FACTOR, value)) {
         TempMaterial.ClearCoat = value;
-        //LOG_PARAMETERS(TempMaterial.ClearCoat);
     }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, value)) {
         TempMaterial.Alpha = value;
-        //LOG_PARAMETERS(TempMaterial.Alpha);
     }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_ANISOTROPY_FACTOR, value)) {
+        TempMaterial.Anisotropy = value;
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_CLEARCOAT_FACTOR, value)) {
+        TempMaterial.ClearCoat = value;
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_CLEARCOAT_ROUGHNESS_FACTOR, value)) {
+        TempMaterial.ClearCoatRoughness = value;
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_SHEEN_ROUGHNESS_FACTOR, value)) {
+        TempMaterial.Sheen = value;
+    }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_NAME, name)) {
+        TempMaterial.MaterialName = name.C_Str();
+    }
+    TempMaterial.PrintMaterialAttributes();
 }
 
 void FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)

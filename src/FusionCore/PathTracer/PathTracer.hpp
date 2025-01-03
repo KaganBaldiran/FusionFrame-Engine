@@ -72,6 +72,9 @@ namespace FUSIONCORE
 		TBO EmissiveData;
 		Texture2D EmissiveTexture;
 
+		TBO ClearCoatData;
+		Texture2D ClearCoatTexture;
+
 		TBO EmissiveObjectsData;
 		Texture2D EmissiveObjectsTexture;
 

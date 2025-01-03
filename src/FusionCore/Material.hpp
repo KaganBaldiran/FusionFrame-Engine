@@ -60,11 +60,19 @@ namespace FUSIONCORE
 		void MakeMaterialBindlessResident();
 		void MakeMaterialBindlessNonResident();
 
+		void PrintMaterialAttributes();
+
+		std::string MaterialName;
+
 		float Roughness;
 		float Metallic;
 		float TilingCoeff = 1.0f;
 		float Alpha = 1.0f;
 		float ClearCoat = 0.0f;
+		float ClearCoatRoughness = 0.0f;
+		float Anisotropy = 0.0f;
+		float Sheen = 0.0f;
+		float SheenTint = 0.0f;
 		glm::vec4 Emission;
 		glm::vec4 Albedo;
 

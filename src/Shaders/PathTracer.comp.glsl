@@ -25,6 +25,7 @@ layout (location = 11) uniform samplerBuffer ModelRoughness;
 layout (location = 12) uniform samplerBuffer ModelMetallic;
 layout (location = 13) uniform samplerBuffer ModelAlphas;
 layout (location = 14) uniform samplerBuffer ModelEmissives;
+layout (location = 15) uniform samplerBuffer ModelClearCoats;
 
 readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 {
@@ -32,26 +33,21 @@ readonly layout(std430,binding=9) restrict buffer ModelTextureHandles
 };
 
 //Geometry data
-layout (location = 15) uniform samplerBuffer TriangleUVS;
-layout (location = 16) uniform samplerBuffer TriangleNormals;
-layout (location = 17) uniform samplerBuffer TrianglePositions;
-layout (location = 18) uniform samplerBuffer TriangleTangentsBitangents;
+layout (location = 16) uniform samplerBuffer TriangleUVS;
+layout (location = 17) uniform samplerBuffer TriangleNormals;
+layout (location = 18) uniform samplerBuffer TrianglePositions;
+layout (location = 19) uniform samplerBuffer TriangleTangentsBitangents;
 
-layout (location = 19) uniform int ModelCount;
-layout (location = 20) uniform samplerCube EnvironmentCubeMap;
-layout (location = 21) uniform int ProgressiveRenderedFrameCount;
+layout (location = 20) uniform int ModelCount;
+layout (location = 21) uniform samplerCube EnvironmentCubeMap;
+layout (location = 22) uniform int ProgressiveRenderedFrameCount;
 
-layout (location = 22) uniform int LightCount;
-layout (location = 23) uniform float CameraPlaneDistance;
-layout (location = 24) uniform float RandomSeed;
+layout (location = 23) uniform int LightCount;
+layout (location = 24) uniform float CameraPlaneDistance;
+layout (location = 25) uniform float RandomSeed;
 
-layout (location = 25) uniform samplerBuffer EmissiveObjects;
-layout (location = 26) uniform float TotalLightIntensity;
-
-readonly layout(std430,binding=8) restrict buffer ModelMatricesData
-{
-  mat4 ModelMatrices[]; 
-};
+layout (location = 26) uniform samplerBuffer EmissiveObjects;
+layout (location = 27) uniform float TotalLightIntensity;
 
 struct Light
 {
@@ -96,6 +92,11 @@ struct RayData
    float Metallic;
    float Roughness;
    float Alpha;
+   float ClearCoat;
+   float ClearCoatRoughness;
+   float Sheen;
+   float SheenTint;
+   float Anisotropy;
    vec2 uv;
    vec3 Light;
 };
@@ -271,6 +272,8 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      int TriangleIndex;
      int TriCount;
 
+     vec2 ClearCoat;
+
      while(StackIndex > 0)
      {
         StackIndex--;
@@ -343,6 +346,7 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                             {
                                 data.Roughness = texelFetch(ModelRoughness,CurrentModelID).x;
                             } 
+                            data.Roughness = clamp(data.Roughness,0.001f,0.999f);
 
                             TextureHandle = TexturesHandles[CurrentModelID * 6 + 3];
                             if (TextureHandle != 0) {
@@ -352,8 +356,11 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
                             {
                                 data.Metallic = texelFetch(ModelMetallic,CurrentModelID).x;
                             }
-                          
-
+                            
+                            ClearCoat = texelFetch(ModelClearCoats,CurrentModelID).xy;
+                            data.ClearCoat = ClearCoat.x;
+                            data.ClearCoatRoughness = ClearCoat.y;
+                           
                             data.uv = TriangleTextureUV;
                         }  
                         TextureHandle = TexturesHandles[CurrentModelID * 6];
@@ -426,17 +433,21 @@ RayData TraverseBVH(in vec3 rayOrigin,in vec3 rayDirection,in vec3 InvRayDirecti
      return data;
 }
 
-float DistributionGGX(vec3 N , vec3 H, float roughness)
+float Luminance(vec3 c)
 {
-    roughness = clamp(roughness,0.09f,1.0f);
-    float a = roughness * roughness;
-    float a2 = a*a;
-    float NdotH = max(dot(N,H),0.0f);
+    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
+}
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = clamp(roughness * roughness, 0.01f, 1.0f);         
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0f);       
     float NdotH2 = NdotH * NdotH;
 
     float num = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
+    float denom = (NdotH2 * (a2 - 1.0f) + 1.0f);
+    denom = max(PI * denom * denom, 0.0001f); 
 
     return num / denom;
 }
@@ -505,16 +516,16 @@ float RayTraceShadows(in vec3 CurrentPosition,in vec3 LightDirection,in float Li
      vec3 Position = CurrentPosition;
      vec3 InvRayDirection;
      int iterator = 0;
-     while(iterator < 3 && HitAlpha < 1.0f && Shadow < 1.0f)
+     while(iterator < 5 && HitAlpha < 1.0f && Shadow < 1.0f)
      {
          ClosestDistance = pos_infinity;
-         SampleLightDirection = mix(LightDirection,SampleSemiSphere(vec2(Hash(seed),Hash(seed)),LightDirection),LightDiameter);
+         SampleLightDirection = LightDirection;
          InvRayDirection = 1.0f / (SampleLightDirection);
-         data = TraverseBVH(Position + Epsilon * distance(CameraPosition,Position) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance,false);
+         data = TraverseBVH(Position + Epsilon * distance(CameraPosition,Position) * SampleLightDirection , SampleLightDirection,InvRayDirection,ClosestDistance,true);
          HitAlpha = data.Alpha;
          if(ClosestDistance != pos_infinity)
          {
-            Shadow += HitAlpha;
+            Shadow += HitAlpha < 1.0f ? mix(Luminance(FresnelSchlick(abs(dot(data.Normal,LightDirection)),vec3(0.04f))),1.0f,HitAlpha) : 1.0f;
             Position = data.Position;
          }
          else break;
@@ -530,7 +541,7 @@ vec3 RayTracePositionalShadows(in vec3 CurrentPosition,in vec3 LightDirection,in
      vec3 Shadow = vec3(0.0f);
      float ClosestDistance = 0.0f;
      RayData data;
-     float HitAlpha = 1.0f;
+     float HitAlpha = 0.0f;
      vec3 Position = CurrentPosition;
      vec3 InvRayDirection;
      float DistancePositions;
@@ -550,33 +561,40 @@ vec3 RayTracePositionalShadows(in vec3 CurrentPosition,in vec3 LightDirection,in
             }
             if(distance(CurrentPosition,LightPosition) <= distance(CurrentPosition,data.Position)) return vec3(0.0f);
             
-            Shadow += data.Alpha; 
             HitAlpha = data.Alpha;
+            Shadow += HitAlpha < 1.0f ? mix(Luminance(FresnelSchlick(abs(dot(data.Normal,LightDirection)),vec3(0.04f))),1.0f,HitAlpha) : 1.0f;
             Position = data.Position;
          }
          else break;
          iterator++;
      }
-     while(iterator < 3 && HitAlpha < 1.0f && length(Shadow) < 1.0f);
+     while(iterator < 5 && HitAlpha < 1.0f && length(Shadow) < 1.0f);
    
      return min(vec3(1.0f),Shadow);
 }
 
 vec3 CookTorranceBRDFspec(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,float Roughness,float Metallic,vec3 Albedo)
 {
+    float NdotL = dot(Normal, LightDirection);
+    if (NdotL <= 0.0)
+        return vec3(0.0);
+
     vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
     vec3 H = normalize(ViewDirection + LightDirection);
     vec3 F = fresnelSchlickRoughness(max(dot(Normal, H), 0.0), F0, Roughness);
     float NDF = DistributionGGX(Normal, H, Roughness);
     float G = GeometrySmith(Normal, ViewDirection, LightDirection, Roughness);
 
-    float NdotL = max(dot(Normal, LightDirection), 0.0);
     float NdotV = max(dot(Normal, ViewDirection), 0.0);
-    return (NDF * G * F) / max(4.0 * NdotL * NdotV, 1e-4);
+    return max((NDF * G * F) / max(4.0 * max(NdotL, 0.0) * NdotV, 1e-4),0.0f);
 }
 
 vec3 CookTorranceBRDF(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,vec3 LightColor,float Roughness,float Metallic,vec3 Albedo)
 {
+    float NdotL = dot(Normal, LightDirection);
+    if (NdotL <= 0.0)
+        return vec3(0.0);
+
     vec3 F0 = mix(vec3(0.04),Albedo, Metallic);
     vec3 H = normalize(ViewDirection + LightDirection);
 
@@ -584,35 +602,36 @@ vec3 CookTorranceBRDF(vec3 Normal, vec3 ViewDirection, vec3 LightDirection,vec3 
     float NDF = DistributionGGX(Normal, H, Roughness);
     float G = GeometrySmith(Normal, ViewDirection, LightDirection, Roughness);
 
-    float NdotL = max(dot(Normal, LightDirection), 0.0);
     float NdotV = max(dot(Normal, ViewDirection), 0.0);
     vec3 kD = (1.0 - F) * (1.0 - Metallic);
 
-    vec3 specular = (NDF * G * F) / max(4.0 * NdotL * NdotV, 1e-4);
-    return (kD * Albedo * Inv_PI + specular) * LightColor;
+    vec3 specular = (NDF * G * F) / max(4.0 * max(NdotL, 0.0) * NdotV, 1e-4);
+    return max((kD * Albedo * Inv_PI + specular) * LightColor,0.0f);
 }
 
-vec3 MicroFacetBTDF(vec3 Normal, vec3 IncidentDirection,vec3 OutgoingDirection,float eta_i, float eta_t,float Roughness,float Metallic,vec3 Albedo)
+//Source https://schuttejoe.github.io/post/disneybsdf/
+vec3 MicroFacetBTDF(vec3 Normal,vec3 IncidentDirection,vec3 OutgoingDirection,float eta_i,float eta_t,float Roughness,float Metallic,vec3 Albedo) 
 {
-    vec3 F0 = mix(vec3(0.04),Albedo, Metallic);
-    vec3 H = normalize(eta_i * IncidentDirection + eta_t * OutgoingDirection);
+    float NdotL = dot(Normal, OutgoingDirection);
 
+    vec3 H = normalize(IncidentDirection + OutgoingDirection);
+
+    vec3 F0 = mix(vec3(0.04), Albedo, Metallic);
     vec3 F = fresnelSchlickRoughness(max(dot(Normal, H), 0.0), F0, Roughness);
     float NDF = DistributionGGX(Normal, H, Roughness);
-    float G = GeometrySmith(Normal, IncidentDirection, OutgoingDirection, Roughness);
+    float G = GeometrySmith(Normal,IncidentDirection,OutgoingDirection,Roughness);
 
-    float NdotL = abs(dot(Normal, IncidentDirection));
-    float NdotV = abs(dot(Normal, OutgoingDirection));
-    float dotHL = dot(H, IncidentDirection);
-    float dotHV = dot(H, OutgoingDirection);
-    float HdotL = abs(dotHL);
-    float HdotV = abs(dotHV);
+    float NdotV = dot(Normal,IncidentDirection);
+    float LdotH = dot(OutgoingDirection,H);
+    float VdotH = dot(IncidentDirection,H);
 
-    float EnergyScale = (eta_t * eta_t) / (eta_i * eta_i);
-    float c = (HdotL * HdotV) / (NdotL * NdotV);
-    float t = (EnergyScale / pow(dotHL + EnergyScale * dotHV,2));
+    float eta = eta_t / eta_i;
+    float denom = LdotH + VdotH * eta;
+    float jacobian = max(0.0001f,abs(LdotH)) / max(0.0001f,(denom * denom));
 
-    return t * (NDF * G * (1.0f - F)) * c;
+    float eta2 = eta * eta;
+    vec3 BTDF = (1.0 - F) * NDF * G * max(0.0001f,abs(VdotH)) * jacobian * eta2 / max(0.0001f,abs(NdotL * NdotV));
+    return max(BTDF,0.0f);
 }
 
 float PowerHeuristic(float pdf0,float pdf1)
@@ -662,11 +681,6 @@ vec3 sampleGGXVNDF(vec3 Ve, float alpha_x, float alpha_y, float U1, float U2)
     return Ne;
 }
 
-float Luminance(vec3 c)
-{
-    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
-}
-
 vec3 Tint(vec3 Albedo)
 {
   float Luminance = dot(vec3(0.3f, 0.6f, 1.0f), Albedo);
@@ -682,12 +696,17 @@ float SchlickWeight(float cosTheta) {
 //Source:https://schuttejoe.github.io/post/disneybsdf/ 
 vec3 EvalSheen(in SampleData Sample,in vec3 IncidentDirection,in vec3 OutgoingDirection,in float Sheen,in float SheenTint,in vec3 Albedo)
 {
+    if(Sheen <= 0.0f) {
+        return vec3(0.0f);
+    }
+
     float HdotL = dot(IncidentDirection,OutgoingDirection);
     vec3 tint = Tint(Albedo);
     return Sheen * mix(vec3(1.0f),tint,SheenTint) * SchlickWeight(HdotL);
 }
 
-void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,in float Roughness,in float Metallic,in float Alpha,in float Anisotropy)
+void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3 Albedo,in vec3 Position,
+                in float Roughness,in float Metallic,in float Alpha,float ior,in float Anisotropy,in float ClearCoat)
 {
     float pdf;
     vec3 SampleVector; 
@@ -696,29 +715,29 @@ void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3
     
     float CoinFlip = Hash(seed);
    
-    float dielectricWt = (1.0 - Metallic) * Alpha;
-    float metalWt = Metallic;
-    float glassWt = (1.0 - Metallic) * (1.0f - Alpha);
+    float DielectricWeight = (1.0 - Metallic) * Alpha;
+    float MetalWeight = Metallic;
+    float GlassWeight = (1.0 - Metallic) * (1.0f - Alpha);
 
-    float diffPr = dielectricWt * Luminance(Albedo);
-    float dielectricPr = dielectricWt * AveragedFresnel;
-    float metalPr = metalWt * Luminance(mix(Albedo, vec3(1.0), AveragedFresnel));
-    float glassPr = glassWt;
-    float clearCtPr = 0.25 * 0.0f;
+    float DiffuseProbability = DielectricWeight * Luminance(Albedo);
+    float DielectricProbability = DielectricWeight * AveragedFresnel;
+    float MetalProbability = MetalWeight * Luminance(mix(Albedo, vec3(1.0), AveragedFresnel));
+    float GlassProbability = GlassWeight;
+    float ClearCoatProbability = 0.25 * ClearCoat;
 
-    float invTotalWt = 1.0 / (diffPr + dielectricPr + metalPr + glassPr + clearCtPr);
-    diffPr *= invTotalWt;
-    dielectricPr *= invTotalWt;
-    metalPr *= invTotalWt;
-    glassPr *= invTotalWt;
-    clearCtPr *= invTotalWt;
+    float InverseTotalWeight = 1.0 / (DiffuseProbability + DielectricProbability + MetalProbability + GlassProbability + ClearCoatProbability);
+    DiffuseProbability *= InverseTotalWeight;
+    DielectricProbability *= InverseTotalWeight;
+    MetalProbability *= InverseTotalWeight;
+    GlassProbability *= InverseTotalWeight;
+    ClearCoatProbability *= InverseTotalWeight;
 
     float cdf[5];
-    cdf[0] = diffPr;
-    cdf[1] = cdf[0] + dielectricPr;
-    cdf[2] = cdf[1] + metalPr;
-    cdf[3] = cdf[2] + glassPr;
-    cdf[4] = cdf[3] + clearCtPr;
+    cdf[0] = DiffuseProbability;
+    cdf[1] = cdf[0] + DielectricProbability;
+    cdf[2] = cdf[1] + MetalProbability;
+    cdf[3] = cdf[2] + GlassProbability;
+    cdf[4] = cdf[3] + ClearCoatProbability;
 
     if(CoinFlip < cdf[0])
     {
@@ -729,7 +748,7 @@ void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3
         float pdfDiffuse = max(dot(Normal, LambertianSample),0.0f) / PI;
         pdf = pdfDiffuse * cdf[0] * (1.0f - AveragedFresnel);
     }
-    else if(CoinFlip < cdf[2] || CoinFlip < cdf[1])
+    else if(CoinFlip < cdf[1] || CoinFlip < cdf[2])
     {
         if(CoinFlip < cdf[2])
         {
@@ -742,9 +761,133 @@ void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3
            pdf = cdf[1];   
         }
         
-        if(Roughness < 1e-4)
+        if(Roughness <= 1e-3)
         {
            SampleVector = reflect(Direction,Normal);
+        }
+        else
+        {   
+#ifdef GGX_SAMPLING
+            GGX_H = SampleGGX(vec2(Hash(seed),Hash(seed)),Normal,Roughness);
+            vec3 GGXsample = reflect(Direction,GGX_H);
+            SampleVector = GGXsample; 
+#elif defined(VNDF_SAMPLING)     
+            vec3 Tangent = normalize(cross(vec3(0, 1, 0), Normal));
+            vec3 Bitangent = cross(Normal, Tangent);
+            vec3 TangentSpaceViewVector = vec3(dot(-Direction,Tangent),dot(-Direction,Bitangent),dot(-Direction,Normal));
+
+            float a = max(Roughness * Roughness,1e-3);
+            float Aspect = sqrt(1.0f - 0.9f * Anisotropy); 
+            float ax = a / Aspect; 
+            float ay = a * Aspect; 
+            vec3 GGX_H = sampleGGXVNDF(TangentSpaceViewVector,ax,ay,Hash(seed),Hash(seed));
+            
+            if (GGX_H.z < 0.0) GGX_H = -GGX_H;
+            
+            vec3 GGXsample = reflect(-TangentSpaceViewVector,GGX_H);
+            SampleVector = normalize(GGXsample.x * Tangent + GGXsample.y * Bitangent + GGXsample.z * Normal);
+           
+            H = normalize(GGX_H.x * Tangent + GGX_H.y * Bitangent + GGX_H.z * Normal);
+            float NDF = DistributionGGX(Normal, H, Roughness);
+            float pdfGGX = (NDF * max(dot(Normal, H), 0.0f)) / max(4.0f * max(dot(H, -Direction), 0.0f),0.0001); 
+            pdf *= pdfGGX;
+#endif
+        }
+    }
+    else if(CoinFlip < cdf[3])
+    {    
+        if(Roughness <= 1e-3)
+        {
+            float VdotH = dot(Direction,Normal);
+            bool IsReflect = VdotH < 0.0f;
+            float Eta_i = IsReflect ? ior : 1.0f;
+            float Eta_t = IsReflect ? 1.0f : ior;
+            float RelativeIOR = Eta_t / Eta_i;
+
+            vec3 refracted = refract(Direction,IsReflect ? Normal : -Normal,RelativeIOR);
+            vec3 reflected = reflect(Direction,Normal);
+            Sample.Eta_i = Eta_i;
+            Sample.Eta_t = Eta_t;
+            float FresnelWeight = SchlickWeight(abs(dot(-Direction,Normal)));
+
+            bool ShouldReflect = length(refracted) == 0.0 || ((CoinFlip - cdf[2]) / (cdf[3] - cdf[2])) < FresnelWeight;
+
+            if (ShouldReflect) SampleVector = reflected;
+            else SampleVector = refracted;
+           
+            if(ShouldReflect && VdotH * dot(SampleVector,Normal) > 0.0f)
+            {
+               pdf = cdf[3] * AveragedFresnel;
+               Sample.lobe = 1;
+            }
+            else
+            {
+               pdf = cdf[3] * (1.0f - AveragedFresnel);
+               Sample.lobe = 3;
+            }
+        }
+        else
+        {
+            if(length(H) <= 0.0f)
+            {
+                float a = max(Roughness * Roughness,1e-3);
+                float Aspect = sqrt(1.0f - 0.9f * Anisotropy); 
+                float ax = a / Aspect; 
+                float ay = a * Aspect; 
+                vec3 Tangent = normalize(cross(vec3(0, 1, 0), Normal));
+                vec3 Bitangent = cross(Normal, Tangent);
+                vec3 TangentSpaceViewVector = vec3(dot(-Direction,Tangent),dot(-Direction,Bitangent),dot(-Direction,Normal));
+
+                vec3 GGX_H = sampleGGXVNDF(TangentSpaceViewVector,a,a,Hash(seed),Hash(seed));
+                if (GGX_H.z < 0.0) GGX_H = -GGX_H;  
+                H = normalize(GGX_H.x * Tangent + GGX_H.y * Bitangent + GGX_H.z * Normal);
+            }
+
+            float VdotH = dot(Direction,H);
+            bool IsReflect = VdotH < 0.0f;
+            float Eta_i = IsReflect ? ior : 1.0f;
+            float Eta_t = IsReflect ? 1.0f : ior;
+            float RelativeIOR = Eta_t / Eta_i;
+
+            vec3 refracted = refract(Direction,IsReflect ? H : -H,RelativeIOR);
+            vec3 reflected = reflect(Direction,H);
+            Sample.Eta_i = Eta_i;
+            Sample.Eta_t = Eta_t;
+
+            float FresnelWeight = SchlickWeight(abs(dot(-Direction,H)));
+
+            bool ShouldReflect = length(refracted) == 0.0 || ((CoinFlip - cdf[2]) / (cdf[3] - cdf[2])) < FresnelWeight;
+
+            if (ShouldReflect) SampleVector = reflected;
+            else SampleVector = refracted;
+           
+            if(ShouldReflect && VdotH * dot(SampleVector,Normal) > 0.0f)
+            {
+               float NDF = DistributionGGX(Normal, H, Roughness);
+               float pdfGGX = (NDF * max(dot(Normal, H), 0.0f)) / max(4.0f * max(dot(H, -Direction), 0.0f),0.0001); 
+               pdf = pdfGGX * cdf[3] * FresnelWeight;
+               Sample.lobe = 1;
+            }
+            else
+            {
+                float LdotH = abs(dot(SampleVector, H));
+                float denum = LdotH + RelativeIOR * VdotH;
+                float jacobian = LdotH / (denum * denum);
+                float G1_V = GeometrySchlickGGX(max(dot(Normal, -Direction), 0.0), Roughness);
+                float NDF = DistributionGGX(Normal, H, Roughness);
+                 
+                pdf = (1.0f - FresnelWeight) * G1_V * max(0.0, VdotH) * NDF * jacobian * cdf[3]; 
+                Sample.lobe = 3;
+            }
+            
+        }
+    }
+    else
+    {
+        if(Roughness <= 1e-3)
+        {
+           SampleVector = reflect(Direction,Normal);
+           pdf = cdf[4];
         }
         else
         {   
@@ -771,60 +914,8 @@ void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3
             H = normalize(GGX_H.x * Tangent + GGX_H.y * Bitangent + GGX_H.z * Normal);
             float NDF = DistributionGGX(Normal, H, Roughness);
             float pdfGGX = (NDF * max(dot(Normal, H), 0.0f)) / max(4.0f * max(dot(H, -Direction), 0.0f),0.0001); 
-            pdf *= pdfGGX;
+            pdf = cdf[4] * pdfGGX;
 #endif
-        }
-    }
-    else if(CoinFlip < cdf[3])
-    {    
-        if(Roughness < 1e-4)
-        {
-            H = Normal;
-        }
-        else
-        {
-            if(length(H) <= 0.0f)
-            {
-                float a = max(Roughness * Roughness,1e-4);
-                float Aspect = sqrt(1.0f - 0.9f * Anisotropy); 
-                float ax = a / Aspect; 
-                float ay = a * Aspect; 
-                vec3 Tangent = normalize(cross(vec3(0, 1, 0), Normal));
-                vec3 Bitangent = cross(Normal, Tangent);
-                vec3 TangentSpaceViewVector = vec3(dot(-Direction,Tangent),dot(-Direction,Bitangent),dot(-Direction,Normal));
-
-                vec3 GGX_H = sampleGGXVNDF(TangentSpaceViewVector,a,a,Hash(seed),Hash(seed));
-                if (GGX_H.z < 0.0) GGX_H = -GGX_H;  
-                H = normalize(GGX_H.x * Tangent + GGX_H.y * Bitangent + GGX_H.z * Normal);
-            }
-        }
-
-        float VdotH = dot(Direction,H);
-        bool IsReflect = VdotH <= 0.0f;
-        float Eta_i = IsReflect ? 1.5f : 1.0f;
-        float Eta_t = IsReflect ? 1.0f : 1.5f;
-        float RelativeIOR = Eta_t/Eta_i;
-
-        vec3 refracted = refract(Direction,IsReflect ? H : -H,RelativeIOR);
-        Sample.Eta_i = Eta_i;
-        Sample.Eta_t = Eta_t;
-
-        float FresnelCoinShot = Hash(seed);
-        if (length(refracted) == 0.0 || FresnelCoinShot < AveragedFresnel) 
-        {
-            SampleVector = reflect(Direction,H);
-            float NDF = DistributionGGX(Normal, H, Roughness);
-            float pdfGGX = (NDF * max(dot(Normal, H), 0.0f)) / max(4.0f * max(dot(H, -Direction), 0.0f),0.0001); 
-            pdf = pdfGGX * cdf[2] * AveragedFresnel;
-            Sample.lobe = 2;
-        }
-        else
-        {
-            SampleVector = refracted;
-            Sample.lobe = 3;
-            float LdotH = abs(dot(SampleVector, H));
-            float jacobian = LdotH / (pow(LdotH + RelativeIOR * VdotH,2));
-            pdf = (1.0f - AveragedFresnel) * cdf[3] / jacobian;
         }
     }
     
@@ -833,48 +924,50 @@ void SampleBSDF(inout SampleData Sample,in vec3 Direction,in vec3 Normal,in vec3
     Sample.pdf = pdf;
 }
 
-void CoinFlipBSDFlobe(inout SampleData Sample,in vec3 Albedo,in float Roughness,in float Metallic,in float Alpha)
+void CoinFlipBSDFlobe(inout SampleData Sample,in vec3 Albedo,in float Roughness,in float Metallic,in float Alpha,in float ClearCoat)
 {
     float AveragedFresnel = Sample.Fresnel;
 
     float CoinFlip = Hash(seed);
    
-    float dielectricWt = (1.0 - Metallic) * Alpha;
-    float metalWt = Metallic;
-    float glassWt = (1.0 - Metallic) * (1.0f - Alpha);
+    float DielectricWeight = (1.0 - Metallic) * Alpha;
+    float MetalWeight = Metallic;
+    float GlassWeight = (1.0 - Metallic) * (1.0f - Alpha);
 
-    float diffPr = dielectricWt * Roughness * Luminance(Albedo);
-    float dielectricPr = dielectricWt * (1.0f - Roughness) * AveragedFresnel;
-    float metalPr = metalWt * Luminance(mix(Albedo, vec3(1.0), AveragedFresnel));
-    float glassPr = glassWt;
-    float clearCtPr = 0.25 * 0.0f;
+    float DiffuseProbability = DielectricWeight * Roughness * Luminance(Albedo);
+    float DielectricProbability = DielectricWeight * (1.0f - Roughness) * AveragedFresnel;
+    float MetalProbability = MetalWeight * Luminance(mix(Albedo, vec3(1.0), AveragedFresnel));
+    float GlassProbability = GlassWeight;
+    float ClearCoatProbability = 0.25 * ClearCoat;
 
-    float invTotalWt = 1.0 / (diffPr + dielectricPr + metalPr + glassPr + clearCtPr);
-    diffPr *= invTotalWt;
-    dielectricPr *= invTotalWt;
-    metalPr *= invTotalWt;
-    glassPr *= invTotalWt;
-    clearCtPr *= invTotalWt;
+    float InverseTotalWeight = 1.0 / (DiffuseProbability + DielectricProbability + MetalProbability + GlassProbability + ClearCoatProbability);
+    DiffuseProbability *= InverseTotalWeight;
+    DielectricProbability *= InverseTotalWeight;
+    MetalProbability *= InverseTotalWeight;
+    GlassProbability *= InverseTotalWeight;
+    ClearCoatProbability *= InverseTotalWeight;
 
     float cdf[5];
-    cdf[0] = diffPr;
-    cdf[1] = cdf[0] + dielectricPr; 
-    cdf[2] = cdf[1] + metalPr;
-    cdf[3] = cdf[2] + glassPr;
-    cdf[4] = cdf[3] + clearCtPr;
+    cdf[0] = DiffuseProbability;
+    cdf[1] = cdf[0] + DielectricProbability;
+    cdf[2] = cdf[1] + MetalProbability;
+    cdf[3] = cdf[2] + GlassProbability;
+    cdf[4] = cdf[3] + ClearCoatProbability;
 
     if(CoinFlip < cdf[0]) Sample.lobe = 0;
     else if(CoinFlip < cdf[1]) Sample.lobe = 1;
     else if(CoinFlip < cdf[2]) Sample.lobe = 2;
     else if(CoinFlip < cdf[3]) Sample.lobe = 3;
-    //else Sample.lobe = 4;
+    else Sample.lobe = 4;
 }
 
-vec3 Eval(in SampleData Sample,in vec3 Radiance,in vec3 Direction,in vec3 LightDirection,in vec3 Normal,in float Roughness,in float Metallic,in vec3 Albedo,in float Alpha)
+vec3 Eval(in SampleData Sample,in vec3 Radiance,in vec3 Direction,in vec3 LightDirection,
+          in vec3 Normal,in float Roughness,in float Metallic,in vec3 Albedo,in float Alpha,
+          in float Sheen,in float SheenTint,in float ClearCoat,in float ClearCoatRoughness,in bool IsThroughPut)
 {
     if (Sample.lobe == 0)
     {
-        return Radiance * (Albedo * Inv_PI + EvalSheen(Sample,-Direction,LightDirection,0.4f,0.2f,Albedo));
+        return Radiance * (Albedo * Inv_PI + EvalSheen(Sample,-Direction,LightDirection,Sheen,SheenTint,Albedo));
     }
     else if (Sample.lobe == 1) 
     {
@@ -882,11 +975,16 @@ vec3 Eval(in SampleData Sample,in vec3 Radiance,in vec3 Direction,in vec3 LightD
     }
     else if (Sample.lobe == 2)
     {   
-        return CookTorranceBRDFspec(Normal, -Direction, LightDirection, Roughness, Metallic, Albedo) * Radiance;  
+        return Albedo * CookTorranceBRDFspec(Normal, -Direction, LightDirection, Roughness, Metallic, Albedo) * Radiance;  
     }
-    else
+    else if (Sample.lobe == 3)
     {   
-        return Radiance * Albedo * MicroFacetBTDF(Normal, -Direction,LightDirection, Sample.Eta_i, Sample.Eta_t, Roughness, Metallic, Albedo);  
+       if(IsThroughPut) return Radiance * (Albedo + MicroFacetBTDF(Normal, -Direction,LightDirection, Sample.Eta_i, Sample.Eta_t, Roughness, Metallic, Albedo));  
+       else return Radiance * Albedo * MicroFacetBTDF(Normal, -Direction,LightDirection, Sample.Eta_i, Sample.Eta_t, Roughness, Metallic, Albedo);  
+    }
+    else if (Sample.lobe == 4)
+    {
+        return CookTorranceBRDFspec(Normal, -Direction, LightDirection,ClearCoatRoughness,0.0f,Albedo) * Radiance;
     }
     
     
@@ -904,17 +1002,18 @@ vec3 Eval(in SampleData Sample,in vec3 Radiance,in vec3 Direction,in vec3 LightD
         return vec3(0.0f,1.0f,0.0f);  
     }
     else if (Sample.lobe == 3)
-    {   
-        return vec3(1.0f,0.0f,1.0f); 
+    {  
+        return vec3(1.0f,1.0f,0.0f); 
     }
     else
     {
-        return vec3(0.0f);
+        return vec3(1.0f,1.0f,0.0f);
     }
-   */
+    */
 }
 
-vec3 SampleLights(in SampleData Sample,vec3 Direction,vec3 N, vec3 Albedo, float Roughness, float Metallic,vec3 Position,in float Alpha) {
+vec3 SampleLights(in SampleData Sample,vec3 Direction,vec3 N, vec3 Albedo, float Roughness, float Metallic,
+                 vec3 Position,in float Alpha,in float Sheen,in float SheenTint,in float ClearCoat,in float ClearCoatRoughness) {
     if(LightCount <= 0) return vec3(0.0f);
     float isShadow = 0.0f;
     vec4 Emissive = vec4(0.0f);
@@ -947,10 +1046,12 @@ vec3 SampleLights(in SampleData Sample,vec3 Direction,vec3 N, vec3 Albedo, float
     else if(IsDirectionalLight) isShadow = RayTraceShadows(Position,L,Epsilon * abs(ndotl));
     
     if(isShadow >= 1.0f) return vec3(0.0f,0.f,0.0f);
-    return NdotL * (1.0f - isShadow) * Eval(Sample,Radiance,Direction,L,N,Roughness,Metallic,Albedo,Alpha);
+    return NdotL * (1.0f - isShadow) * Eval(Sample,Radiance,Direction,L,N,Roughness,Metallic,Albedo,Alpha,Sheen,SheenTint,ClearCoat,ClearCoatRoughness,false);
 }
 
-vec3 SampleEmissiveObjects(in SampleData Sample,in vec3 Direction,in vec3 Position,in vec3 Normal,in float Roughness,in float Metallic,in vec3 Albedo,in float Alpha)
+vec3 SampleEmissiveObjects(in SampleData Sample,in vec3 Direction,in vec3 Position,in vec3 Normal,
+                           in float Roughness,in float Metallic,in vec3 Albedo,in float Alpha,
+                           in float Sheen,in float SheenTint,in float ClearCoat,in float ClearCoatRoughness)
 {
      int EmissiveTriangleCount = textureSize(EmissiveObjects);
      if(EmissiveTriangleCount <= 0) return vec3(0.0f);
@@ -969,7 +1070,6 @@ vec3 SampleEmissiveObjects(in SampleData Sample,in vec3 Direction,in vec3 Positi
      float NdotL = max(dot(L,Normal),0.0f);
      if(NdotL <= 0.0f) return vec3(0.0f);
 
-     float Distance = length(L);
 
      vec4 Emissive = vec4(0.0f);
      vec3 Shadow = RayTracePositionalShadows(Position,L,SampledPosition,Emissive);
@@ -985,10 +1085,10 @@ vec3 SampleEmissiveObjects(in SampleData Sample,in vec3 Direction,in vec3 Positi
      IsVisible = LdotLnormal * NdotL * (1.0f - IsVisible);
      if(IsVisible <= 0.0f) return vec3(0.0f);
 
-     float Attenuation = 1.0 / (Distance * Distance);
-     vec3 Radiance = 10.4f * Emissive.xyz * Attenuation;
+     float Distance = length(SampledPosition - Position);
+     vec3 Radiance = (150.4f * Emissive.xyz) / (Distance * Distance);
 
-     return IsVisible * Eval(Sample,Radiance,Direction,L,Normal,Roughness,Metallic,Albedo,Alpha);
+     return IsVisible * Eval(Sample,Radiance,Direction,L,Normal,Roughness,Metallic,Albedo,Alpha,Sheen,SheenTint,ClearCoat,ClearCoatRoughness,false);
 }
 
 vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount,inout vec3 FirstHitPosition)
@@ -997,6 +1097,8 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount,inout ve
     SampleData Sample;
     Sample.lobe = -1;
     Sample.Fresnel = 1.0f;
+    Sample.Eta_i = 1.5f;
+    Sample.Eta_t = 1;
     float ClosestDistance = pos_infinity;
     vec3 InvRayDirection = 1.0f / rayDirection;
     
@@ -1025,7 +1127,6 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount,inout ve
         if(ClosestDistance == pos_infinity)
         {
             Albedo.xyz += Throughput * (IsFirstHit ? 0.0f : EnvironmentIntensity) * texture(EnvironmentCubeMap,Direction).xyz;
-            //Albedo.xyz += Throughput * (i == 0 ? 1.0f : EnvironmentIntensity) * vec3(0.8f);
             break;
         }
 
@@ -1046,22 +1147,25 @@ vec4 TraceRay(in vec3 rayOrigin,in vec3 rayDirection,in int SampleCount,inout ve
 
         if(IsFirstHit)
         {
-          CoinFlipBSDFlobe(Sample,data.Albedo.xyz,data.Roughness,data.Metallic,data.Alpha);
+          CoinFlipBSDFlobe(Sample,data.Albedo.xyz,data.Roughness,data.Metallic,data.Alpha,data.ClearCoat);
           FirstHitPosition = data.Position;
         }
         
-        AnalyticLightContribution = SampleLights(Sample,Direction,data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic, data.Position,data.Alpha);
+        AnalyticLightContribution = SampleLights(Sample,Direction,data.Normal, data.Albedo.xyz, data.Roughness, data.Metallic, data.Position,data.Alpha,0.0f,0.0f,data.ClearCoat,data.ClearCoatRoughness);
         if(length(AnalyticLightContribution) > 0.0f) Albedo.xyz += Throughput * AnalyticLightContribution;
-   
-        EmissiveLightContribution = SampleEmissiveObjects(Sample,Direction,data.Position,data.Normal,data.Roughness,data.Metallic,data.Albedo.xyz,data.Alpha);
+
+        EmissiveLightContribution = SampleEmissiveObjects(Sample,Direction,data.Position,data.Normal,data.Roughness,data.Metallic,data.Albedo.xyz,data.Alpha,0.0f,0.0f,data.ClearCoat,data.ClearCoatRoughness);
         if(length(EmissiveLightContribution) > 0.0f) Albedo.xyz += Throughput * EmissiveLightContribution;
 
-        SampleBSDF(Sample,Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,0.0f);
+        SampleBSDF(Sample,Direction,data.Normal,data.Albedo.xyz,data.Position,data.Roughness,data.Metallic,data.Alpha,1.5f,0.0f,data.ClearCoat);
+
+        ThroughputBRDF = Eval(Sample,vec3(1.0f),Direction,Sample.Direction,data.Normal,
+                              data.Roughness,data.Metallic,data.Albedo.xyz,data.Alpha,0.0f,0.0f,
+                              data.ClearCoat,data.ClearCoatRoughness,true);
+        
         BSDFpdf = Sample.pdf;
 
-        ThroughputBRDF = Eval(Sample,vec3(1.0f),Direction,Sample.Direction,data.Normal,data.Roughness,data.Metallic,data.Albedo.xyz,data.Alpha);
-
-        Throughput *= mix(data.Albedo.xyz,ThroughputBRDF,data.Alpha) / BSDFpdf;
+        Throughput *= ThroughputBRDF / BSDFpdf;
         Direction = Sample.Direction;
 
         float p = max(Throughput.x,max(Throughput.y,Throughput.z));
@@ -1094,7 +1198,7 @@ void main()
     vec3 rayDirection = normalize(rayDir4.xyz - rayOrigin.xyz);
 
     vec3 FirstHitPosition;
-    vec3 result = TraceRay(rayOrigin,rayDirection.xyz,min(10,max(2,int(0.7f * ProgressiveRenderedFrameCount))),FirstHitPosition).xyz;
+    vec3 result = TraceRay(rayOrigin,rayDirection.xyz,min(15,max(2,int(0.7f * ProgressiveRenderedFrameCount))),FirstHitPosition).xyz;
     
     /*
     if(distance(FirstHitPosition,CameraPosition) > 5.0f)

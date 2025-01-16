@@ -107,6 +107,16 @@ void FUSIONCORE::Material::MakeMaterialBindlessResident()
 	}
 }
 
+void FUSIONCORE::Material::MakeMaterialMipmapBindlessResident(const uint& MipmapCount,Shader& MipmapShader)
+{
+	for (auto& texture : this->TextureMaps)
+	{
+		texture.second->RenderMipmaps(MipmapCount, MipmapShader);
+		texture.second->MakeBindless();
+		texture.second->MakeResident();
+	}
+}
+
 void FUSIONCORE::Material::MakeMaterialBindlessNonResident()
 {
 	for (auto& texture : this->TextureMaps)
@@ -124,6 +134,8 @@ void FUSIONCORE::Material::PrintMaterialAttributes()
 		"Emission: {" << Emission.x << "," << Emission.y << "," << Emission.z << "," << Emission.w << "} " << "\n"
 	<<
 	    "Alpha: " << Alpha << "\n"
+	<<
+		"IOR: " << IOR << "\n"
 	<<
 		"Roughness: " << Roughness << "\n"
 	<<

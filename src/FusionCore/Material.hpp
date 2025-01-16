@@ -58,6 +58,7 @@ namespace FUSIONCORE
 		inline void EnableClayMaterial() { std::fill_n(this->DisableClayMaterial, 5, 1); };
 
 		void MakeMaterialBindlessResident();
+		void MakeMaterialMipmapBindlessResident(const uint& MipmapCount, Shader& MipmapShader);
 		void MakeMaterialBindlessNonResident();
 
 		void PrintMaterialAttributes();
@@ -65,9 +66,10 @@ namespace FUSIONCORE
 		std::string MaterialName;
 
 		float Roughness;
-		float Metallic;
+		float Metallic = 0.0f;
 		float TilingCoeff = 1.0f;
 		float Alpha = 1.0f;
+		float IOR = 1.5f;
 		float ClearCoat = 0.0f;
 		float ClearCoatRoughness = 0.0f;
 		float Anisotropy = 0.0f;

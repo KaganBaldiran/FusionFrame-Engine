@@ -465,7 +465,7 @@ bool ProcessMaterial(FUSIONCORE::Material*& material,
 					AlignedBuffer<glm::vec4> &ModelAlbedos,
 					AlignedBuffer<float> &ModelRoughness,
 					AlignedBuffer<float> &ModelMetallic,
-					AlignedBuffer<float> &ModelAlphas,
+					AlignedBuffer<glm::vec2> &ModelAlphas,
 					AlignedBuffer<glm::vec4>& ModelEmissives,
 	                AlignedBuffer<glm::vec2>& ModelClearCoats)
 {
@@ -484,13 +484,13 @@ bool ProcessMaterial(FUSIONCORE::Material*& material,
 	ModelAlbedos.push_back(material->Albedo);
 	ModelRoughness.push_back(material->Roughness);
 	ModelMetallic.push_back(material->Metallic);
-	ModelAlphas.push_back(material->Alpha);
+	ModelAlphas.push_back({ material->Alpha,material->IOR });
 	ModelEmissives.push_back(material->Emission);
 	ModelClearCoats.push_back({ material->ClearCoat , material->ClearCoatRoughness });
 	return ((material->Emission.x + material->Emission.y + material->Emission.z) / 3.0f) > 0.0f || EmissiveTexture != nullptr;
 }
 
-FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace)
+FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::vector<std::pair<Model*, Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders)
 {
 	glGenTextures(1, &image);
 	glActiveTexture(GL_TEXTURE0);
@@ -502,26 +502,41 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindImageTexture(0, image, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-	glGenBuffers(1, &pbo);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
 
-	glBufferData(GL_PIXEL_PACK_BUFFER, width * height * 3 * sizeof(float), NULL, GL_STREAM_DRAW);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+	glGenTextures(1, &NormalImage);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, NormalImage);
 
-	glGenQueries(1, &queryObject);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindImageTexture(1, NormalImage, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+
+	glGenTextures(1, &AlbedoImage);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, AlbedoImage);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindImageTexture(2, AlbedoImage, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 	ImageSize = { width,height };
 
-
-	device = oidn::newDevice(oidn::DeviceType::CUDA);
+	device = oidn::newDevice(OIDN_DEVICE_TYPE_CUDA);
 	device.commit();
 
 	colorBuf = device.newBuffer(ImageSize.x * ImageSize.y * 3 * sizeof(float));
+	NormalBuf = device.newBuffer(ImageSize.x * ImageSize.y * 3 * sizeof(float));
+	AlbedoBuf = device.newBuffer(ImageSize.x * ImageSize.y * 3 * sizeof(float));
 	filter = device.newFilter("RT");
 
 	filter.set("hdr", true); 
 	filter.commit();
-
+	
 	if (ModelsToTrace.empty())
 	{
 		return;
@@ -543,7 +558,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	AlignedBuffer<glm::vec4> ModelAlbedos;
 	AlignedBuffer<float> ModelRoughness;
 	AlignedBuffer<float> ModelMetallic;
-	AlignedBuffer<float> ModelAlphas;
+	AlignedBuffer<glm::vec2> ModelAlphas;
 	AlignedBuffer<glm::vec4> ModelEmissives;
 	AlignedBuffer<glm::vec2> ModelClearCoats;
 	std::map<unsigned int,unsigned int> EmissiveObjectIndices;
@@ -601,6 +616,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		if (material != nullptr)
 		{
 			MaterialIndex++;
+			material->MakeMaterialMipmapBindlessResident(4,*Shaders.TextureMipmapRenderShader);
 			ProcessMaterial(material, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives, ModelClearCoats);
 		}
 
@@ -624,9 +640,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 			{
 				MaterialIndex++;
 				auto MeshMaterial = &mesh.ImportedMaterial;
-				MeshMaterial->MakeMaterialBindlessResident();
+				MeshMaterial->MakeMaterialMipmapBindlessResident(4, *Shaders.TextureMipmapRenderShader);
 				IsMaterialEmissive = ProcessMaterial(MeshMaterial, TextureHandles, ModelAlbedos, ModelRoughness, ModelMetallic, ModelAlphas, ModelEmissives,ModelClearCoats);
-				//LOG_PARAMETERS(IsMaterialEmissive);
 			}
 
 			for (size_t y = 0; y < indices.size(); y += 3)
@@ -747,7 +762,7 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 		TriangleIndicies.push_back(node.TriangleIndex);
 		TriangleCounts.push_back(node.TriangleCount);
 	}
-
+	
 	SetTBObindlessTextureData(MinBoundData, 
 		MinBoundTexture, 
 		GL_RGB32F,
@@ -806,8 +821,8 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 
 	SetTBObindlessTextureData(AlphaData,
 		AlphaTexture,
-		GL_R32F,
-		ModelAlphas.size() * sizeof(float),
+		GL_RG32F,
+		ModelAlphas.size() * sizeof(glm::vec2),
 		ModelAlphas.data(),
 		GL_STATIC_DRAW);
 
@@ -878,25 +893,28 @@ FUSIONCORE::PathTracer::PathTracer(unsigned int width,unsigned int height, std::
 	TriangleCount = TrianglePositions.size();
 	IsInitialized = false;
 	ProgressiveRenderedFrameCount = -1;
+	TargetSampleCount = 100;
+	ShouldRestart = false;
+	IsDenoised = false;
 
 	LOG("Process took: " << timer.GetMiliseconds());
-}
-
-GLint FUSIONCORE::PathTracer::IsPathTracingDone()
-{
-	GLint PathTracingDone = 0;
-	glGetQueryObjectiv(queryObject, GL_QUERY_RESULT_AVAILABLE, &PathTracingDone);
-	LOG_PARAMETERS(PathTracingDone);
-	return PathTracingDone;
 }
 
 void FUSIONCORE::PathTracer::PathTracerDashBoard()
 {
 	ImGui::Begin("Path Tracer Settings");
-	ImGui::Text("Hello");
+	ImGui::Text(("Sample: " + std::to_string(this->ProgressiveRenderedFrameCount) + " / " + std::to_string(this->TargetSampleCount)).c_str());
 	if (ImGui::Button("Render"))
 	{
-		ShouldPathTrace = true;
+		ShouldRestart = true;
+	}
+	if (ImGui::Button("Conclude Rendering"))
+	{
+		TargetSampleCount = ProgressiveRenderedFrameCount;
+	}
+	if (ImGui::SliderInt("Sample Count", &TargetSampleCount, 1, 10000))
+	{
+		ShouldRestart = true;
 	}
 	ImGui::End();
 }
@@ -904,26 +922,27 @@ void FUSIONCORE::PathTracer::PathTracerDashBoard()
 FUSIONCORE::PathTracer::~PathTracer()
 {
 	glDeleteTextures(1, &this->image);
-	glDeleteQueries(1, &queryObject);
+	glDeleteTextures(1, &this->NormalImage);
+	glDeleteTextures(1, &this->AlbedoImage);
 }
 
 void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& camera,CubeMap* Cubemap,unsigned int DenoiseSampleCount)
 {
-	glm::vec2 WindowSize = window.GetWindowSize();
-	static bool IsDenoised = false;
+	glm::vec2 WindowSize = window.GetWindowSize(); 
 	shader.use();
 
-	if (camera.IsCameraMovedf() || window.IsWindowResizedf() || shader.IsRecompiled())
+	if (ShouldRestart || camera.IsCameraMovedf() || window.IsWindowResizedf() || shader.IsRecompiled())
 	{
 		ProgressiveRenderedFrameCount = -1;
 		IsDenoised = false;
+		ShouldRestart = false;
 		shader.setVec2("WindowSize", WindowSize);
 		shader.setVec3("CameraPosition", camera.Position);
 		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
 		shader.setInt("ModelCount", ModelCount);
 		timer.Set();
 	}
-	else ProgressiveRenderedFrameCount++;
+	else if(ProgressiveRenderedFrameCount < TargetSampleCount) ProgressiveRenderedFrameCount++;
 	
 	shader.setInt("ProgressiveRenderedFrameCount", ProgressiveRenderedFrameCount);
 
@@ -948,10 +967,8 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		SendLightsShader(shader);
 		IsInitialized = true;
 	}
-	
-	const int SampleCount = 1000;
 
-	if (ProgressiveRenderedFrameCount <= SampleCount)
+	if (ProgressiveRenderedFrameCount < TargetSampleCount)
 	{
 		float Time = glfwGetTime();
 		std::uniform_real_distribution<float> RandomSeed(0.01f, 1.0f);
@@ -960,12 +977,20 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		shader.setFloat("Time", Time);
 		shader.setFloat("CameraPlaneDistance", camera.FarPlane - camera.NearPlane);
 		shader.setFloat("RandomSeed", RandomSeed(engine));
+		shader.setInt("TargetSampleCount", TargetSampleCount);
 
 		if (Cubemap != nullptr)
 		{
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
 			shader.setInt("EnvironmentCubeMap", 3);
+
+			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetConvDiffCubeMap());
+			shader.setInt("ConvolutedEnvironmentCubeMap", 4);
+			shader.setVec2("EnvMapBinSize", Cubemap->GetBinningSize());
+			Cubemap->RadianceBuffer.BindSSBO(12);
+
 		}
 
 		GLuint workGroupSizeX = 32;
@@ -983,46 +1008,32 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 
 		if (!IsDenoised)
 		{
-			/*glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
-			glBindTexture(GL_TEXTURE_2D, image);
-
-			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 0);
-
-			float* pixels = (float*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-
-			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 4);*/
-
 			IsDenoised = true;
-			ShouldPathTrace = false;
 
-			std::vector<float> outputBuffer(ImageSize.x * ImageSize.y * 3);
+			std::vector<float> TempBuffer(ImageSize.x * ImageSize.y * 3);
 			glBindTexture(GL_TEXTURE_2D, image);
-			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, outputBuffer.data());
-			colorBuf.write(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), outputBuffer.data());
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, TempBuffer.data());
+			colorBuf.write(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), TempBuffer.data());
 
-			Denoise(colorBuf.getData(), colorBuf.getData());
+			glBindTexture(GL_TEXTURE_2D, NormalImage);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, TempBuffer.data());
+			NormalBuf.write(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), TempBuffer.data());
+
+			glBindTexture(GL_TEXTURE_2D, AlbedoImage);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, TempBuffer.data());
+			AlbedoBuf.write(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), TempBuffer.data());
+
+			Denoise(colorBuf.getData(), NormalBuf.getData(), AlbedoBuf.getData(),colorBuf.getData());
+
 			glBindTexture(GL_TEXTURE_2D, image);
-
-			colorBuf.read(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), outputBuffer.data());
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ImageSize.x, ImageSize.y, GL_RGB, GL_FLOAT, outputBuffer.data());  
-
-			/*glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-
-			float* pixels2 = (float*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_ONLY);
-			memcpy(pixels2, outputBuffer.data(), ImageSize.x * ImageSize.y * 4);
-
-			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ImageSize.x, ImageSize.y, GL_RGBA, GL_FLOAT, 0);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);*/
+			colorBuf.read(0, ImageSize.x * ImageSize.y * 3 * sizeof(float), TempBuffer.data());
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ImageSize.x, ImageSize.y, GL_RGB, GL_FLOAT, TempBuffer.data());  
+			
 			LOG_INF("----------------- Path tracing meta data -----------------" << "\n"
 				<<
 				"Render time (seconds): " << timer.GetSeconds() << "\n" 
 				<<
-				"Sample count: " << SampleCount << "\n"
+				"Sample count: " << TargetSampleCount << "\n"
 				<<
 				"BVH node count: " << this->NodeCount << "\n"
 				<<
@@ -1032,9 +1043,11 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	}
 }
 
-void FUSIONCORE::PathTracer::Denoise(void* ColorBuffer, void* outputBuffer)
+void FUSIONCORE::PathTracer::Denoise(void* ColorBuffer, void* NormalBuffer, void* AlbedoBuffer, void* outputBuffer)
 {
-	filter.setImage("color", ColorBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y); 
+	filter.setImage("color", ColorBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y);
+	filter.setImage("albedo", AlbedoBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y);
+	filter.setImage("normal", NormalBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y);
 	filter.setImage("output", outputBuffer, oidn::Format::Float3, ImageSize.x, ImageSize.y); 
 	filter.commit();
 

@@ -1191,16 +1191,16 @@ void RandomizeLights(FUSIONUTIL::DefaultShaders& Shaders,FUSIONCORE::Shader& Des
 {
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	std::uniform_real_distribution<float> RandomFloats(-100.0f, 100.0f);
-	std::uniform_real_distribution<float> RandomFloatsY(0.0f, 300.0f);
+	std::uniform_real_distribution<float> RandomFloatsY(-30000.0f, 30000.0f);
 	std::uniform_real_distribution<float> RandomColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> RandomIntensity(15.0f, 40.0f);
+	std::uniform_real_distribution<float> RandomIntensity(40.0f, 60.0f);
 	std::default_random_engine engine(seed);
 
 	std::vector<FUSIONCORE::Light> Lights;
 	float LightIntensity;
 	
 	LightIntensity = RandomIntensity(engine);
-	Lights.emplace_back(glm::vec3(0.4f,1.0f,-0.2f), FF_COLOR_TAN, LightIntensity, FF_DIRECTIONAL_LIGHT, LightIntensity);
+    Lights.emplace_back(glm::vec3(-0.9f,1.0f,0.2f), FF_COLOR_TAN, LightIntensity, FF_DIRECTIONAL_LIGHT, LightIntensity);
 	//Lights.emplace_back(glm::vec3(1.0f, 0.4f, -0.3f), FF_COLOR_BURNT_SIENNA, LightIntensity, FF_POINT_LIGHT, LightIntensity);
 	
 	/*
@@ -1227,12 +1227,17 @@ int Application::PathTracer()
 	FUSIONUTIL::DefaultShaders Shaders;
 
 	FUSIONCORE::Shader PathTraceComputeShader("Shaders/PathTracer.comp.glsl");
+	FUSIONCORE::Shader RadianceBinningComputeShader("Shaders/RadianceBinning.comp.glsl");
+	FUSIONCORE::Shader RadiancePrefixSumComputeShader("Shaders/RadiancePrefixSum.comp.glsl");
+	FUSIONCORE::Shader RadianceGroupPrefixSumComputeShader("Shaders/RadianceGroupPrefixSum.comp.glsl");
+	FUSIONCORE::Shader RadianceAggregatePrefixSumsComputeShader("Shaders/RadianceAggregatePrefixSums.comp.glsl");
 	FUSIONCORE::Shader BVHvisualizeShader("Shaders/BVHvisualizeShader.vs", "Shaders/BVHvisualizeShader.fs");
-	FUSIONCORE::Shader PathTracerGeometryPassComputeShader("Shaders/PathTracerGeometryPass.comp.glsl");
+	
 
-	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-	//FUSIONCORE::ImportCubeMap("Resources/kloofendal_43d_clear_puresky_2k.hdr", 512, cubemap, Shaders);
-	FUSIONCORE::ImportCubeMap("Resources/boma_4k.hdr", 4098, cubemap, Shaders);
+	FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader,64,64);
+	//FUSIONCORE::ImportCubeMap("Resources/sunflowers_puresky_2k.hdr", 4096, cubemap, Shaders);
+	FUSIONCORE::ImportCubeMap("Resources/boma_4k.hdr", 512, cubemap, Shaders);
+	cubemap.CalculateBinRadiances(RadianceBinningComputeShader, RadiancePrefixSumComputeShader, RadianceGroupPrefixSumComputeShader,RadianceAggregatePrefixSumsComputeShader);
 
 	const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
 	FUSIONCORE::GeometryBuffer Gbuffer(mode.width, mode.height);
@@ -1249,8 +1254,10 @@ int Application::PathTracer()
 	camera3d.SetOrientation(glm::vec3(-0.593494, -0.648119, -0.477182));
 
 	RandomizeLights(Shaders,PathTraceComputeShader);
+
 	//FUSIONCORE::Model Car("Resources\\models\\Box\\CornellBox-Original.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\BreakFastRoom\\breakfast_room.obj");
+	FUSIONCORE::Model Car("Resources\\models\\Car_New\\scene.gltf");
 	//FUSIONCORE::Model Car("Resources\\models\\Bathroom\\Bathroom.fbx");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Desktop\\Helmet\\Helmet.obj");
     //FUSIONCORE::Model Car("Resources\\models\\Bistro\\Exterior\\exterior.obj");
@@ -1259,12 +1266,15 @@ int Application::PathTracer()
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\barbie\\barbie.gltf");
     //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons_opaque.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cornell_dragons.glb");
-	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\sphere.glb");
+    //FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\sphere.glb");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\dragon.glb");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\cliff\\cliff_side_2k.gltf");
+	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\kitchen\\kitchen-asset-library-pack-photoreal-vol1.gltf");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\fireplace_room.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\chess\\chess_set_2k.obj");
 	//FUSIONCORE::Model Car("Resources\\models\\Sponza\\sponza.obj");
-	FUSIONCORE::Model Car("Resources\\models\\CannonBall\\ShaderBalls.gltf");
+	//FUSIONCORE::Model Car("Resources\\models\\CannonBall\\ShaderBalls.gltf");
+	//FUSIONCORE::Model Car("Resources\\models\\CannonBall\\ShaderBalls_furnace.gltf");
 	//FUSIONCORE::Model Car("C:\\Users\\kbald\\Downloads\\GutsSword\\sword.gltf");
 	//FUSIONCORE::Model Car("Resources\\models\\FirePlace\\Fireplace.glb");
 	//FUSIONCORE::Model Curtain("C:\\Users\\kbald\\Desktop\\BetterSponza\\Curtains\\NewSponza_Curtains_glTF.gltf");
@@ -1327,57 +1337,10 @@ int Application::PathTracer()
 	});
 
 	std::vector<std::pair<FUSIONCORE::Model*,FUSIONCORE::Material*>> models;
-
-	FUSIONCORE::Material material0(0.4f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
-	FUSIONCORE::Material RedMaterial(0.3f, 0.0f, { 1.0f,0.0f,0.0f,1.0f });
-	FUSIONCORE::Material material1(0.7f, 0.0f, { 0.0f,0.0f,1.0f,1.0f });
-	FUSIONCORE::Material material2(0.5f, 0.0f, FF_COLOR_WARM_COCOA);
-	FUSIONCORE::Material material3(0.05f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
-	FUSIONCORE::Material ShovelMaterial(0.5f, 0.0f, FF_COLOR_MYSTIC_MAUVE);
-	/*
-	material1.PushTextureMap(FF_TEXTURE_DIFFUSE, &SofaDiffuse);
-	material1.PushTextureMap(FF_TEXTURE_NORMAL, &SofaNormal);
-	material1.PushTextureMap(FF_TEXTURE_SPECULAR, &SofaSpecular);
-	material1.PushTextureMap(FF_TEXTURE_ALPHA, &SofaOpacity);
-	material1.MakeMaterialBindlessResident();
-
-
-	material3.PushTextureMap(FF_TEXTURE_DIFFUSE, &StoveDiffuse);
-	material3.PushTextureMap(FF_TEXTURE_NORMAL, &StoveNormal);
-	material3.PushTextureMap(FF_TEXTURE_SPECULAR, &StoveSpecular);
-	material3.PushTextureMap(FF_TEXTURE_METALLIC, &StoveMetalic);
-	material3.PushTextureMap(FF_TEXTURE_ALPHA, &StoveOpacity);
-	material3.MakeMaterialBindlessResident();
-
-
-	ShovelMaterial.PushTextureMap(FF_TEXTURE_DIFFUSE, &ShovelDiffuse);
-	ShovelMaterial.PushTextureMap(FF_TEXTURE_NORMAL, &ShovelNormal);
-	ShovelMaterial.PushTextureMap(FF_TEXTURE_SPECULAR, &ShovelSpecular);
-	ShovelMaterial.MakeMaterialBindlessResident();
-
 	
-	material0.PushTextureMap(FF_TEXTURE_DIFFUSE, &FloorAlbedo);
-	material0.PushTextureMap(FF_TEXTURE_NORMAL, &FloorNormal);
-	material0.PushTextureMap(FF_TEXTURE_SPECULAR, &FloorSpecular);
-	material0.MakeMaterialBindlessResident();
-	*/
-	/*
-	models.push_back({ grid.get(),&material2 });
-	//models.push_back({ grid2.get(),&material2 });
-	models.push_back({MainCharac.get(),&material0 });
-	models.push_back({model1.get(),&ShovelMaterial });
-	models.push_back({&Rock,nullptr });
-	models.push_back({wall.get(),&material0 });
-	models.push_back({sofa.get(),&material1 });
-	models.push_back({Stove.get(),&material3 });
-	models.push_back({&Chess,nullptr });
-	models.push_back({Cliff.get(),nullptr });
-	*/
     models.push_back({&Car,nullptr });
-    //models.push_back({&helmet,nullptr });
-	//models.push_back({&Curtain,nullptr });
 
-	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models);
+	FUSIONCORE::PathTracer pathtracer(mode.width,mode.height, models,Shaders);
 	
 	glm::ivec2 PrevWindowSize;
 	glm::ivec2 PrevWindowPos;
@@ -1393,13 +1356,13 @@ int Application::PathTracer()
 	glm::dvec2 CurrentMousePos(0.0f);
 	glm::dvec2 PrevMousePos(0.0f);
 	bool AllowPathTrace = false;
-	//FUSIONUTIL::InitializeImguiGLFW(ApplicationWindow.GetWindow());
+	FUSIONUTIL::InitializeImguiGLFW(ApplicationWindow.GetWindow());
 	while (!ApplicationWindow.ShouldClose())
 	{
 		timer.Set();
 		WindowSize = ApplicationWindow.GetWindowSize();
-	//    FUSIONUTIL::CreateFrameImguiGLFW();
-	//	pathtracer.PathTracerDashBoard();
+	    FUSIONUTIL::CreateFrameImguiGLFW();
+		pathtracer.PathTracerDashBoard();
 
 		PathTraceComputeShader.HotReload(3000);
 
@@ -1485,44 +1448,39 @@ int Application::PathTracer()
 			FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
 		}
 		
-		if (Debug)
-		{
-			
-		}
-		
 		FUSIONUTIL::GLBindFrameBuffer(FF_GL_FRAMEBUFFER, 0);
 		FUSIONUTIL::ClearFrameBuffer(0, 0, WindowSize.x, WindowSize.y, FF_COLOR_VOID);
-		if (AllowPathTrace)
+		if (AllowPathTrace && !FUSIONUTIL::IsAnyItemActive())
 		{
 			pathtracer.Render(ApplicationWindow, PathTraceComputeShader, camera3d, &cubemap);
 		}
-
-		std::function<void()> OnFBOrender = [&]()
+		GLuint ViewportImage;
+		if (!AllowPathTrace)
 		{
-			Shaders.FBOShader->setBool("Debug", !AllowPathTrace);
-		};
-
-        ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, OnFBOrender, WindowSize, false, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
-		
-		/*
-		if (pathtracer.IsPathTracingDone())
-		{
+			ViewportImage = ScreenFrameBuffer.GetFBO();
 		}
-		*/
-		//FUSIONUTIL::RenderImguiGLFW(); 
+		else
+		{
+			ViewportImage = pathtracer.GetTracedImage();
+		}
+		FUSIONCORE::DrawTextureOnQuad(ViewportImage, { 0,0 }, { mode.width,mode.height }, camera3d, *Shaders.TextureOnQuadShader, 1.7f, 1.6f);
+		FUSIONUTIL::RenderImguiGLFW();
 
 		ApplicationWindow.UpdateWindow();
 		DeltaTime = timer.GetMiliseconds();
 	}
 
-	//FUSIONUTIL::TerminateRenderImguiGLFW();
+	FUSIONUTIL::TerminateRenderImguiGLFW();
 	FUSIONCORE::TerminateCascadedShadowMapTextureArray();
 
 	ScreenFrameBuffer.clean();
 	Gbuffer.clean();
 	BVHvisualizeShader.Clear();
-	PathTracerGeometryPassComputeShader.Clear();
 	PathTraceComputeShader.Clear();
+	RadianceBinningComputeShader.Clear();
+	RadiancePrefixSumComputeShader.Clear();
+	RadianceAggregatePrefixSumsComputeShader.Clear();
+	RadianceGroupPrefixSumComputeShader.Clear();
 
 	ApplicationWindow.TerminateWindow();
 	FUSIONUTIL::TerminateGLFW();

@@ -753,6 +753,9 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, value)) {
         TempMaterial.Alpha = value;
     }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_REFRACTI, value)) {
+        TempMaterial.IOR = value;
+    }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_ANISOTROPY_FACTOR, value)) {
         TempMaterial.Anisotropy = value;
     }
@@ -768,7 +771,7 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_NAME, name)) {
         TempMaterial.MaterialName = name.C_Str();
     }
-    TempMaterial.PrintMaterialAttributes();
+    //TempMaterial.PrintMaterialAttributes();
 }
 
 void FUSIONCORE::Model::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -953,6 +956,11 @@ glm::mat4 FUSIONCORE::ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
     return to;
 }
 
+bool isFormatSupported(const std::string& extension) {
+    Assimp::Importer importer;
+    return importer.IsExtensionSupported(extension);
+}
+
 //Import multiple models into a vector from a directory. It's not safe for files other than mtl(except object supported formats).
 std::vector<std::shared_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModelsFromDirectory(const char* DirectoryFilePath, bool AnimationModel)
 {
@@ -961,7 +969,8 @@ std::vector<std::shared_ptr<FUSIONCORE::Model>> FUSIONCORE::ImportMultipleModels
     for (const auto& entry : std::filesystem::directory_iterator(path))
     {
         std::string EntryPath = entry.path().generic_string();
-        if (EntryPath.find(".mtl") == std::string::npos && EntryPath.find(".") != std::string::npos)
+        auto DotFound = EntryPath.find_last_of(".");
+        if (DotFound != std::string::npos && isFormatSupported(EntryPath.substr(DotFound)))
         {
            std::shared_ptr<FUSIONCORE::Model> NewModel = std::make_shared<Model>(EntryPath, false, AnimationModel);
            if (NewModel->GetModelImportStateCode() == FF_SUCCESS_CODE)

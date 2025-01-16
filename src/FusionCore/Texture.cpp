@@ -3,6 +3,7 @@
 #include "stb_image.h"
 #include <glew.h>
 #include <glfw3.h>
+#include "Framebuffer.hpp"
 
 FUSIONCORE::Texture2D::Texture2D()
 {
@@ -17,6 +18,8 @@ FUSIONCORE::Texture2D::Texture2D()
 
 FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuint Wrap_T_filter,GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter, bool Flip)
 {
+	static uint TextureIDIterator = 0;
+
 	PathData = std::string(filePath);
 	this->PixelType = PixelType;
 	this->TextureType = TextureType;
@@ -183,6 +186,43 @@ void FUSIONCORE::Texture2D::Unbind()
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
+}
+
+void FUSIONCORE::Texture2D::RenderMipmaps(const uint& MipMapCount,Shader& MipmapShader)
+{
+	static std::shared_ptr<Framebuffer> MipmapBuffer = std::make_shared<Framebuffer>();
+	MipmapBuffer->Bind();
+	MipmapShader.use();
+	FUSIONCORE::GetSquareBuffer()->Bind();
+	glDisable(GL_DEPTH_TEST);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,GetTexture());
+	glUniform1i(glGetUniformLocation(MipmapShader.GetID(), "AlbedoTexture"), 1);
+
+	for (size_t i = 0; i < MipMapCount; i++)
+	{
+		uint MipmapWidth = glm::max(1, width >> (i + 1));
+		uint MipmapHeight = glm::max(1, height >> (i + 1));
+
+		MipmapBuffer->AttachTexture2DTarget(GetTexture(),i + 1);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		{
+			LOG_ERR("Error completing the framebuffer while rendering mipmap");
+		}
+
+		glViewport(0, 0, MipmapWidth, MipmapHeight);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	BindVAONull();
+
+	glEnable(GL_DEPTH_TEST);
+	UseShaderProgram(0);
 }
 
 std::string FUSIONCORE::Texture2D::GetFilePath()

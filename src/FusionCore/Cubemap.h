@@ -45,9 +45,9 @@ namespace FUSIONCORE
 	{
 	public:
 
-		CubeMap(std::vector<std::string> texture_faces, Shader& CubeMapShader);
-		CubeMap(GLuint CubeMap, Shader& CubeMapShader);
-		CubeMap(Shader& CubeMapShader);
+		CubeMap(std::vector<std::string> texture_faces, Shader& CubeMapShader,int BinningSizeX = 0, int BinningSizeY = 0);
+		CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningSizeX = 0, int BinningSizeY = 0);
+		CubeMap(Shader& CubeMapShader, int BinningSizeX = 0, int BinningSizeY = 0);
 		~CubeMap();
 		void Draw(Camera3D& camera, const glm::vec2& windowSize);
 		GLuint GetCubeMapTexture() { return this->cubemaptextureID; };
@@ -56,15 +56,29 @@ namespace FUSIONCORE
 		void SetConvDiffCubeMap(GLuint ConvDiffCubeMapID);
 		GLuint GetPreFilteredEnvMap() { return this->PrefilteredEnvMap; };
 		GLuint GetConvDiffCubeMap() { return this->ConvDiffCubeMap; };
+		void CalculateBinRadiances(Shader& ShaderBinning, Shader& ShaderPrefixSum, Shader& ShaderGroupPrefixSum, Shader& ShaderAggregatePrefixSums);
+		//
+		inline const bool IsBinned() { return isBinned; };
+		inline void SetBinned(const bool& isBinned) { this->isBinned = isBinned; };
+		inline glm::ivec2 GetBinningSize() { return BinningSize; };
+
+		SSBO RadianceBuffer;
+		SSBO RadianceSumBuffer;
+		SSBO SummedWorkgroupBuffer;
 	private:
 
 		GLuint cubemaptextureID;
 		VBO vbo;
 		VAO vao;
+		
 		std::vector<std::string> texture_faces;
 		Shader* cubemapshader;
 		GLuint PrefilteredEnvMap;
 		GLuint ConvDiffCubeMap;
+		glm::ivec2 BinningSize;
+		bool isBinned;
+
+		void InitializeRadianceBuffers();
 	};
 
 	FUSIONFRAME_EXPORT_FUNCTION int ImportCubeMap(const char* HDRIfilePath, unsigned int CubeMapSize, CubeMap& cubemap,FUSIONUTIL::DefaultShaders& shaders);

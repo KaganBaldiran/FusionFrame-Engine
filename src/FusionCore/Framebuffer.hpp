@@ -24,6 +24,9 @@ namespace FUSIONCORE
 	//internal , do not call
 	//Planned to be hidden soon
 	void InitializeFBObuffers();
+	FUSIONCORE::VAO* GetSquareBuffer();
+
+	void DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader,float Gamma = 0.9f, float Exposure = 1.0f);
 
 	enum FBOattachmentType
 	{
@@ -34,13 +37,19 @@ namespace FUSIONCORE
 	class Framebuffer
 	{
 	public:
+		Framebuffer();
 		Framebuffer(unsigned int width, unsigned int height);
 		void PushFramebufferAttachment2D(FBOattachmentType attachmentType = FBO_ATTACHMENT_COLOR, GLint InternalFormat = FF_INTERNAL_FORMAT_GL_RGB16F, GLenum Format = FF_PIXEL_FORMAT_GL_RGB,
 			                             GLenum type = FF_DATA_TYPE_GL_FLOAT, GLint MinFilter = FF_TEXTURE_FILTER_MODE_GL_NEAREST, GLint MaxFilter = FF_TEXTURE_FILTER_MODE_GL_NEAREST, 
 			                             GLint Wrap_S = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLint Wrap_T = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE);
 		void SetDrawModeDefault();
+		void DrawAttachment(size_t index, Shader& shader, const std::function<void()>& ShaderPrep = [](){});
 
-		void Bind();
+	    void AttachRenderBufferTexture2DTarget(Texture2D& InputTexture, const GLuint& MipmapWidth = 0, const GLuint& MipmapHeight = 0, const GLuint& MipmapLevel = 0);
+	    void AttachRenderBufferTexture2DTarget(const GLuint& InputTexture, const GLuint& MipmapWidth = 0, const GLuint& MipmapHeight = 0, const GLuint& MipmapLevel = 0);
+	    void AttachTexture2DTarget(Texture2D& InputTexture, const GLuint& MipmapLevel = 0);
+	    void AttachTexture2DTarget(const GLuint& InputTexture, const GLuint& MipmapLevel = 0);
+        void Bind();
 		void Unbind();
 		inline GLuint GetRBO() { return rbo; };
 		inline GLuint& GetFBOattachment(size_t index) { return Attachments[index]; };

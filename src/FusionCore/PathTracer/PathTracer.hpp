@@ -9,6 +9,7 @@
 #include "../Texture.h"
 #include "../Window.hpp"
 #include "../../FusionUtility/Hashing.hpp"
+#include "../../FusionUtility/Initialize.h"
 #include <OpenImageDenoise/oidn.hpp>
 
 static struct BVHnode;
@@ -23,7 +24,7 @@ namespace FUSIONCORE
 	class PathTracer
 	{
 	public:
-		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace);
+		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders);
 		inline GLuint GetTracedImage() { return image; };
 		GLint IsPathTracingDone();
 		void PathTracerDashBoard();
@@ -31,15 +32,17 @@ namespace FUSIONCORE
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
 		void Render(Window& window,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr,unsigned int DenoiseSampleCount = 60);
 	private:
-		void Denoise(void* ColorBuffer, void* outputBuffer);
+		void Denoise(void* ColorBuffer, void* NormalBuffer, void* AlbedoBuffer, void* outputBuffer);
 
 		FUSIONUTIL::Timer timer;
 
 		oidn::DeviceRef device;
 		oidn::FilterRef filter;
 		oidn::BufferRef colorBuf;
+		oidn::BufferRef NormalBuf;
+		oidn::BufferRef AlbedoBuf;
 
-		GLuint image,pbo,queryObject;
+		GLuint image,NormalImage, AlbedoImage,pbo,queryObject;
 		glm::ivec2 ImageSize;
 
 		TBO MinBoundData;
@@ -98,9 +101,11 @@ namespace FUSIONCORE
 		int ModelNodeCount;
 		size_t ModelCount;
 		bool IsInitialized;
-		bool ShouldPathTrace;
+		bool ShouldRestart;
 		int EmissiveObjectCount;
 
+		int TargetSampleCount;
+		bool IsDenoised;
 		int ProgressiveRenderedFrameCount;
 
 		std::vector<BVHnode> TopDownBVHnodes;

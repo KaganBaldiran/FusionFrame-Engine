@@ -4,13 +4,6 @@ out vec4 FragColor;
 in vec2 TexCoords;
 uniform sampler2D Viewport;
 uniform sampler2D DepthAttac;
-uniform sampler2D SSRtexture;
-uniform sampler2D IDtexture;
-uniform sampler2D TracedImage;
-
-layout(rgba32f,binding=0) uniform image2D image;
-
-uniform sampler2DArray CascadeShadowMaps1024;
 
 uniform float FarPlane;
 uniform float NearPlane;
@@ -59,24 +52,8 @@ void main()
 	{
       OutColor = texture(Viewport, TexCoords);
     }
-	//OutColor += texture(Viewport,texture(SSRtexture, TexCoords).xy);
-    //OutColor /= 2.0f;
-   // vec4 ReflectionUVcoords = texture(SSRtexture, TexCoords);
-	//vec3 TracedUV = texture(TracedImage, TexCoords.xy).xyz;
-	vec3 TracedUV = imageLoad( image, ivec2(TexCoords.xy * imageSize(image)) ).rgb;
-	OutColor.xyz =  TracedUV;
-	if(Debug)
-	{
-      //FragColor = vec4(vec3(texture(CascadeShadowMaps1024,vec3(TexCoords,0)).r),1.0f); 
-	  OutColor.xyz = texture(Viewport, TexCoords.xy).xyz;
-	  //OutColor.xyz =  mix(texture(Viewport, TexCoords.xy).xyz,TracedUV,0.8f);
-	}
-    
+	
+    OutColor.xyz = texture(Viewport, TexCoords.xy).xyz;
 	OutColor.xyz = vec3(1.0) - exp(-OutColor.xyz * Exposure);
     FragColor = vec4(pow(OutColor.xyz,vec3(1.0 / Gamma)),1.0f); 
-	//vec2 Coords = TexCoords * 0.5f + vec2(0.5f,0.0f);
-
-	//FragColor = vec4(texture(Viewport, ReflectionUVcoords.xy).xyz,1.0f);
-    //FragColor = vec4(texture(SSRtexture, TexCoords).xyz,1.0f);
-    //FragColor = vec4(vec3(texture(IDtexture, TexCoords).x / 10.0f),1.0f);
 }

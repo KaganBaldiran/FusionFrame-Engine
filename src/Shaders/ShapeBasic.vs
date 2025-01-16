@@ -3,7 +3,7 @@
 layout (location = 0) in vec2 VertexPosition;
 layout (location = 1) in vec2 VertexTexCoord;
 
-out vec2 TextCoords;
+out vec2 TexCoords;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ProjMat;
@@ -18,5 +18,5 @@ void main()
 
   gl_Position = ProjMat * vec4(CurrentPos.xy,0.0f,1.0f);
 
-  TextCoords = VertexTexCoord;
+  TexCoords = VertexTexCoord;
 }

@@ -107,6 +107,8 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> ShapeTexturedShader;
         std::unique_ptr<FUSIONCORE::Shader> CascadedLightSpaceMatrixComputeShader;
         std::unique_ptr<FUSIONCORE::Shader> DecalShader;
+        std::unique_ptr<FUSIONCORE::Shader> TextureMipmapRenderShader;
+        std::unique_ptr<FUSIONCORE::Shader> TextureOnQuadShader;
 	};
 
     FUSIONFRAME_EXPORT_FUNCTION void InitializeEngineBuffers();
@@ -115,6 +117,7 @@ namespace FUSIONUTIL
     
     FUSIONFRAME_EXPORT_FUNCTION void InitializeImguiGLFW(GLFWwindow* window);
     FUSIONFRAME_EXPORT_FUNCTION void RenderImguiGLFW();
+    FUSIONFRAME_EXPORT_FUNCTION bool IsAnyItemActive();
     FUSIONFRAME_EXPORT_FUNCTION void TerminateRenderImguiGLFW();
     FUSIONFRAME_EXPORT_FUNCTION void CreateFrameImguiGLFW();
     

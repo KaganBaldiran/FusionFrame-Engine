@@ -4,6 +4,7 @@
 
 std::unique_ptr<FUSIONCORE::VBO> ObjectBufferVBO;
 std::unique_ptr<FUSIONCORE::VAO> ObjectBufferVAO;
+unsigned int IDiterator = 0;
 
 void FUSIONCORE::InitializeFBObuffers()
 {
@@ -32,6 +33,12 @@ void FUSIONCORE::InitializeFBObuffers()
 	BindVAONull();
 	BindVBONull();
 }
+
+FUSIONCORE::VAO* FUSIONCORE::GetSquareBuffer()
+{
+	return ObjectBufferVAO.get();
+}
+
 
 void FUSIONCORE::CopyDepthInfoFBOtoFBO(GLuint src, glm::vec2 srcSize, GLuint dest)
 {
@@ -145,18 +152,6 @@ void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::f
 	glBindTexture(GL_TEXTURE_2D, fboDepth);
 	shader.setInt("DepthAttac", 1);
 
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, SSRtexture);
-	shader.setInt("SSRtexture", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, IDtexture);
-	shader.setInt("IDtexture", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, GetCascadedShadowMapTextureArray());
-	shader.setInt("CascadeShadowMaps1024", 4);
-
 	shader.setVec3("CamPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
@@ -164,6 +159,28 @@ void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::f
 	shader.setFloat("DOFdistanceClose", DOFdistanceClose);
 	shader.setBool("DOFenabled", DOFenabled);
 	shader.setFloat("DOFintensity", DOFintensity);
+	shader.setFloat("Gamma", Gamma);
+	shader.setFloat("Exposure", Exposure);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	BindVAONull();
+	UseShaderProgram(0);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void FUSIONCORE::DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader, float Gamma, float Exposure) {
+	glViewport(LocalQuadPosition.x,LocalQuadPosition.y, QuadSizeInPixel.x, QuadSizeInPixel.y);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
+	shader.use();
+	ObjectBufferVAO->Bind();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, TargetImage);
+	shader.setInt("Viewport", 0);
+
 	shader.setFloat("Gamma", Gamma);
 	shader.setFloat("Exposure", Exposure);
 
@@ -436,9 +453,26 @@ void FUSIONCORE::GeometryBuffer::clean()
 	LOG_INF("Cleaned G-buffer[ID:" << ID << "]!");
 };
 
+FUSIONCORE::Framebuffer::Framebuffer()
+{
+	ID = IDiterator;
+	IDiterator++;
+
+	ColorAttachmentCount = 0;
+	FramebufferSize.x = 0;
+	FramebufferSize.y = 0;
+
+	glGenFramebuffers(1, &fbo);
+	glGenRenderbuffers(1, &rbo);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		LOG_ERR("Error Completing the G-buffer[ID:" << ID << "]!");
+	}
+}
+
 FUSIONCORE::Framebuffer::Framebuffer(unsigned int width, unsigned int height)
 {
-	static unsigned int IDiterator = 0;
 	ID = IDiterator;
 	IDiterator++;
 
@@ -516,6 +550,56 @@ void FUSIONCORE::Framebuffer::SetDrawModeDefault()
 	}
 	glDrawBuffers(Attachments.size(), AtBuffers.data());
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FUSIONCORE::Framebuffer::DrawAttachment(size_t index, Shader& shader,const std::function<void()> &ShaderPrep)
+{
+	glViewport(0, 0, this->FramebufferSize.x, this->FramebufferSize.y);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
+	shader.use();
+	ObjectBufferVAO->Bind();
+	ShaderPrep();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->GetFBOattachment(index));
+	shader.setInt("Viewport", 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	BindVAONull();
+	UseShaderProgram(0);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void FUSIONCORE::Framebuffer::AttachRenderBufferTexture2DTarget(Texture2D& InputTexture,const GLuint& MipmapWidth, const GLuint& MipmapHeight,const GLuint &MipmapLevel)
+{
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	if (MipmapWidth > 0 && MipmapHeight > 0) glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, MipmapWidth, MipmapWidth);
+	else glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, InputTexture.GetWidth(), InputTexture.GetHeight());
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, InputTexture.GetTexture(), MipmapLevel);
+}
+
+void FUSIONCORE::Framebuffer::AttachRenderBufferTexture2DTarget(const GLuint& InputTexture, const GLuint& MipmapWidth, const GLuint& MipmapHeight, const GLuint& MipmapLevel)
+{
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, MipmapWidth, MipmapWidth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, InputTexture, MipmapLevel);
+}
+
+void FUSIONCORE::Framebuffer::AttachTexture2DTarget(Texture2D& InputTexture,const GLuint& MipmapLevel)
+{
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, InputTexture.GetTexture(), MipmapLevel);
+}
+
+void FUSIONCORE::Framebuffer::AttachTexture2DTarget(const GLuint& InputTexture, const GLuint& MipmapLevel)
+{
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, InputTexture, MipmapLevel);
 }
 
 void FUSIONCORE::Framebuffer::Bind()

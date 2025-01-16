@@ -4,6 +4,7 @@
 #include <string>
 #include "../FusionUtility/FusionDLLExport.h"
 #include "../FusionUtility/Definitions.hpp"
+#include "Shader.h"
 #define FF_TEXTURE_SUCCESS 1
 #define FF_TEXTURE_ERROR -1
 #define FF_TEXTURE_UNINITIALIZED 0
@@ -40,7 +41,7 @@ namespace FUSIONCORE
 	public:
 		Texture2D();
 		Texture2D(const char* filePath, GLuint Wrap_S_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLuint Wrap_T_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE,GLenum TextureType = FF_TEXTURE_TARGET_GL_TEXTURE_2D, 
-			     GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_BYTE,GLuint Mag_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR, GLuint Min_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR,bool Flip = true);
+			     GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_BYTE,GLuint Mag_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR, GLuint Min_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR,bool Flip = true);
 		Texture2D(const GLuint SourceTexture, const GLenum SourceTextureInternalFormat, const glm::vec2 SourceTextureSize, 
 			      const char* SourceTextureFilePath,GLenum texturetype, GLenum pixeltype, GLenum MAG_FILTER, GLenum MIN_FILTER);
 		
@@ -64,6 +65,8 @@ namespace FUSIONCORE
 		//Sends the bindless texture to a shader sampler.
 		void SendBindlessHandle(GLuint Shader, std::string Uniform);
 		void Unbind();
+
+		void RenderMipmaps(const uint& MipMapCount,Shader& MipmapShader);
 
 		GLuint GetTexture();
 		int GetWidth();

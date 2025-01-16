@@ -33,6 +33,11 @@ void FUSIONUTIL::RenderImguiGLFW()
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+bool FUSIONUTIL::IsAnyItemActive()
+{
+	return ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsAnyItemFocused();
+}
+
 void FUSIONUTIL::TerminateRenderImguiGLFW()
 {
 	ImGui_ImplOpenGL3_Shutdown();
@@ -85,6 +90,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.MeshBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/MeshBasic.vs", "Shaders/MeshBasic.fs");
 	shaders.LightShader = std::make_unique<FUSIONCORE::Shader>("Shaders/Light.vs", "Shaders/Light.fs");
 	shaders.FBOShader = std::make_unique<FUSIONCORE::Shader>("Shaders/FBO.vs", "Shaders/FBO.fs");
+	shaders.TextureOnQuadShader = std::make_unique<FUSIONCORE::Shader>("Shaders/FBO.vs", "Shaders/TextureOnQuad.fs");
 	shaders.PBRShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PBR.vs", "Shaders/PBR.fs");
 	shaders.ConvolutateCubeMapShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ConvolutationCubeMap.vs", "Shaders/ConvolutationCubeMap.fs");
 	shaders.PreFilterCubeMapShader = std::make_unique<FUSIONCORE::Shader>("Shaders/PreFilterCubeMap.vs", "Shaders/PreFilterCubeMap.fs");
@@ -125,6 +131,7 @@ void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)
 	shaders.ShapeBasicShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeBasic.fs");
 	shaders.ShapeTexturedShader = std::make_unique<FUSIONCORE::Shader>("Shaders/ShapeBasic.vs","Shaders/ShapeTextured.fs");
 	shaders.DecalShader = std::make_unique<FUSIONCORE::Shader>("Shaders/Decal.vs","Shaders/Decal.fs");
+	shaders.TextureMipmapRenderShader = std::make_unique<FUSIONCORE::Shader>("Shaders/FBO.vs", "Shaders/ShapeTextured.fs");
 	
 	shaders.CascadedLightSpaceMatrixComputeShader = std::make_unique<FUSIONCORE::Shader>();
 	shaders.CascadedLightSpaceMatrixComputeShader->PushShaderSource(FUSIONCORE::FF_COMPUTE_SHADER_SOURCE, "Shaders/CascadedShadowMapsLightSpaceMatrix.comp.glsl");
@@ -166,6 +173,8 @@ void FUSIONUTIL::DisposeDefaultShaders(DefaultShaders& shaders)
 	FUSIONCORE::DeleteShaderProgram(shaders.ShapeTexturedShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.CascadedLightSpaceMatrixComputeShader->GetID());
 	FUSIONCORE::DeleteShaderProgram(shaders.DecalShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.TextureMipmapRenderShader->GetID());
+	FUSIONCORE::DeleteShaderProgram(shaders.TextureOnQuadShader->GetID());
 }
 
 FUSIONUTIL::DefaultShaders::DefaultShaders()

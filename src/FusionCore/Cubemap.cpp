@@ -10,7 +10,7 @@ namespace FUSIONCORE
     GLuint brdfLUT;
 }
 
-FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &CubeMapShader)
+FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &CubeMapShader,int BinningSizeX,int BinningSizeY)
 {
     this->texture_faces.assign(texture_faces.begin(),texture_faces.end());
 	
@@ -111,10 +111,11 @@ FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &Cub
     BindVAONull();
     BindVBONull();
 
-
+    BinningSize = { BinningSizeX ,BinningSizeY };
+    InitializeRadianceBuffers();
 }
 
-FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader)
+FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningSizeX, int BinningSizeY)
 {
     this->cubemaptextureID = CubeMap;
     cubemapshader = &CubeMapShader;
@@ -175,9 +176,12 @@ FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader)
 
     BindVAONull();
     BindVBONull();
+
+    BinningSize = { BinningSizeX ,BinningSizeY };
+    InitializeRadianceBuffers();
 }
 
-FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader)
+FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader, int BinningSizeX , int BinningSizeY)
 {
     cubemapshader = &CubeMapShader;
 
@@ -236,6 +240,9 @@ FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader)
 
     BindVAONull();
     BindVBONull();
+
+    BinningSize = { BinningSizeX ,BinningSizeY };
+    InitializeRadianceBuffers();
 }
 
 FUSIONCORE::CubeMap::~CubeMap()
@@ -288,6 +295,87 @@ void FUSIONCORE::CubeMap::SetConvDiffCubeMap(GLuint ConvDiffCubeMapID)
     this->ConvDiffCubeMap = ConvDiffCubeMapID;
 }
 
+void FUSIONCORE::CubeMap::CalculateBinRadiances(Shader& ShaderBinning, Shader& ShaderPrefixSum, Shader& ShaderGroupPrefixSum,Shader& ShaderAggregatePrefixSums)
+{
+    ShaderBinning.use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, GetCubeMapTexture());
+    ShaderBinning.setInt("EnvironmentCubeMap", 0);
+    ShaderBinning.setVec2("BinSize", BinningSize);
+    this->RadianceBuffer.BindSSBO(12);
+
+    GLuint workGroupSizeX = 32;
+    GLuint workGroupSizeY = 32;
+
+    GLuint numGroupsX = (BinningSize.x + workGroupSizeX - 1) / workGroupSizeX;
+    GLuint numGroupsY = (BinningSize.y + workGroupSizeY - 1) / workGroupSizeY;
+    GLuint numGroupsZ = 6;
+
+    glDispatchCompute(numGroupsX,numGroupsY,numGroupsZ);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    workGroupSizeX = 256;
+    
+
+    ShaderPrefixSum.use();
+
+    this->RadianceBuffer.BindSSBO(12);
+    this->RadianceSumBuffer.BindSSBO(13);
+    this->SummedWorkgroupBuffer.BindSSBO(14);
+
+    numGroupsX = ((BinningSize.x * BinningSize.y * 6) + workGroupSizeX - 1) / workGroupSizeX;
+
+    glDispatchCompute(numGroupsX, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+
+    ShaderGroupPrefixSum.use();
+
+    this->RadianceBuffer.BindSSBO(12);
+    this->RadianceSumBuffer.BindSSBO(13);
+    this->SummedWorkgroupBuffer.BindSSBO(14);
+
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+    ShaderAggregatePrefixSums.use();
+
+    this->RadianceBuffer.BindSSBO(12);
+    this->RadianceSumBuffer.BindSSBO(13);
+    this->SummedWorkgroupBuffer.BindSSBO(14);
+
+    glDispatchCompute(numGroupsX, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    UseShaderProgram(0);
+    
+}
+
+void FUSIONCORE::CubeMap::InitializeRadianceBuffers()
+{
+    if (this->BinningSize.x > 0 && this->BinningSize.y > 0)
+    {
+        size_t Size = 6 * BinningSize.x * BinningSize.y * (sizeof(float) + sizeof(int) + sizeof(glm::vec4));
+        RadianceBuffer.Bind();
+        RadianceBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, Size, NULL, GL_STATIC_COPY);
+        RadianceBuffer.BindSSBO(12);
+        RadianceBuffer.Unbind();
+
+        RadianceSumBuffer.Bind();
+        RadianceSumBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, ((6 * BinningSize.x * BinningSize.y)) * sizeof(float), NULL, GL_STATIC_COPY);
+        RadianceSumBuffer.BindSSBO(13);
+        RadianceSumBuffer.Unbind();
+
+        SummedWorkgroupBuffer.Bind();
+        SummedWorkgroupBuffer.BufferDataFill(GL_SHADER_STORAGE_BUFFER, ((6 * BinningSize.x * BinningSize.y) / 256) * sizeof(float), NULL, GL_STATIC_COPY);
+        SummedWorkgroupBuffer.BindSSBO(14);
+        SummedWorkgroupBuffer.Unbind();
+    }
+}
+
 std::pair<GLuint, int> FUSIONCORE::HDRItoCubeMap(const char* HDRI, unsigned int CubeMapSize, GLuint HDRItoCubeMapShader)
 {
     int width, height, components;
@@ -323,7 +411,7 @@ std::pair<GLuint, int> FUSIONCORE::HDRItoCubeMap(const char* HDRI, unsigned int 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, HDRItexture);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, Format, GL_FLOAT, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, Format, GL_FLOAT, data);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -367,10 +455,8 @@ std::pair<GLuint, int> FUSIONCORE::HDRItoCubeMap(const char* HDRI, unsigned int 
 
     for (size_t i = 0; i < 6; i++)
     {
-
-        //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, CubeMapSize, CubeMapSize, 0, GL_RGB, GL_FLOAT, nullptr);
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, GL_RGB, CubeMapSize, CubeMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, CubeMapSize, CubeMapSize, 0, GL_RGB, GL_FLOAT, nullptr);
+        //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, CubeMapSize, CubeMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     }
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

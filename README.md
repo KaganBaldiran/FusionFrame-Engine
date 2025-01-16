@@ -36,15 +36,9 @@ Ray tracing is done on a compute shader using a hybrid BVH(top and bottom) for a
 
 Here are quick demo scenes and visualization of the BVH structure.
 Scenes don't belong to me.
-![image](https://github.com/user-attachments/assets/ae9ce97c-a549-45ba-91a8-ecd41c4ca9ea)
-![image](https://github.com/user-attachments/assets/e197fb52-77fc-4b33-a452-0d0474f5572f)
-![image](https://github.com/user-attachments/assets/755fa7e1-83a0-4368-86b5-c9ca6ea0d88f)
-![image](https://github.com/user-attachments/assets/c5d02786-d6ba-4156-9ddb-a8bb3733252d)
-![image](https://github.com/user-attachments/assets/33afa8e7-f430-4d66-a487-e9af56e1154a)
-![image](https://github.com/user-attachments/assets/28aa68e8-fe4c-4787-aeb1-7ae0d07a0ed8)
-![image](https://github.com/user-attachments/assets/f439d903-ac1a-4482-8e88-fa30145dac7e)
-![image](https://github.com/user-attachments/assets/bf8c5667-1124-4382-b864-bf2ba2267906)
-
+![image](https://github.com/user-attachments/assets/e217924b-7cb2-4766-95a9-f997fbae3700)
+![image](https://github.com/user-attachments/assets/d5914304-4269-4d86-85d6-0f44d2d9a643)
+![image](https://github.com/user-attachments/assets/65283e06-7b85-43a9-9a3e-a2ea65525767)
 
 ## Documentation
 The overall API is pretty simple and user friendly.

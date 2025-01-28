@@ -48,8 +48,9 @@ namespace FUSIONCORE
 		~Texture2D();
 
 		void Clear();
-		void Bind(GLuint slot, GLuint shader, const char* uniform);
+		void Bind(const GLuint& slot, const GLuint& shader, const char* uniform);
 		void Bind(GLenum target);
+		void BindTextureBuffer(const GLuint& slot, const GLuint& shader, const char* uniform);
 		//Used to recieve handle for the texture in order to make it bindless.
 		//Requires ARB bindless texture extention. 
 		//For more information: https://registry.khronos.org/OpenGL/extensions/ARB/ARB_bindless_texture.txt
@@ -60,6 +61,7 @@ namespace FUSIONCORE
 		void MakeResident();
 		//Makes a bindless texture non-resident to allow altering operations.
 		void MakeNonResident();
+		void InvalidateBindlessHandle();
 		//Returns if the texture is already made resident
 		inline bool IsTextureResident() { return IsResident; };
 		//Sends the bindless texture to a shader sampler.

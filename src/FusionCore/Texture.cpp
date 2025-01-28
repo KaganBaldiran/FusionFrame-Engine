@@ -143,7 +143,7 @@ int FUSIONCORE::Texture2D::GetHeight()
 	return this->height;
 }
 
-void FUSIONCORE::Texture2D::Bind(GLuint slot , GLuint shader , const char* uniform)
+void FUSIONCORE::Texture2D::Bind(const GLuint& slot ,const GLuint& shader,const char* uniform)
 {
 	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, id);
@@ -172,6 +172,11 @@ void FUSIONCORE::Texture2D::MakeNonResident()
 	if (TextureHandle == 0) throw FFexception("Non-bindless textures cannot be made non-resident");
 	glMakeTextureHandleNonResidentARB(this->TextureHandle);
 	IsResident = false;
+}
+
+void FUSIONCORE::Texture2D::InvalidateBindlessHandle()
+{
+	TextureHandle = 0;
 }
 
 void FUSIONCORE::Texture2D::SendBindlessHandle(GLuint Shader, std::string Uniform)
@@ -258,4 +263,11 @@ GLuint64 FUSIONCORE::Texture2D::GetTextureHandle()
 void FUSIONCORE::Texture2D::Bind(GLenum target)
 {
 	glBindTexture(target, id);
+}
+
+void FUSIONCORE::Texture2D::BindTextureBuffer(const GLuint& slot, const GLuint& shader, const char* uniform)
+{
+	glActiveTexture(GL_TEXTURE0 + slot);
+	glBindTexture(GL_TEXTURE_BUFFER, id);
+	glUniform1i(glGetUniformLocation(shader, uniform), slot);
 }

@@ -322,45 +322,45 @@ void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& sha
 	ObjectBufferVAO->Bind();
 	ShaderPrep();
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, AlbedoSpecularPass);
-	shader.setInt("AlbedoSpecularPass", 0);
-
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, NormalMetalicPass);
-	shader.setInt("NormalPass", 1);
+	glBindTexture(GL_TEXTURE_2D, AlbedoSpecularPass );
+	shader.setInt("AlbedoSpecularPass", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
-	shader.setInt("PositionDepthPass", 2);
+	glBindTexture(GL_TEXTURE_2D, NormalMetalicPass);
+	shader.setInt("NormalPass", 2);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
-	shader.setInt("MetalicRoughnessModelIDPass", 3);
+	glBindTexture(GL_TEXTURE_2D, PositionDepthPass);
+	shader.setInt("PositionDepthPass", 3);
 
 	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, MetalicRoughnessPass);
+	shader.setInt("MetalicRoughnessModelIDPass", 4);
+
+	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, DecalNormalPass);
-	shader.setInt("DecalNormalPass", 4);
+	shader.setInt("DecalNormalPass", 5);
 
 	shader.setVec3("CameraPos", camera.Position);
 	shader.setFloat("FarPlane", camera.FarPlane);
 	shader.setFloat("NearPlane", camera.NearPlane);
 
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
-	shader.setInt("ConvDiffCubeMap", 5);
-
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
-	shader.setInt("prefilteredMap", 6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetConvDiffCubeMap());
+	shader.setInt("ConvDiffCubeMap", 6);
 
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
-	shader.setInt("LUT", 7);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap.GetPreFilteredEnvMap());
+	shader.setInt("prefilteredMap", 7);
 
 	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, FUSIONCORE::brdfLUT);
+	shader.setInt("LUT", 8);
+
+	glActiveTexture(GL_TEXTURE9);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, FUSIONCORE::GetCascadedShadowMapTextureArray());
-	shader.setInt("CascadeShadowMaps", 8);
+	shader.setInt("CascadeShadowMaps", 9);
 
 	auto CascadedShadowMapsMetaData = GetCascadedShadowMapMetaDataSSBO();
 	CascadedShadowMapsMetaData->BindSSBO(10);
@@ -373,15 +373,14 @@ void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& sha
 
 	for (size_t i = 0; i < ShadowMaps.size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + 9 + i);
+		glActiveTexture(GL_TEXTURE0 + 10 + i);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, ShadowMaps[i]->GetShadowMap());
-		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 9 + i);
+		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMaps[" + std::to_string(i) + "]").c_str()), 10 + i);
 		glUniform1f(glGetUniformLocation(shader.GetID(), ("ShadowMapFarPlane[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetFarPlane());
 		glUniform1i(glGetUniformLocation(shader.GetID(), ("OmniShadowMapsLightIDS[" + std::to_string(i) + "]").c_str()), ShadowMaps[i]->GetBoundLightID());
 	}
 
 	FUSIONCORE::SendLightsShader(shader);
-
 	shader.setVec2("screenSize", glm::vec2(1920, 1080));
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);

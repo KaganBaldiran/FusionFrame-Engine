@@ -36,6 +36,7 @@ if(WIN32)
                                      ${CMAKE_SOURCE_DIR}/external/glew-2.1.0-win32/glew-2.1.0/lib/Release/x64/glew32.lib
                                      ${CMAKE_SOURCE_DIR}/external/assimp/lib/assimp-vc143-mt.lib
                                      ${CMAKE_SOURCE_DIR}/external/oidn-2.3.0.x64.windows/lib/OpenImageDenoise.lib
+                                     ${CMAKE_SOURCE_DIR}/external/nativefiledialog/library/nfd.lib
                                      opengl32.lib)
 
 elseif(UNIX)

@@ -10,7 +10,7 @@ namespace FUSIONCORE
 	//It uses AZDO opengl abilities (indirect rendering,bindless textures etc) so it might require higher versions of OpenGL
 	//Generally gives better performance by reducing cpu overhead 
 	//Gives better perfomance with static models
-	class IndirectBatch
+	class FUSIONFRAME_EXPORT IndirectBatch
 	{
 	public:
 		IndirectBatch();

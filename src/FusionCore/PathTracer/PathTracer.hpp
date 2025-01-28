@@ -24,15 +24,21 @@ namespace FUSIONCORE
 	class PathTracer
 	{
 	public:
-		PathTracer(unsigned int width, unsigned int height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders);
+		PathTracer(const unsigned int& width, const unsigned int& height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders);
 		inline GLuint GetTracedImage() { return image; };
-		GLint IsPathTracingDone();
-		void PathTracerDashBoard();
+		
+		void PathTracerDashBoard(std::function<void()> OnImportModel);
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
 		void Render(Window& window,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr,unsigned int DenoiseSampleCount = 60);
+		void ConstructBVH(std::vector<std::pair<Model*, Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders);
+
+		inline void SetShouldRestart(const bool& value) { ShouldRestart = value; };
+
+		inline const bool& ShouldDisplayBVH() { return ShouldDisplayBVHv; };
 	private:
 		void Denoise(void* ColorBuffer, void* NormalBuffer, void* AlbedoBuffer, void* outputBuffer);
+		void InitializeImages(const unsigned int& width, const unsigned int& height);
 
 		FUSIONUTIL::Timer timer;
 
@@ -42,23 +48,8 @@ namespace FUSIONCORE
 		oidn::BufferRef NormalBuf;
 		oidn::BufferRef AlbedoBuf;
 
-		GLuint image,NormalImage, AlbedoImage,pbo,queryObject;
+		GLuint image,NormalImage, AlbedoImage;
 		glm::ivec2 ImageSize;
-
-		TBO MinBoundData;
-		Texture2D MinBoundTexture;
-
-		TBO MaxBoundData;
-		Texture2D MaxBoundTexture;
-
-		TBO ChildIndexData;
-		Texture2D ChildIndexTexture;
-
-		TBO TriangleIndexData;
-		Texture2D TriangleIndexTexture;
-
-		TBO TriangleCountData;
-		Texture2D TriangleCountTexture;
 
 		TBO AlbedoData;
 		Texture2D AlbedoTexture;
@@ -84,17 +75,14 @@ namespace FUSIONCORE
 		TBO TracerTriangleUVdata;
 		Texture2D TracerTriangleUVTexture;
 
-		TBO TracerTriangleNormalData;
-		Texture2D TracerTriangleNormalsTexture;
-
-		TBO TracerTriangleTangentBitangentData;
-		Texture2D TracerTriangleTangentBitangentTexture;
-
-		TBO TracerTrianglePositionsData;
-		Texture2D TracerTrianglePositionsTexture;
-
 		SSBO ModelMatricesData;
 		SSBO ModelTextureHandlesData;
+		SSBO MaterialFloatValuesData;
+		SSBO BVHvec4Data;
+		SSBO BVHfloatData;
+		SSBO MeshData;
+
+		int AlbedoCount;
 
 		int TriangleCount;
 		int NodeCount;
@@ -102,7 +90,13 @@ namespace FUSIONCORE
 		size_t ModelCount;
 		bool IsInitialized;
 		bool ShouldRestart;
+		bool ShouldDisplayBVHv;
 		int EmissiveObjectCount;
+
+		int TargetBounceCount;
+		float EnvironmentLightIntensity;
+
+		bool ShouldDisplayTheEnv;
 
 		int TargetSampleCount;
 		bool IsDenoised;
@@ -110,9 +104,6 @@ namespace FUSIONCORE
 
 		std::vector<BVHnode> TopDownBVHnodes;
 		std::vector<BVHnode> BottomUpBVHNodes;
-
-		std::vector<Model*> Models;
-
 	};
 
 }

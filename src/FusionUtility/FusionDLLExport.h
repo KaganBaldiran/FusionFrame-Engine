@@ -2,16 +2,24 @@
 
 #ifdef _WIN32 
 
-#define BUILD_DLL
+//#define BUILD_DLL
+#define BUILD_STATIC_LIBRARY
 
 #ifdef BUILD_DLL 
 #define FUSIONFRAME_EXPORT __declspec(dllexport)
-#else
-#define FUSIONFRAME_EXPORT __declspec(dllimport)
-#endif
-
 #define FUSIONFRAME_EXPORT_FUNCTION extern FUSIONFRAME_EXPORT
 #define FUSIONFRAME_EXPORT_FUNCTION_C_LINKAGE extern "C" FUSIONFRAME_EXPORT
+#elif defined(BUILD_STATIC_LIBRARY)
+#define FUSIONFRAME_EXPORT
+#define FUSIONFRAME_EXPORT_FUNCTION extern
+#define FUSIONFRAME_EXPORT_FUNCTION_C_LINKAGE 
+#else
+#define FUSIONFRAME_EXPORT __declspec(dllimport)
+#define FUSIONFRAME_EXPORT_FUNCTION extern FUSIONFRAME_EXPORT
+#define FUSIONFRAME_EXPORT_FUNCTION_C_LINKAGE extern "C" FUSIONFRAME_EXPORT
+#endif
+
+
 
 #elif defined(__linux__)
 

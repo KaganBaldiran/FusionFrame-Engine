@@ -208,33 +208,18 @@ float CascadedDirectionalShadowCalculation(vec3 fragPos,int MetaDataIndex,vec3 N
       return shadow;
   }
 
-  /*
-  float ShadowCalculationOmni(vec3 fragPos , samplerCube OmnishadowMap , vec3 LightPosition)
-  {
-      vec3 fragTolight = fragPos - LightPosition;
-      float closestDepth = texture(OmnishadowMap,fragTolight).r;
-      closestDepth *= 25.0f;
-
-      float currentDepth = length(fragTolight);
-
-      float bias = 0.05;
-      float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
-      
-      return shadow;
-  }
-  */
   float DistributionGGX(vec3 N , vec3 H, float roughness)
   {
-      float a = roughness * roughness;
-      float a2 = a*a;
-      float NdotH = max(dot(N,H),0.0);
-      float NdotH2 = NdotH * NdotH;
+    float a = clamp(roughness * roughness, 0.03f, 1.0f);         
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0f);       
+    float NdotH2 = NdotH * NdotH;
 
-      float num = a2;
-      float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-      denom = PI * denom * denom;
+    float num = a2;
+    float denom = (NdotH2 * (a2 - 1.0f) + 1.0f);
+    denom = max(PI * denom * denom, 0.0001f); 
 
-      return num / denom;
+    return num / denom;
   }
 
   float GeometrySchlickGGX(float NdotV , float roughness)
@@ -301,120 +286,120 @@ void main()
    Cluster cluster = Clusters[tileIndex];
    */
 
-      float shadow = 0.0f;
-      vec3 N = normalize(Normal + DecalNormal);
-      vec3 V = normalize(CameraPos - Position);
+    float shadow = 0.0f;
+    vec3 N = normalize(Normal + DecalNormal);
+    vec3 V = normalize(CameraPos - Position);
 
-      float DotNV = max(dot(N,V),0.0);
+    float DotNV = max(dot(N,V),0.0);
 
-      vec3 F0 = vec3(0.04);
-      F0 = mix(F0,Albedo,Metalic);
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0,Albedo,Metalic);
 
-      vec3 Lo = vec3(0.0);
-      for(int i = 0; i < LightCount;++i)
-      {
-          Light CurrentLight = Lights[i];
-          //Light CurrentLight = Lights[cluster.LightIndices[i]];
-          vec3 L;
-          vec3 H;
-          vec3 radiance;
+    vec3 Lo = vec3(0.0);
+    for(int i = 0; i < LightCount;++i)
+    {
+        Light CurrentLight = Lights[i];
+        //Light CurrentLight = Lights[cluster.LightIndices[i]];
+        vec3 L;
+        vec3 H;
+        vec3 radiance;
 
-          if(CurrentLight.Type == POINT_LIGHT)
-          {
-		    vec3 CurrentLightPosition = CurrentLight.Position.xyz;
-            float distance = length(CurrentLightPosition - Position);
+        if(CurrentLight.Type == POINT_LIGHT)
+        {
+		vec3 CurrentLightPosition = CurrentLight.Position.xyz;
+        float distance = length(CurrentLightPosition - Position);
             
-            if(distance > CurrentLight.Radius)
-            {
-               continue;
-            }
+        if(distance > CurrentLight.Radius)
+        {
+            continue;
+        }
 
-            L = normalize(CurrentLightPosition - Position);
-            H = normalize(V + L);
-            float attenuation = 1.0 / (distance * distance);
-            radiance = CurrentLight.Color.xyz * attenuation;
+        L = normalize(CurrentLightPosition - Position);
+        H = normalize(V + L);
+        float attenuation = 1.0 / (distance * distance);
+        radiance = CurrentLight.Color.xyz * attenuation;
 
-            int OmniShadowMapIndex = CurrentLight.ShadowMapIndex;
-            if(OmniShadowMapIndex >= 0)
-            {
-               shadow = ShadowCalculationOmni(Position,OmniShadowMaps[OmniShadowMapIndex],CurrentLight.Position.xyz , ShadowMapFarPlane[OmniShadowMapIndex]);
-            }
-          }
-          else if(CurrentLight.Type == DIRECTIONAL_LIGHT)
-          {
-            L = normalize(CurrentLight.Position.xyz);
-            H = normalize(V + L); 
-            radiance = CurrentLight.Color.xyz;
+        int OmniShadowMapIndex = CurrentLight.ShadowMapIndex;
+        if(OmniShadowMapIndex >= 0)
+        {
+            shadow = ShadowCalculationOmni(Position,OmniShadowMaps[OmniShadowMapIndex],CurrentLight.Position.xyz , ShadowMapFarPlane[OmniShadowMapIndex]);
+        }
+        }
+        else if(CurrentLight.Type == DIRECTIONAL_LIGHT)
+        {
+        L = normalize(CurrentLight.Position.xyz);
+        H = normalize(V + L); 
+        radiance = CurrentLight.Color.xyz;
 
-            int DirectionalShadowMapIndex = CurrentLight.ShadowMapIndex;
-            if(DirectionalShadowMapIndex >= 0)
-            {
-               shadow = CascadedDirectionalShadowCalculation(Position,DirectionalShadowMapIndex,N , CurrentLight.Position.xyz,ColorMap);
-            }
-          }
-          float NDF = DistributionGGX(N,H,roughness);
-          float G = GeometrySmith(N,V,L,roughness);
-          vec3 F = FresnelSchlick(max(dot(H,V),0.0),F0);
-          //vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+        int DirectionalShadowMapIndex = CurrentLight.ShadowMapIndex;
+        if(DirectionalShadowMapIndex >= 0)
+        {
+            shadow = CascadedDirectionalShadowCalculation(Position,DirectionalShadowMapIndex,N , CurrentLight.Position.xyz,ColorMap);
+        }
+        }
+        float NDF = DistributionGGX(N,H,roughness);
+        float G = GeometrySmith(N,V,L,roughness);
+        vec3 F = FresnelSchlick(max(dot(H,V),0.0),F0);
+        //vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
-          float NdotL = max(dot(N,L),0.0);
+        float NdotL = max(dot(N,L),0.0);
 
-          vec3 kS = F;
-          vec3 Kd = vec3(1.0) - kS;
-          Kd *= 1.0 - Metalic;
+        vec3 kS = F;
+        vec3 Kd = vec3(1.0) - kS;
+        Kd *= 1.0 - Metalic;
 
-          vec3 numerator = NDF * G * F;
-          float denominator = 4.0 * DotNV * NdotL + 0.0001;
-          vec3 specular = numerator / denominator;
+        vec3 numerator = NDF * G * F;
+        float denominator = 4.0 * DotNV * NdotL + 0.0001;
+        vec3 specular = numerator / denominator;
 
-          Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
-      }
+        Lo += (1.0 - shadow) * (Kd * Albedo / PI + specular) * radiance * CurrentLight.Intensity * NdotL;
+    }
 
-      vec3 color;
-      vec3 ambient;
+    vec3 color;
+    vec3 ambient;
 
-      if(EnableIBL)
-      {
-         vec3 F = fresnelSchlickRoughness(DotNV, F0, roughness);
+    if(EnableIBL)
+    {
+        vec3 F = fresnelSchlickRoughness(DotNV, F0, roughness);
 
-         vec3 R = reflect(-V , N);
-         const float MAX_REFLECTION_LOD = 4.0f;
-         vec3 prefilteredColor = textureLod(prefilteredMap,R,roughness * MAX_REFLECTION_LOD).rgb;
-         vec2 EnvLut = texture(LUT,vec2(DotNV,roughness)).rg;
-         vec3 specular = prefilteredColor * (F * EnvLut.x + EnvLut.y);
+        vec3 R = reflect(-V , N);
+        const float MAX_REFLECTION_LOD = 4.0f;
+        vec3 prefilteredColor = textureLod(prefilteredMap,R,roughness * MAX_REFLECTION_LOD).rgb;
+        vec2 EnvLut = texture(LUT,vec2(DotNV,roughness)).rg;
+        vec3 specular = prefilteredColor * (F * EnvLut.x + EnvLut.y);
 
-         vec3 irradiance = texture(ConvDiffCubeMap, N).rgb;
-         vec3 kS = F; 
-         vec3 kD = 1.0 - kS;
-         vec3 diffuse = irradiance * Albedo;
-         ambient = (kD * diffuse + specular) * ao; 
-         color = ambient + Lo;
-      }
-      else
-      {
-         ambient = vec3(0.03) * Albedo * ao;
-         color = ambient + Lo;
-      }
+        vec3 irradiance = texture(ConvDiffCubeMap, N).rgb;
+        vec3 kS = F; 
+        vec3 kD = 1.0 - kS;
+        vec3 diffuse = irradiance * Albedo;
+        ambient = (kD * diffuse + specular) * ao; 
+        color = ambient + Lo;
+    }
+    else
+    {
+        ambient = vec3(0.03) * Albedo * ao;
+        color = ambient + Lo;
+    }
       
-      color = color / (color + vec3(1.0));
+    color = color / (color + vec3(1.0));
      
-      float DeltaPlane = FarPlane - NearPlane;
-      float distanceFromCamera = distance(CameraPos,Position) / DeltaPlane;
+    float DeltaPlane = FarPlane - NearPlane;
+    float distanceFromCamera = distance(CameraPos,Position) / DeltaPlane;
 
-      float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
+    float FogIntensity = distanceFromCamera * distanceFromCamera * FogIntesityUniform;
 
-      vec3 FinalFogColor;
-      if(IBLfog)
-      {
-         FinalFogColor = texture(ConvDiffCubeMap, -N).rgb;
-      }
-      else
-      {
-         FinalFogColor = FogColor;
-      }
+    vec3 FinalFogColor;
+    if(IBLfog)
+    {
+        FinalFogColor = texture(ConvDiffCubeMap, -N).rgb;
+    }
+    else
+    {
+        FinalFogColor = FogColor;
+    }
 
-      FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
-      //FragColor = vec4(ColorMap, 1.0); 
-      Depth = vec4(Position,1.0f);
-      ID = vec4(vec3(ModelID),1.0f);
+    FragColor = vec4(color + (FinalFogColor * FogIntensity), 1.0); 
+    //FragColor = vec4(Albedo, 1.0); 
+    Depth = vec4(Position,1.0f);
+    ID = vec4(vec3(ModelID),1.0f);
 }

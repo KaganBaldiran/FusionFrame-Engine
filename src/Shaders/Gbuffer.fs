@@ -40,7 +40,7 @@ void main()
     }
     else
     {
-      AlphaMap = texture(texture_alpha0, FinalTexCoord * TilingCoeff).r;
+      AlphaMap = textureLod(texture_alpha0, FinalTexCoord * TilingCoeff,0.0f).r;
     }
 
     if(AlphaMap < 0.5f)
@@ -55,7 +55,7 @@ void main()
     }
     else
     {
-      texturecolor = texture(texture_diffuse0, FinalTexCoord * TilingCoeff).rgb;
+      texturecolor = textureLod(texture_diffuse0, FinalTexCoord * TilingCoeff,0.0f).rgb;
     }
 
     float roughnessmap;
@@ -66,7 +66,7 @@ void main()
     }
     else
     {
-      roughnessmap = texture(texture_specular0, FinalTexCoord * TilingCoeff).r;
+      roughnessmap = textureLod(texture_specular0, FinalTexCoord * TilingCoeff,0.0f).r;
     }
 
     vec3 resultnormal;
@@ -77,7 +77,7 @@ void main()
     }
     else
     {
-        resultnormal = texture(texture_normal0,FinalTexCoord * TilingCoeff).rgb;
+        resultnormal = textureLod(texture_normal0,FinalTexCoord * TilingCoeff,0.0f).rgb;
         resultnormal = resultnormal * 2.0f - 1.0f;
         resultnormal = normalize(TBN * resultnormal);
         //resultnormal = normalize(Normal);
@@ -92,7 +92,7 @@ void main()
     }
     else
     {
-      metalicmap = texture(texture_metalic0, FinalTexCoord * TilingCoeff).r;
+      metalicmap = textureLod(texture_metalic0, FinalTexCoord * TilingCoeff,0.0f).r;
     }
 
     AlbedoSpecularPass = vec4(texturecolor,1.0f);

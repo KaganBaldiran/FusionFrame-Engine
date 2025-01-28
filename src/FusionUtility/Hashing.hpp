@@ -7,7 +7,7 @@
 namespace FUSIONUTIL
 {
 	template<typename T, std::size_t Alignment>
-	struct AlignedAllocator
+	struct FUSIONFRAME_EXPORT AlignedAllocator
 	{
 		using value_type = T;
 		using pointer = T*;

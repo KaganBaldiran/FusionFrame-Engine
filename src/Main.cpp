@@ -1,10 +1,11 @@
-#include "Application.hpp"
-//#include "FusionFrame.h"
+//#include "Application.hpp"
+#include "FusionFrame.h"
+//#include "PathTracerApplication.hpp"
 
 int main()
 {
-	Application app;
+	//Application app;
 	//return app.Run();
-	return app.PathTracer();
-	//return 0;
+	//return PathTracingDemo();
+	return 0;
 }

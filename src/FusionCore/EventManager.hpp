@@ -8,13 +8,13 @@
 
 namespace FUSIONCORE
 {
-	class Event
+	class FUSIONFRAME_EXPORT Event
 	{
 	public:
 		virtual ~Event() {};
 	};
 
-	class EventManager
+	class FUSIONFRAME_EXPORT EventManager
 	{
 	public:
 		template<typename T>

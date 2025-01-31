@@ -37,8 +37,8 @@ Ray tracing is done on a compute shader using a hybrid BVH(top and bottom) for a
 Here are quick demo scenes and visualization of the BVH structure.
 Scenes don't belong to me.
 ![image](https://github.com/user-attachments/assets/e217924b-7cb2-4766-95a9-f997fbae3700)
-![image](https://github.com/user-attachments/assets/d5914304-4269-4d86-85d6-0f44d2d9a643)
-![image](https://github.com/user-attachments/assets/65283e06-7b85-43a9-9a3e-a2ea65525767)
+![image](https://github.com/user-attachments/assets/883806a4-f773-4f22-9669-4146204dc09a)
+![image](https://github.com/user-attachments/assets/5e7880c7-eed3-4109-b36e-4b581e3b795d)
 
 ## Documentation
 The overall API is pretty simple and user friendly.

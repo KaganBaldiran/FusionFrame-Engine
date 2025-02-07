@@ -16,9 +16,6 @@
 #include "imgui_internal.h"
 #include <omp.h>
 
-template <typename T>
-using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
-
 inline glm::vec3 MinVec3(const glm::vec3& input0,const glm::vec3& input1)
 {
 	return { glm::min(input0.x, input1.x) ,glm::min(input0.y, input1.y),glm::min(input0.z, input1.z) };
@@ -158,7 +155,7 @@ inline float ComputeSAHcost(const float& LeftNodeArea, const float& RightNodeAre
 }
 
 inline float EstimateSplitTopDown(BVHnode& Node, const int& Axis, const float& SplitPosition,
-					AlignedBuffer<glm::vec3>& TriangleCenters,
+					FUSIONUTIL::AlignedBuffer<glm::vec3>& TriangleCenters,
 					std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
 {
 	BVHnode Child0;
@@ -214,7 +211,7 @@ inline float EstimateSplitBottomUp(BVHnode& Node, const int& Axis, const float& 
 }
 
 inline void SplitTopDown(int &BestAxis,float& BestPos,float& BestCost,BVHnode& Node,
-	              AlignedBuffer<glm::vec3>& TriangleCenters,
+	              FUSIONUTIL::AlignedBuffer<glm::vec3>& TriangleCenters,
 	              std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
 {
 	constexpr int TestCountPerAXis = 35;
@@ -280,11 +277,11 @@ inline void SplitBottomUp(int& BestAxis, float& BestPos, float& BestCost, BVHnod
 
 inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 						int ModelBoundingBoxIndex,
-						AlignedBuffer<glm::vec4>& TrianglePositions,
-						AlignedBuffer<glm::vec4>& TriangleNormals,
-						AlignedBuffer<glm::vec2>& TriangleUVs,
-						AlignedBuffer<glm::vec3> &TriangleCenters,
-						AlignedBuffer<glm::vec4> &TriangleTangentsBitangents,
+						FUSIONUTIL::AlignedBuffer<glm::vec4>& TrianglePositions,
+						FUSIONUTIL::AlignedBuffer<glm::vec4>& TriangleNormals,
+						FUSIONUTIL::AlignedBuffer<glm::vec2>& TriangleUVs,
+						FUSIONUTIL::AlignedBuffer<glm::vec3> &TriangleCenters,
+						FUSIONUTIL::AlignedBuffer<glm::vec4> &TriangleTangentsBitangents,
 						std::map<unsigned int, unsigned int> &EmissiveObjectIndices,
 						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
@@ -454,13 +451,13 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 }
 
 bool ProcessMaterial(FUSIONCORE::Material*& material,
-					AlignedBuffer<GLuint64> &TextureHandles,
-					AlignedBuffer<glm::vec4> &ModelAlbedos,
-					AlignedBuffer<float> &ModelRoughness,
-					AlignedBuffer<float> &ModelMetallic,
-					AlignedBuffer<glm::vec2> &ModelAlphas,
-					AlignedBuffer<glm::vec4>& ModelEmissives,
-	                AlignedBuffer<glm::vec2>& ModelClearCoats)
+					FUSIONUTIL::AlignedBuffer<GLuint64> &TextureHandles,
+					FUSIONUTIL::AlignedBuffer<glm::vec4> &ModelAlbedos,
+					FUSIONUTIL::AlignedBuffer<float> &ModelRoughness,
+					FUSIONUTIL::AlignedBuffer<float> &ModelMetallic,
+					FUSIONUTIL::AlignedBuffer<glm::vec2> &ModelAlphas,
+					FUSIONUTIL::AlignedBuffer<glm::vec4>& ModelEmissives,
+					FUSIONUTIL::AlignedBuffer<glm::vec2>& ModelClearCoats)
 {
 	auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
 	auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
@@ -672,24 +669,24 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	this->TopDownBVHnodes.clear();
 	this->BottomUpBVHNodes.clear();
 
-	AlignedBuffer<glm::mat4> ModelMatrixes;
-	AlignedBuffer<glm::vec3> TriangleCenters;
-	AlignedBuffer<glm::vec4> TrianglePositions;
-	AlignedBuffer<glm::vec4> TriangleNormals;
-	AlignedBuffer<glm::vec4> TriangleTangentsBitangents;
-	AlignedBuffer<glm::vec2> TriangleUVs;
+	FUSIONUTIL::AlignedBuffer<glm::mat4> ModelMatrixes;
+	FUSIONUTIL::AlignedBuffer<glm::vec3> TriangleCenters;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> TrianglePositions;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> TriangleNormals;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> TriangleTangentsBitangents;
+	FUSIONUTIL::AlignedBuffer<glm::vec2> TriangleUVs;
 
 	int TextureMapTypeCount = 6;
 
 	//Albedo-Normal-Roughness-Metallic-Alpha-Emissive
-	AlignedBuffer<GLuint64> TextureHandles;
+	FUSIONUTIL::AlignedBuffer<GLuint64> TextureHandles;
 
-	AlignedBuffer<glm::vec4> ModelAlbedos;
-	AlignedBuffer<float> ModelRoughness;
-	AlignedBuffer<float> ModelMetallic;
-	AlignedBuffer<glm::vec2> ModelAlphas;
-	AlignedBuffer<glm::vec4> ModelEmissives;
-	AlignedBuffer<glm::vec2> ModelClearCoats;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> ModelAlbedos;
+	FUSIONUTIL::AlignedBuffer<float> ModelRoughness;
+	FUSIONUTIL::AlignedBuffer<float> ModelMetallic;
+	FUSIONUTIL::AlignedBuffer<glm::vec2> ModelAlphas;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> ModelEmissives;
+	FUSIONUTIL::AlignedBuffer<glm::vec2> ModelClearCoats;
 	std::map<unsigned int, unsigned int> EmissiveObjectIndices;
 	int MaterialIndex = -1;
 
@@ -861,8 +858,8 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	std::cout << "\033[2K\rConstructing the BVH... Progress: " << 70 << "%" << std::flush;
 
 	NodeCount = TopDownBVHnodes.size();
-	AlignedBuffer<glm::vec4> Bounds;
-	AlignedBuffer<int> ChildIndicesTriIndicesCounts;
+	FUSIONUTIL::AlignedBuffer<glm::vec4> Bounds;
+	FUSIONUTIL::AlignedBuffer<int> ChildIndicesTriIndicesCounts;
 
 	std::vector<float> EmissiveIndices;
 
@@ -896,7 +893,7 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	BVHfloatData.BindSSBO(21);
 	BVHfloatData.Unbind();
 
-	AlignedBuffer<char> CombinedMeshvec4data;
+	FUSIONUTIL::AlignedBuffer<char> CombinedMeshvec4data;
 	size_t sizeOfTriangleNormals = TriangleNormals.size() * sizeof(glm::vec4);
 	size_t sizeOfTriangleTangentBitangentNormals = TriangleTangentsBitangents.size() * sizeof(glm::vec4);
 	size_t sizeOfTrianglePositions = TrianglePositions.size() * sizeof(glm::vec4);

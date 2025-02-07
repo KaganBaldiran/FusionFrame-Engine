@@ -152,4 +152,12 @@ namespace FUSIONCORE
 	FUSIONFRAME_EXPORT_FUNCTION void BindSSBONull();
 	FUSIONFRAME_EXPORT_FUNCTION void BindTBONull();
 	FUSIONFRAME_EXPORT_FUNCTION void BindIndirectCommandBufferNull();
+
+	//3D cube buffer
+	FUSIONFRAME_EXPORT_FUNCTION VAO* GetCubeBuffer();
+	//2D rectangle buffer
+	FUSIONFRAME_EXPORT_FUNCTION VAO* GetRectangleBuffer();
+
+	//Internally called, no need to call 
+	FUSIONFRAME_EXPORT_FUNCTION void InitializeBuffers();
 }

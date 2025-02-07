@@ -28,7 +28,7 @@ namespace FUSIONCORE
 	};
 
 	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<Model> LightIcon;
-	FUSIONFRAME_EXPORT_FUNCTION std::map<int, LightData> LightDatas;
+	FUSIONFRAME_EXPORT_FUNCTION std::map<int, std::pair<LightData, FUSIONCORE::WorldTransform*>> LightDatas;
 	FUSIONFRAME_EXPORT_FUNCTION int LightCount;
 	FUSIONFRAME_EXPORT_FUNCTION std::unique_ptr<SSBO> LightsShaderStorageBufferObject;
 
@@ -73,7 +73,6 @@ namespace FUSIONCORE
 		//Depending on the light type position argument can be passed as direction
 		Light(glm::vec3 Position_Direction, glm::vec3 Color, float intensity , int LightType = FF_POINT_LIGHT, float Radius = 10.0f);
 		void SetAttrib(glm::vec3 Color, float intensity = 1.0f);
-		WorldTransformForLights* GetTransformation() { return this->transformation.get(); };
 		void Draw(Camera3D& camera, Shader& shader);
 		inline int GetLightType() { return this->LightType; };
 		inline const glm::vec3& GetLightColor() { return this->LightColor; };
@@ -94,11 +93,11 @@ namespace FUSIONCORE
 		void PushBackLight();
 
 	private:
-		std::unique_ptr<WorldTransformForLights> transformation;
 		int LightID;
 		int LightType;
 		float LightIntensity , LightRadius;
-		glm::vec3 LightColor , LightDirection;
+		glm::vec3 LightColor;
+		glm::vec3 LightDirection;
 		bool LightState;
 	};
 }

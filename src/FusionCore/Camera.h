@@ -9,7 +9,7 @@
 #define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD 0X101
 #define MAX_LIGHT_PER_CLUSTER 100
 
-#define FREE_INDUSTRY_STANDARD_CAMERA  // define if you want to freely change the targetPosition using alt-lm click 
+//#define FREE_INDUSTRY_STANDARD_CAMERA  // define if you want to freely change the targetPosition using alt-lm click 
 //#define FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION // define if you want to freely rotate the camera without needing to press alt 
 
 //Forward Declarations 

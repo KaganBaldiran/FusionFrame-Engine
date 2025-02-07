@@ -111,7 +111,6 @@ namespace FUSIONUTIL
         std::unique_ptr<FUSIONCORE::Shader> TextureOnQuadShader;
 	};
 
-    FUSIONFRAME_EXPORT_FUNCTION void InitializeEngineBuffers();
 	FUSIONFRAME_EXPORT_FUNCTION void InitializeDefaultShaders(DefaultShaders& shaders);
     FUSIONFRAME_EXPORT_FUNCTION void DisposeDefaultShaders(DefaultShaders& shaders);
     

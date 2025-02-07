@@ -68,6 +68,8 @@ namespace FUSIONCORE
 		void SendBindlessHandle(GLuint Shader, std::string Uniform);
 		void Unbind();
 
+		//Renders specified amount of mipmaps.
+		//Mipmap sizes decreases logarithmically. 
 		void RenderMipmaps(const uint& MipMapCount,Shader& MipmapShader);
 
 		GLuint GetTexture();

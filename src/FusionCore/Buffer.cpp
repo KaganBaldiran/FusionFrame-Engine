@@ -1,6 +1,13 @@
 #include "Buffer.h"
 #include <glew.h>
 #include <glfw3.h>
+#include <memory>
+
+std::shared_ptr<FUSIONCORE::VAO> CubeVAO;
+std::shared_ptr<FUSIONCORE::VBO> CubeVBO;
+
+std::shared_ptr<FUSIONCORE::VAO> RectangleVAO;
+std::shared_ptr<FUSIONCORE::VBO> RectangleVBO;
 
 FUSIONCORE::Buffer::Buffer()
 {
@@ -156,6 +163,99 @@ void FUSIONCORE::BindTBONull()
 void FUSIONCORE::BindIndirectCommandBufferNull()
 {
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+}
+
+FUSIONCORE::VAO* FUSIONCORE::GetCubeBuffer()
+{
+	return CubeVAO.get();
+}
+
+FUSIONCORE::VAO* FUSIONCORE::GetRectangleBuffer()
+{
+	return RectangleVAO.get();
+}
+
+void FUSIONCORE::InitializeBuffers()
+{
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	CubeVAO = std::make_shared<VAO>();
+	CubeVBO = std::make_shared<VBO>();
+
+	CubeVAO->Bind();
+	CubeVBO->Bind();
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	RectangleVAO = std::make_shared<VAO>();
+	RectangleVBO = std::make_shared<VBO>();
+
+	float quadVertices[] = {
+		// positions   // texCoords
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f
+	};
+
+	RectangleVAO->Bind();
+	RectangleVBO->Bind();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	BindVAONull();
+	BindVBONull();
 }
 
 FUSIONCORE::EBO::EBO()

@@ -5,6 +5,7 @@
 #include "Transformation.hpp"
 #include <unordered_set>
 #include "../FusionUtility/FusionDLLExport.h"
+#include <variant>
 
 namespace FUSIONPHYSICS
 {
@@ -13,6 +14,18 @@ namespace FUSIONPHYSICS
 
 namespace FUSIONCORE
 {
+    //Forward declarations
+    //{
+        class Light;
+        class Model;
+    //}
+
+    enum FF_OBJECT_TYPE
+    {
+        FF_OBJECT_TYPE_MODEL = 0x00313,
+        FF_OBJECT_TYPE_LIGHT = 0x00314,
+        FF_OBJECT_TYPE_CUSTOM = 0x00315
+    };
      /*
      Represents a basic object in a scene.
 
@@ -38,6 +51,7 @@ namespace FUSIONCORE
     class FUSIONFRAME_EXPORT Object
     {
     protected:
+        FF_OBJECT_TYPE ObjectType;
         size_t ObjectID;
         std::vector<Object*> Children;
         WorldTransform transformation;
@@ -65,6 +79,9 @@ namespace FUSIONCORE
 
         template<typename T>
         T DynamicObjectCast() { return dynamic_cast<T>(this); };
+       
+        std::variant<std::monostate, FUSIONCORE::Model*, FUSIONCORE::Light*> ObjectTypeCast();
+        const FF_OBJECT_TYPE& GetObjectType();
 
         //Checking if two objects memory addresses are the same(Doesn't check for object state) 
         inline bool IsSameObject(Object* other) {

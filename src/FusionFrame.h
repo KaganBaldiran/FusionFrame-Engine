@@ -28,6 +28,7 @@
 #include "FusionUtility/FusionGL.hpp"
 #include "FusionCore/Window.hpp"
 #include "FusionCore/EventManager.hpp"
+#include "FusionUtility/Hashing.hpp"
 #include <stdio.h>
 
 struct GLFWmonitor;

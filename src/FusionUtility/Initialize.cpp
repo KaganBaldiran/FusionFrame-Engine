@@ -1,14 +1,8 @@
 #include "Initialize.h"
 #include <glew.h>
 #include <glfw3.h>
-#include "../FusionCore/Camera.h"
 #include "../FusionCore/Cubemap.h"
-#include "../FusionCore/Animator.hpp"
 #include "../FusionCore/Light.hpp"
-#include "../FusionCore/ShadowMaps.hpp"
-#include "../FusionCore/Shapes.hpp"
-#include "../FusionCore/Decal.hpp"
-#include "../FusionPhysics/ParticleSystem.hpp"
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
@@ -72,16 +66,6 @@ void FUSIONUTIL::RefreshWindow(GLFWwindow* window)
 {
 	SwapBuffers(window);
 	PollEvents();
-}
-
-void FUSIONUTIL::InitializeEngineBuffers()
-{
-	FUSIONCORE::InitializeAnimationUniformBuffer();
-	FUSIONPHYSICS::InitializeParticleEmitterUBO();
-	FUSIONCORE::InitializeLightsShaderStorageBufferObject();
-	FUSIONCORE::SHAPES::InitializeShapeBuffers();
-	FUSIONCORE::InitializeDecalUnitBox();
-	FUSIONCORE::InitializeFBObuffers();
 }
 
 void FUSIONUTIL::InitializeDefaultShaders(DefaultShaders &shaders)

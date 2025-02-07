@@ -1,44 +1,10 @@
 #include "Framebuffer.hpp"
 #include <glew.h>
 #include <glfw3.h>
+#include <FreeImage.h>
+#include "Buffer.h"
 
-std::unique_ptr<FUSIONCORE::VBO> ObjectBufferVBO;
-std::unique_ptr<FUSIONCORE::VAO> ObjectBufferVAO;
 unsigned int IDiterator = 0;
-
-void FUSIONCORE::InitializeFBObuffers()
-{
-	ObjectBufferVBO = std::make_unique<VBO>();
-	ObjectBufferVAO = std::make_unique<VAO>();
-
-	float quadVertices[] = {
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
-
-	ObjectBufferVAO->Bind();
-	ObjectBufferVBO->Bind();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	BindVAONull();
-	BindVBONull();
-}
-
-FUSIONCORE::VAO* FUSIONCORE::GetSquareBuffer()
-{
-	return ObjectBufferVAO.get();
-}
-
 
 void FUSIONCORE::CopyDepthInfoFBOtoFBO(GLuint src, glm::vec2 srcSize, GLuint dest)
 {
@@ -58,6 +24,27 @@ FUSIONCORE::Color FUSIONCORE::ReadFrameBufferPixel(int Xcoord, int Ycoord,unsign
 	Color PixelColor;
 	PixelColor.SetRGBA({ pixel[0], pixel[1], pixel[2], pixel[3] });
     return PixelColor;
+}
+
+void FUSIONCORE::SaveFrameBufferImage(const int& width, const int& height, const char* path, const GLenum& Attachment)
+{
+	BYTE* pixels;
+
+	Vec2<int> finalImageSize;
+	int ChannelSize = 0;
+
+	finalImageSize({ (int)width,(int)height });
+	ChannelSize = 3;
+	pixels = new BYTE[ChannelSize * finalImageSize.x * finalImageSize.y];
+
+	glReadBuffer(Attachment);
+	glReadPixels(0, 0, finalImageSize.x, finalImageSize.y, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+
+	FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, finalImageSize.x, finalImageSize.y, ChannelSize * finalImageSize.x, 8 * ChannelSize, 0x0000FF, 0xFF0000, 0x00FF00, false);
+	FreeImage_Save(FIF_PNG, image, path, 0);
+
+	FreeImage_Unload(image);
+	delete[] pixels;
 }
 
 FUSIONCORE::ScreenFrameBuffer::ScreenFrameBuffer(int width, int height)
@@ -141,7 +128,7 @@ void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::f
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBufferVAO->Bind();
+	GetRectangleBuffer()->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -175,7 +162,7 @@ void FUSIONCORE::DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& L
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBufferVAO->Bind();
+	GetRectangleBuffer()->Bind();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, TargetImage);
@@ -319,7 +306,7 @@ void FUSIONCORE::GeometryBuffer::DrawSceneDeferred(Camera3D& camera, Shader& sha
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBufferVAO->Bind();
+	GetRectangleBuffer()->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE1);
@@ -400,7 +387,7 @@ void FUSIONCORE::GeometryBuffer::DrawSSR(Camera3D& camera, Shader& shader, std::
 	glDisable(GL_DEPTH_TEST);
 
 	shader.use();
-	ObjectBufferVAO->Bind();
+	GetRectangleBuffer()->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -558,7 +545,7 @@ void FUSIONCORE::Framebuffer::DrawAttachment(size_t index, Shader& shader,const 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	shader.use();
-	ObjectBufferVAO->Bind();
+	GetRectangleBuffer()->Bind();
 	ShaderPrep();
 
 	glActiveTexture(GL_TEXTURE0);

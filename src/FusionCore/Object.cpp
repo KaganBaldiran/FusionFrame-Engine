@@ -3,13 +3,14 @@
 #include <glew.h>
 #include <glfw3.h>
 #include "Buffer.h"
+#include "Light.hpp"
 
 std::unordered_map<size_t, FUSIONCORE::Object*> IDobjectMap;
 std::unordered_map<int, std::pair<glm::vec3, glm::vec3>> CalculatedObjectBoundingBoxes;
 
 FUSIONCORE::Object::Object()
 {
-	static size_t IDiterator = 0;
+	static size_t IDiterator = 1;
 	this->ObjectID = IDiterator;
 	IDobjectMap[ObjectID] = this;
 	IDiterator++;
@@ -114,6 +115,26 @@ int FUSIONCORE::Object::GetChildrenCount()
 {
 	return Children.size();
 }
+
+std::variant<std::monostate, FUSIONCORE::Model*, FUSIONCORE::Light*> FUSIONCORE::Object::ObjectTypeCast()
+{
+	switch (ObjectType)
+	{
+	case FF_OBJECT_TYPE_MODEL:
+		return dynamic_cast<FUSIONCORE::Model*>(this);
+		break;
+	case FF_OBJECT_TYPE_LIGHT:
+		return dynamic_cast<FUSIONCORE::Light*>(this);
+		break;
+	default:
+		return std::monostate{};
+		break;
+	};
+}
+const FUSIONCORE::FF_OBJECT_TYPE& FUSIONCORE::Object::GetObjectType()
+{
+	return ObjectType;
+};
 
 FUSIONCORE::Object* FUSIONCORE::GetObject(size_t ObjectID)
 {

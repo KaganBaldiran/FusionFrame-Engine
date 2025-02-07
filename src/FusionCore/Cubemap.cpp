@@ -3,6 +3,7 @@
 #include "Cubemap.h"
 #include "stb_image.h"
 #include "Texture.h"
+#include "Buffer.h"
 #include "../FusionUtility/Log.h"
 
 namespace FUSIONCORE
@@ -41,7 +42,6 @@ FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &Cub
         }
     }
 
-
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -54,63 +54,6 @@ FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &Cub
 
     cubemapshader = &CubeMapShader;
 
-    float skyboxVertices[] = {
-        // positions          
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
-
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),(void*)0);
-
-    BindVAONull();
-    BindVBONull();
-
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
 }
@@ -120,63 +63,6 @@ FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningS
     this->cubemaptextureID = CubeMap;
     cubemapshader = &CubeMapShader;
 
-    float skyboxVertices[] = {
-        // positions          
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
-
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-    BindVAONull();
-    BindVBONull();
-
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
 }
@@ -184,63 +70,7 @@ FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningS
 FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader, int BinningSizeX , int BinningSizeY)
 {
     cubemapshader = &CubeMapShader;
-
-    float skyboxVertices[] = {
-        // positions          
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-    BindVAONull();
-    BindVBONull();
-
+    
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
 }
@@ -248,11 +78,12 @@ FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader, int BinningSizeX , int Binni
 FUSIONCORE::CubeMap::~CubeMap()
 {
     glDeleteTextures(1, &this->cubemaptextureID);
+    glDeleteTextures(1, &this->PrefilteredEnvMap);
+    glDeleteTextures(1, &this->ConvDiffCubeMap);
 }
 
 void FUSIONCORE::CubeMap::Draw(Camera3D &camera, const glm::vec2& windowSize)
-{
-    
+{ 
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
 
@@ -265,7 +96,7 @@ void FUSIONCORE::CubeMap::Draw(Camera3D &camera, const glm::vec2& windowSize)
     glUniformMatrix4fv(glGetUniformLocation(cubemapshader->GetID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(cubemapshader->GetID(), "ScreenRatio"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 
-    vao.Bind();
+    GetCubeBuffer()->Bind();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, this->cubemaptextureID);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -287,11 +118,13 @@ void FUSIONCORE::CubeMap::SetCubeMapTexture(GLuint CubeMapTexture)
 
 void FUSIONCORE::CubeMap::SetPreFilteredEnvMap(GLuint preFilteredEnvironmentMapID)
 {
+    glDeleteTextures(1, &this->PrefilteredEnvMap);
     this->PrefilteredEnvMap = preFilteredEnvironmentMapID;
 }
 
 void FUSIONCORE::CubeMap::SetConvDiffCubeMap(GLuint ConvDiffCubeMapID)
 {
+    glDeleteTextures(1, &this->ConvDiffCubeMap);
     this->ConvDiffCubeMap = ConvDiffCubeMapID;
 }
 
@@ -316,7 +149,7 @@ void FUSIONCORE::CubeMap::CalculateBinRadiances(Shader& ShaderBinning, Shader& S
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     workGroupSizeX = 256;
-    
+   
 
     ShaderPrefixSum.use();
 
@@ -469,65 +302,6 @@ std::pair<GLuint, int> FUSIONCORE::HDRItoCubeMap(const char* HDRI, unsigned int 
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-    
-    float skyboxVertices[] = {
-                 
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
-    VBO vbo;
-    VAO vao;
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    BindVBONull();
-    BindVAONull();
-
     glm::mat4 Projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
     glm::mat4 fboViews[] =
@@ -549,7 +323,7 @@ std::pair<GLuint, int> FUSIONCORE::HDRItoCubeMap(const char* HDRI, unsigned int 
     glUniform1i(glGetUniformLocation(HDRItoCubeMapShader, "hdriTexture"), 0);
 
     glViewport(0,0, CubeMapSize, CubeMapSize);
-    vao.Bind();
+    GetCubeBuffer()->Bind();
 
     for (size_t i = 0; i < 6; i++)
     {
@@ -618,69 +392,10 @@ std::pair<GLuint, int> FUSIONCORE::ConvolutateCubeMap(GLuint CubeMap, GLuint Con
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-    
-    float skyboxVertices[] = {
-
-       -1.0f,  1.0f, -1.0f,
-       -1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-
-       -1.0f, -1.0f,  1.0f,
-       -1.0f, -1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f,  1.0f,
-       -1.0f, -1.0f,  1.0f,
-
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-
-       -1.0f, -1.0f,  1.0f,
-       -1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f,
-       -1.0f, -1.0f,  1.0f,
-
-       -1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-       -1.0f,  1.0f,  1.0f,
-       -1.0f,  1.0f, -1.0f,
-
-       -1.0f, -1.0f, -1.0f,
-       -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-       -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f
-    };
-
-    VBO vbo;
-    VAO vao;
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    BindVBONull();
-    BindVAONull();
-
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     UseShaderProgram(ConvolutateCubeMapShader);
     glViewport(0, 0, 32, 32);
-    vao.Bind();
+    GetCubeBuffer()->Bind();
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap);
@@ -759,68 +474,10 @@ std::pair<GLuint, int> FUSIONCORE::PreFilterCubeMap(GLuint CubeMap, GLuint PreFi
 
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    float skyboxVertices[] = {
-
-       -1.0f,  1.0f, -1.0f,
-       -1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-
-       -1.0f, -1.0f,  1.0f,
-       -1.0f, -1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f, -1.0f,
-       -1.0f,  1.0f,  1.0f,
-       -1.0f, -1.0f,  1.0f,
-
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-
-       -1.0f, -1.0f,  1.0f,
-       -1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f,
-       -1.0f, -1.0f,  1.0f,
-
-       -1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-       -1.0f,  1.0f,  1.0f,
-       -1.0f,  1.0f, -1.0f,
-
-       -1.0f, -1.0f, -1.0f,
-       -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-       -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f
-    };
-
-    VBO vbo;
-    VAO vao;
-
-    vao.Bind();
-    vbo.Bind();
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    BindVBONull();
-    BindVAONull();
-
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     UseShaderProgram(PreFilterCubeMapShader);
     glViewport(0, 0, 32, 32);
-    vao.Bind();
+    GetCubeBuffer()->Bind();
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap);
@@ -912,37 +569,11 @@ std::pair<GLuint, int> FUSIONCORE::ComputeLUT(Shader& LUTshader)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    float quadVertices[] = { 
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
-    };
-
-    GLuint quadVAO, quadVBO;
-
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     glDisable(GL_BLEND);
     glUseProgram(LUTshader.GetID());
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, 512, 512);
-    glBindVertexArray(quadVAO);
+    GetRectangleBuffer()->Bind();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
@@ -956,8 +587,6 @@ std::pair<GLuint, int> FUSIONCORE::ComputeLUT(Shader& LUTshader)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &fbo);
 
-    glDeleteBuffers(1, &quadVBO);
-    glDeleteVertexArrays(1, &quadVAO);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 

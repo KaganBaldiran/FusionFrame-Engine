@@ -31,12 +31,17 @@ if(WIN32)
         FusionFrameEngine PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY "$(SolutionDir)..\\src")
 
-    include_directories(external/glfw-3.3.7.bin.WIN64/glfw-3.3.7.bin.WIN64/include/GLFW external/glew-2.1.0-win32/glew-2.1.0/include/GL external/assimp/include external/oidn-2.3.0.x64.windows/include)
+    set_target_properties(FusionFrameEngine PROPERTIES
+        VS_DEBUGGER_ENVIRONMENT "PATH=$(SolutionDir)..\\dlls;%PATH%"
+    )
+
+    include_directories(external/glfw-3.3.7.bin.WIN64/glfw-3.3.7.bin.WIN64/include/GLFW  external/freeimage/include/Source external/glew-2.1.0-win32/glew-2.1.0/include/GL external/assimp/include external/oidn-2.3.0.x64.windows/include)
     target_link_libraries(FusionFrameEngine ${CMAKE_SOURCE_DIR}/external/glfw-3.3.7.bin.WIN64/glfw-3.3.7.bin.WIN64/lib-vc2022/glfw3.lib 
                                      ${CMAKE_SOURCE_DIR}/external/glew-2.1.0-win32/glew-2.1.0/lib/Release/x64/glew32.lib
                                      ${CMAKE_SOURCE_DIR}/external/assimp/lib/assimp-vc143-mt.lib
                                      ${CMAKE_SOURCE_DIR}/external/oidn-2.3.0.x64.windows/lib/OpenImageDenoise.lib
                                      ${CMAKE_SOURCE_DIR}/external/nativefiledialog/library/nfd.lib
+                                     ${CMAKE_SOURCE_DIR}/external/freeimage/lib/release/FreeImage.lib
                                      opengl32.lib)
 
 elseif(UNIX)

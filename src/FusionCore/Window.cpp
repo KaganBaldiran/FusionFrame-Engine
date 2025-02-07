@@ -2,6 +2,12 @@
 #include <glew.h>
 #include <glfw3.h>
 #include "../FusionCore/Camera.h"
+#include "../FusionCore/Animator.hpp"
+#include "../FusionCore/Light.hpp"
+#include "../FusionCore/ShadowMaps.hpp"
+#include "../FusionCore/Shapes.hpp"
+#include "../FusionCore/Decal.hpp"
+#include "../FusionPhysics/ParticleSystem.hpp"
 
 static std::pair<bool, bool> BaseSystemsInitialised;
 
@@ -27,7 +33,6 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 	if (!BaseSystemsInitialised.first)
 	{
 		LOG_INF("GLFW initialized!");
-		BaseSystemsInitialised.first = true;
 	}
 	
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -63,7 +68,6 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 	if (!BaseSystemsInitialised.second)
 	{
 		LOG_INF("Glew initialized!");
-		BaseSystemsInitialised.second = true;
 	}
 
 	int major, minor;
@@ -78,8 +82,6 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-	glfwSetScrollCallback(window, FUSIONCORE::scrollCallback);
-
 	if (EnableGLdebug)
 	{
 		glDebugMessageCallback(debugCallback, nullptr);
@@ -90,6 +92,20 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, window_size_callback);
+	glfwSetScrollCallback(window, FUSIONCORE::scrollCallback);
+
+	if (!BaseSystemsInitialised.second && !BaseSystemsInitialised.first)
+	{
+		InitializeBuffers();
+		FUSIONCORE::InitializeAnimationUniformBuffer();
+		FUSIONPHYSICS::InitializeParticleEmitterUBO();
+		FUSIONCORE::InitializeLightsShaderStorageBufferObject();
+		FUSIONCORE::SHAPES::InitializeShapeBuffers();
+		FUSIONCORE::InitializeDecalUnitBox();
+
+		BaseSystemsInitialised.first = true;
+		BaseSystemsInitialised.second = true;
+	}
 
 	return FF_SUCCESS_CODE;
 }

@@ -34,10 +34,8 @@ int Application::Run()
 	ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
 	auto window = ApplicationWindow.GetWindow();
 
-	FUSIONUTIL::InitializeEngineBuffers();
 	FUSIONCORE::InitializeCascadedShadowMapTextureArray(4096, 1, 1024);
 	FUSIONUTIL::DefaultShaders Shaders;
-	FUSIONUTIL::InitializeDefaultShaders(Shaders);
 
 	//FUSIONCORE::Shader shader;
 	//shader.PushShaderSource(FUSIONCORE::FF_VERTEX_SHADER_SOURCE, "Shaders/Gbuffer.fs");
@@ -557,7 +555,7 @@ int Application::Run()
 
 	//std::shared_ptr<FILE> screenCaptureFile;
 
-	FUSIONCORE::Model* PixelModel = nullptr;
+	FUSIONCORE::Color Pixel = FUSIONCORE::Color(glm::vec4(0.0f));
 
 	FUSIONCORE::DecalDeferred decal0;
 	//decal0.GetTransformation().Scale({ 4.0f, 6.0f, 1.0f });
@@ -889,6 +887,8 @@ int Application::Run()
 		{
 			DebugFBO = !DebugFBO;
 		}
+
+
 		//glfwGetWindowSize(window, &WindowSize.x, &WindowSize.y);
 		WindowSize = ApplicationWindow.GetWindowSize();
 		/*if (direction != glm::vec3(0.0f))
@@ -922,7 +922,7 @@ int Application::Run()
 
 		//LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
 		//camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
-		//camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
+		camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
 		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD,0.1f);
 
 		camera2d.UpdateCameraMatrix({ 0.0f,0.0f,0.0f }, 1.0f, WindowSize);
@@ -1011,7 +1011,7 @@ int Application::Run()
 		//if (!Collision)
 		//{
 		//}
-
+	
 
 		FUSIONCORE::Material redMaterial(0.3f, 0.6f, { 1.0f,0.0f,0.0f,1.0f });
 		subdModel.DrawDeferred(camera3d, *Shaders.GbufferShader, shaderPrepe, redMaterial);
@@ -1034,37 +1034,59 @@ int Application::Run()
 		//Gbuffer.DrawSSR(camera3d, *Shaders.SSRshader, [&]() {}, WindowSize);
 		Gbuffer.DrawSceneDeferred(camera3d, *Shaders.DeferredPBRshader, [&]() {}, WindowSize, shadowMaps, cubemap, FF_COLOR_VOID, 0.3f);
 
-		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
-		{
-			auto Pixel = FUSIONCORE::ReadFrameBufferPixel(mousePos.x, mousePos.y, FF_FRAMEBUFFER_MODEL_ID_IMAGE_ATTACHMENT, FF_PIXEL_FORMAT_GL_RED, { WindowSize.x, WindowSize.y });
-			PixelModel = FUSIONCORE::GetModel(Pixel.GetRed());
-		}
-
 		//glViewport(0, 0, WindowSize.x, WindowSize.y);
 		FUSIONUTIL::GLviewport(0, 0, WindowSize.x, WindowSize.y);
 		auto gbufferSize = Gbuffer.GetFBOSize();
 		FUSIONCORE::CopyDepthInfoFBOtoFBO(Gbuffer.GetFBO(), { gbufferSize.x ,gbufferSize.y }, ScreenFrameBuffer.GetFBO());
 		ScreenFrameBuffer.Bind();
 
+		for (size_t i = 0; i < Lights.size(); i++)
+		{
+			Lights[i].Draw(camera3d, *Shaders.LightShader);
+		}
+
+		if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_RIGHT) == FF_GLFW_PRESS)
+		{
+			Pixel = FUSIONCORE::ReadFrameBufferPixel(mousePos.x, mousePos.y, FF_FRAMEBUFFER_MODEL_ID_IMAGE_ATTACHMENT, FF_PIXEL_FORMAT_GL_RED, { WindowSize.x, WindowSize.y });
+		}
 
 		emitter0.DrawParticles(*Shaders.ParticleRenderShader, grid->Meshes[0], particleTransform, camera3d);
 		cubemap.Draw(camera3d, WindowSize);
 
-		if (PixelModel)
+		size_t SelectedObjectID = static_cast<size_t>(Pixel.GetRed());
+		if (SelectedObjectID > 0)
 		{
-			if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_LEFT) == FF_GLFW_PRESS)
+			auto PixelObject = FUSIONCORE::GetObject(SelectedObjectID);
+			LOG_PARAMETERS(PixelObject);
+			if (PixelObject && PixelObject->GetObjectType() == FUSIONCORE::FF_OBJECT_TYPE_MODEL)
 			{
-				glm::vec4 PrevMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(PrevMousePos.x, PrevMousePos.y, 0.0f, 1.0f);
-				glm::vec4 CurrentMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(CurrentMousePos.x, CurrentMousePos.y, 0.0f, 1.0f);
-				glm::vec3 DeltaMouse = CurrentMouseWorldPos - PrevMouseWorldPos;
-				PixelModel->GetTransformation().Translate(glm::vec3(DeltaMouse.x, -DeltaMouse.y, DeltaMouse.z) / 10.0f);
-			}
+				auto CastObject = PixelObject->DynamicObjectCast<FUSIONCORE::Model*>();
+				if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_LEFT) == FF_GLFW_PRESS)
+				{
+					glm::vec4 PrevMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(PrevMousePos.x, PrevMousePos.y, 0.0f, 1.0f);
+					glm::vec4 CurrentMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(CurrentMousePos.x, CurrentMousePos.y, 0.0f, 1.0f);
+					glm::vec3 DeltaMouse = CurrentMouseWorldPos - PrevMouseWorldPos;
+					CastObject->GetTransformation().Translate(glm::vec3(DeltaMouse.x, -DeltaMouse.y, DeltaMouse.z) / 10.0f);
+				}
 
-			FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
-			//glPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
-			PixelModel->DrawDeferred(camera3d, *Shaders.LightShader, shaderPrepe, FUSIONCORE::Material());
-			FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
-			//glPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+				FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+				//glPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_LINE);
+				CastObject->DrawDeferred(camera3d, *Shaders.LightShader, shaderPrepe, FUSIONCORE::Material());
+				FUSIONUTIL::GLPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+				//glPolygonMode(FF_CULL_FACE_MODE_GL_FRONT_AND_BACK, FF_GL_FILL);
+			}
+			else if (PixelObject && PixelObject->GetObjectType() == FUSIONCORE::FF_OBJECT_TYPE_LIGHT)
+			{
+				auto CastObject = PixelObject->DynamicObjectCast<FUSIONCORE::Light*>();
+				if (FUSIONUTIL::GetMouseKey(window, FF_GLFW_MOUSE_BUTTON_LEFT) == FF_GLFW_PRESS)
+				{
+					glm::vec4 PrevMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(PrevMousePos.x, PrevMousePos.y, 0.0f, 1.0f);
+					glm::vec4 CurrentMouseWorldPos = glm::inverse(camera3d.viewMat) * glm::vec4(CurrentMousePos.x, CurrentMousePos.y, 0.0f, 1.0f);
+					glm::vec3 DeltaMouse = CurrentMouseWorldPos - PrevMouseWorldPos;
+					//CastObject->GetTransformation().Translate(glm::vec3(DeltaMouse.x, -DeltaMouse.y, DeltaMouse.z) / 10.0f);
+					//::UploadLightsShader(*Shaders.DeferredPBRshader);
+				}
+			}
 		}
 #ifdef ENGINE_DEBUG
 
@@ -1075,10 +1097,6 @@ int Application::Run()
 		}
 		if (showDebug)
 		{
-			for (size_t i = 0; i < Lights.size(); i++)
-			{
-				Lights[i].Draw(camera3d, *Shaders.LightShader);
-			}
 			/*Capsule0.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			Box1.DrawBoxMesh(camera3d, *Shaders.LightShader);
 			SofaBox.DrawBoxMesh(camera3d, *Shaders.LightShader);
@@ -1132,6 +1150,12 @@ int Application::Run()
 		};
 
 		ScreenFrameBuffer.Draw(camera3d, *Shaders.FBOShader, DebugFbo, WindowSize, true, 0.7f, 0.1f, 2.0f, 1.7f, 1.6f);
+
+		static bool AllowPressP = true;
+		if (FUSIONUTIL::IsKeyPressedOnce(window, FF_KEY_P, AllowPressP))
+		{
+			FUSIONCORE::SaveFrameBufferImage(WindowSize.x, WindowSize.y, "ScreenShot.png", GL_COLOR_ATTACHMENT0);
+		}
 
 		//glfwPollEvents();
 		ApplicationWindow.SwapBuffers();

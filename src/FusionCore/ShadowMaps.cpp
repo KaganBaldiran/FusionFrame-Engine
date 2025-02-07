@@ -3,6 +3,7 @@
 #include <glew.h>
 #include <glfw3.h>
 #include "../FusionUtility/Initialize.h"
+#include "../FusionUtility/Hashing.hpp"
 
 namespace FUSIONCORE
 {
@@ -145,7 +146,8 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 		for (size_t i = 0; i < CascadedDirectionalShadowMapsCount; i++)
 		{
 			CascadedDirectionalShadowMaps[i]->CurrentGlobalArrayIndex = i;
-			CascadedMapMetaData CascadedMetaData = CascadedDirectionalShadowMaps[i]->GetMetaData();
+			CascadedMapMetaData &CascadedMetaData = CascadedDirectionalShadowMaps[i]->GetMetaData();
+			//FUSIONUTIL::AlignedBuffer<char> ShadowMetaData;
 			
 			std::copy(std::begin(CascadedMetaData.LightMatrices), std::end(CascadedMetaData.LightMatrices), std::begin(metaDataGPU.lightMatrices) + (i * FF_MAX_CASCADES));
 			std::copy(std::begin(CascadedMetaData.PositionAndSize), std::end(CascadedMetaData.PositionAndSize), std::begin(metaDataGPU.positionAndSize) + (i * FF_MAX_CASCADES));
@@ -170,7 +172,10 @@ void FUSIONCORE::CalculateLightSpaceMatricesOnGPU(Camera3D& camera, std::vector<
 	LightSpaceMatrixComputeShader.setMat4("ViewMat", camera.viewMat);
 	LightSpaceMatrixComputeShader.setFloat("CameraAspectRatio", camera.GetCameraAspectRatio());
 
-	glDispatchCompute(CascadedDirectionalShadowMapsCount,1, 1);
+	int WorkGroupSize = 8;
+	int WorkGroupCount = (CascadedDirectionalShadowMapsCount + WorkGroupSize - 1) / WorkGroupSize;
+
+	glDispatchCompute(WorkGroupCount,1, 1);
 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	UseShaderProgram(0);
@@ -372,7 +377,7 @@ void FUSIONCORE::OmniShadowMap::BindShadowMapLight(Light& light)
 		}
 		OmniShadowMapBoundLightCount++;
 	}
-	FUSIONCORE::LightDatas[light.GetLightID()].ShadowMapIndex = OmniShadowMapBoundLightCount;
+	FUSIONCORE::LightDatas[light.GetLightID()].first.ShadowMapIndex = OmniShadowMapBoundLightCount;
 	BoundLightID = light.GetLightID();
 }
 
@@ -687,7 +692,7 @@ void FUSIONCORE::CascadedDirectionalShadowMap::BindShadowMapLight(Light& light)
 		}
 		DirectionalShadowMapBoundLightCount++;
 	}
-	FUSIONCORE::LightDatas[light.GetLightID()].ShadowMapIndex = DirectionalShadowMapBoundLightCount;
+	FUSIONCORE::LightDatas[light.GetLightID()].first.ShadowMapIndex = DirectionalShadowMapBoundLightCount;
 	BoundLightID = light.GetLightID();
 	this->MetaData.LightDirection = glm::vec4(light.GetLightDirectionPosition(),0.0f);
 }

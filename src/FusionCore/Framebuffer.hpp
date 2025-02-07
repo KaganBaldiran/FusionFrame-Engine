@@ -21,11 +21,6 @@
 
 namespace FUSIONCORE
 {
-	//internal , do not call
-	//Planned to be hidden soon
-	void InitializeFBObuffers();
-	FUSIONCORE::VAO* GetSquareBuffer();
-
 	void DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader,float Gamma = 0.9f, float Exposure = 1.0f);
 
 	enum FBOattachmentType
@@ -196,6 +191,7 @@ namespace FUSIONCORE
 	 * @return The color of the pixel.
 	 */
 	FUSIONFRAME_EXPORT_FUNCTION Color ReadFrameBufferPixel(int Xcoord, int Ycoord, unsigned int FramebufferAttachmentMode, GLenum AttachmentFormat, glm::vec2 CurrentWindowSize);
+	FUSIONFRAME_EXPORT_FUNCTION void SaveFrameBufferImage(const int& width, const int& height,const char* path, const GLenum& Attachment);
 }
 
 

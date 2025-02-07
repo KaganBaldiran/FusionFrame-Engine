@@ -251,18 +251,15 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 		
 		Vec2<double> deltaMouse(CurrentMousePos - MousePosCamera);
 
-		if (ClampZoom)
+		if (ScrollAmount.y == 1)
 		{
-			if (ScrollAmount.y == 1)
-			{
-				Zoom += ZoomSpeed;
-				Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
-			}
-			if (ScrollAmount.y == -1)
-			{
-				Zoom -= ZoomSpeed;
-				Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
-			}
+			Zoom += ZoomSpeed;
+			Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
+		}
+		if (ScrollAmount.y == -1)
+		{
+			Zoom -= ZoomSpeed;
+			Zoom = glm::clamp(Zoom, MinZoom, MaxZoom);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
@@ -298,8 +295,9 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 				glm::vec3 deltaPosition(PositionVecLength * glm::vec3(deltaMouse.y / WindowSize.y) * Up);
 				Position += deltaPosition;
 				targetPosition += deltaPosition;
-	}
-}
+
+	        }
+        }
 
 #endif 
 #ifdef FF_CAMERA_LAYOUT_INDUSTRY_STANDARD_FREE_ROTATION

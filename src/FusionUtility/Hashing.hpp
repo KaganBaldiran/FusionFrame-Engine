@@ -51,4 +51,7 @@ namespace FUSIONUTIL
 #endif
 		}
 	};
+
+	template <typename T>
+	using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
 }

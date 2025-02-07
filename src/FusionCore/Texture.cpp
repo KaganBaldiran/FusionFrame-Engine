@@ -198,7 +198,7 @@ void FUSIONCORE::Texture2D::RenderMipmaps(const uint& MipMapCount,Shader& Mipmap
 	static std::shared_ptr<Framebuffer> MipmapBuffer = std::make_shared<Framebuffer>();
 	MipmapBuffer->Bind();
 	MipmapShader.use();
-	FUSIONCORE::GetSquareBuffer()->Bind();
+	GetRectangleBuffer()->Bind();
 	glDisable(GL_DEPTH_TEST);
 
 	glActiveTexture(GL_TEXTURE1);

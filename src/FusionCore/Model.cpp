@@ -21,6 +21,8 @@ FUSIONCORE::Model::Model()
     IDmodelMap[ModelID] = this;
     counter++;
 
+    this->ObjectType = FF_OBJECT_TYPE_MODEL;
+
     this->InstanceDataVBO = nullptr;
     this->InstanceCount = 0;
 }
@@ -39,7 +41,7 @@ FUSIONCORE::Model::Model(std::string const& filePath, bool Async, bool Animation
     this->InstanceDataVBO = nullptr;
     this->InstanceCount = 0;
 
-
+    this->ObjectType = FF_OBJECT_TYPE_MODEL;
 }
 
 FUSIONCORE::Model::Model(Model& Other)
@@ -50,6 +52,7 @@ FUSIONCORE::Model::Model(Model& Other)
         auto &newMesh = Meshes.emplace_back();
         newMesh.CopyMesh(mesh);
     }
+    this->ObjectType = FF_OBJECT_TYPE_MODEL;
 }
 
 void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader,const std::function<void()> &ShaderPreperations)
@@ -57,7 +60,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader,const std::functio
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
         //shader.setBool("EnableAnimation", false);
@@ -75,7 +78,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, Material material
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
         shader.setBool("EnableAnimation", false);
@@ -93,7 +96,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::functi
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", 0);
         shader.setBool("EnableAnimation", false);
@@ -111,7 +114,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::functi
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", ShadowMaps.size());
         for (size_t i = 0; i < ShadowMaps.size(); i++)
@@ -136,7 +139,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, const std::functi
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", ShadowMaps.size());
         for (size_t i = 0; i < ShadowMaps.size(); i++)
@@ -165,7 +168,7 @@ void FUSIONCORE::Model::DrawInstanced(Camera3D& camera, Shader& shader, const st
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setInt("OmniShadowMapCount", ShadowMaps.size());
         for (size_t i = 0; i < ShadowMaps.size(); i++)
@@ -217,7 +220,7 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         material.SetMaterialShader(shader);
 
@@ -243,7 +246,7 @@ void FUSIONCORE::Model::DrawDeferredInstanced(Camera3D& camera, Shader& shader, 
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
 
         if (InstanceDataVBO.IsVBOchanged())
@@ -269,7 +272,7 @@ void FUSIONCORE::Model::DrawDeferredInstancedImportedMaterial(Camera3D& camera, 
     auto shaderPrep = [&](Material& material) {
         return [&]() {
             this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-            shader.setFloat("ModelID", this->GetModelID());
+            shader.setFloat("ModelID", this->GetObjectID());
             shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
             material.SetMaterialShader(shader);
 
@@ -297,7 +300,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, const std
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
 
         AnimationUniformBufferObject->Bind();
@@ -321,7 +324,7 @@ void FUSIONCORE::Model::DrawDeferred(Camera3D& camera, Shader& shader, const std
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setBool("EnableAnimation", false);
         ShaderPreperations();
@@ -337,7 +340,7 @@ void FUSIONCORE::Model::DrawDeferredIndirect(Camera3D& camera, Shader& shader, c
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setBool("EnableAnimation", false);
         ShaderPreperations();
@@ -353,7 +356,7 @@ void FUSIONCORE::Model::DrawDeferredImportedMaterial(Camera3D& camera, Shader& s
 {
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setBool("EnableAnimation", false);
         ShaderPreperations();
@@ -371,7 +374,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setInt("OmniShadowMapCount", 0);
         shader.setBool("EnableAnimation", false);
         ShaderPreperations();
@@ -388,7 +391,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setInt("OmniShadowMapCount", ShadowMaps.size());
         for (size_t i = 0; i < ShadowMaps.size(); i++)
         {
@@ -411,7 +414,7 @@ void FUSIONCORE::Model::Draw(Camera3D& camera, Shader& shader, std::vector<Mater
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setInt("OmniShadowMapCount", ShadowMaps.size());
         for (size_t i = 0; i < ShadowMaps.size(); i++)
         {
@@ -438,7 +441,7 @@ void FUSIONCORE::Model::DrawImportedMaterial(Camera3D& camera, Shader& shader, c
     std::function<void()> shaderPrep = [&]() {
         this->GetTransformation().SetModelMatrixUniformLocation(shader.GetID(), "model");
         FUSIONCORE::SendLightsShader(shader);
-        shader.setFloat("ModelID", this->GetModelID());
+        shader.setFloat("ModelID", this->GetObjectID());
         shader.setFloat("ObjectScale", this->GetTransformation().scale_avg);
         shader.setBool("EnableAnimation", false);
         ShaderPreperations();

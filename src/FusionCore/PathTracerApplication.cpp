@@ -5,8 +5,8 @@
 #include <memory>
 #include <unordered_set>
 
-//#include "FusionCore/PathTracer/PathTracer.hpp"
-//#include "../external/nativefiledialog/include/nfd.h"
+#include "FusionCore/PathTracer/PathTracer.hpp"
+#include "../external/nativefiledialog/include/nfd.h"
 
 #define SPEED 6.0f
 #define CAMERA_CLOSE_PLANE 0.5f
@@ -147,7 +147,6 @@ int PathTracingDemo()
 	FUSIONCORE::Window ApplicationWindow;
 	ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
 
-	FUSIONUTIL::InitializeEngineBuffers();
 	FUSIONCORE::InitializeCascadedShadowMapTextureArray(256, 1, 256);
 	FUSIONUTIL::DefaultShaders Shaders;
 

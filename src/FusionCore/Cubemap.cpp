@@ -56,6 +56,8 @@ FUSIONCORE::CubeMap::CubeMap(std::vector<std::string> texture_faces ,Shader &Cub
 
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
+
+    ImportedHDRCount = 0;
 }
 
 FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningSizeX, int BinningSizeY)
@@ -65,6 +67,8 @@ FUSIONCORE::CubeMap::CubeMap(GLuint CubeMap, Shader& CubeMapShader, int BinningS
 
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
+
+    ImportedHDRCount = 0;
 }
 
 FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader, int BinningSizeX , int BinningSizeY)
@@ -73,6 +77,8 @@ FUSIONCORE::CubeMap::CubeMap(Shader& CubeMapShader, int BinningSizeX , int Binni
     
     BinningSize = { BinningSizeX ,BinningSizeY };
     InitializeRadianceBuffers();
+
+    ImportedHDRCount = 0;
 }
 
 FUSIONCORE::CubeMap::~CubeMap()
@@ -603,6 +609,7 @@ int FUSIONCORE::ImportCubeMap(const char* HDRIfilePath , unsigned int CubeMapSiz
         cubemap.SetPreFilteredEnvMap(PreFilterCubeMap(CubeMapTexture.first, shaders.PreFilterCubeMapShader->GetID()).first);
         cubemap.SetCubeMapTexture(CubeMapTexture.first);
 
+        cubemap.BookKeepImportedHDRI();
         LOG_INF("Imported HDRI :: " + std::string(HDRIfilePath));
     }
     else if (CubeMapTexture.second == FF_HDRI_INCOMPATIBLE_FILE)

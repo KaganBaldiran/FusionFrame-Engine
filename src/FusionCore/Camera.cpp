@@ -168,7 +168,7 @@ void FUSIONCORE::Camera3D::SetZoomSensitivity(float Speed)
 }
 #endif
 
-void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& WindowSize, const int& CameraLayout,float speed)
+void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::vec2& WindowSize, const int& CameraLayout,float speed)
 {
 	this->CameraLayout = CameraLayout;
 	if (CameraLayout == FF_CAMERA_LAYOUT_FIRST_PERSON)
@@ -211,22 +211,22 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 		if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS))
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			glm::vec2 HalfWindowSize = { glm::floor(WindowSize.x * 0.5f) ,glm::floor(WindowSize.y * 0.5f) };
 			if (firstclick)
 			{
-				glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
+				glfwSetCursorPos(window, HalfWindowSize.x, HalfWindowSize.y);
 				firstclick = false;
 			}
 
-			Vec2<double> mousepos;
-
+			glm::dvec2 mousepos;
 			glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
 
-			Vec2<float> rot;
+			glm::vec2 rot;
 
-			rot.x = sensitivity * (float)(mousepos.y - (WindowSize.y * 0.5f)) / WindowSize.y;
-			rot.y = sensitivity * (float)(mousepos.x - (WindowSize.x * 0.5f)) / WindowSize.x;
+			rot.x = sensitivity * (float)(((float)mousepos.y - HalfWindowSize.y) / WindowSize.y);
+			rot.y = sensitivity * (float)(((float)mousepos.x - HalfWindowSize.x) / WindowSize.x);
 
-			glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rot.x), glm::normalize(glm::cross(Orientation, Up)));
+			glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians( -rot.x), glm::normalize(glm::cross(Orientation, Up)));
 
 			if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
 			{
@@ -307,10 +307,11 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 		if (!Break)
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			glm::vec2 HalfWindowSize = { glm::floor(WindowSize.x * 0.5f) ,glm::floor(WindowSize.y * 0.5f) };
 
 			if (firstclick)
 			{
-				glfwSetCursorPos(window, (WindowSize.x / 2), (WindowSize.y / 2));
+				glfwSetCursorPos(window, HalfWindowSize.x, HalfWindowSize.y);
 				firstclick = false;
 			}
 
@@ -319,8 +320,8 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 
 			Vec2<float> rot;
 
-			rot.x = CameraSensitivity * (float)(mousepos.y - (WindowSize.y / 2)) / WindowSize.y;
-			rot.y = CameraSensitivity * (float)(mousepos.x - (WindowSize.x / 2)) / WindowSize.x;
+			rot.x = sensitivity * (float)(((float)mousepos.y - HalfWindowSize.y) / WindowSize.y);
+			rot.y = sensitivity * (float)(((float)mousepos.x - HalfWindowSize.x) / WindowSize.x);
 
 			glm::vec3 cameraToTarget = targetPosition - Position;
 			float distanceToTarget = glm::length(cameraToTarget);
@@ -350,10 +351,11 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS && (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS))
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			glm::vec2 HalfWindowSize = { glm::floor(WindowSize.x * 0.5f) ,glm::floor(WindowSize.y * 0.5f) };
 
 			if (firstclick)
 			{
-				glfwSetCursorPos(window, (WindowSize.x * 0.5f), (WindowSize.y * 0.5f));
+				glfwSetCursorPos(window, HalfWindowSize.x, HalfWindowSize.y);
 				firstclick = false;
 			}
 
@@ -362,8 +364,8 @@ void FUSIONCORE::Camera3D::HandleInputs(GLFWwindow* window, const glm::ivec2& Wi
 
 			Vec2<float> rot;
 
-			rot.x = CameraSensitivity * (float)(mousepos.y - (WindowSize.y * 0.5f)) / WindowSize.y;
-			rot.y = CameraSensitivity * (float)(mousepos.x - (WindowSize.x * 0.5f)) / WindowSize.x;
+			rot.x = sensitivity * (float)(((float)mousepos.y - HalfWindowSize.y) / WindowSize.y);
+			rot.y = sensitivity * (float)(((float)mousepos.x - HalfWindowSize.x) / WindowSize.x);
 
 			glm::vec3 cameraToTarget = targetPosition - Position;
 			float distanceToTarget = glm::length(cameraToTarget);

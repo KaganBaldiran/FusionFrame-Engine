@@ -4,6 +4,7 @@
 #include <glew.h>
 #include <glfw3.h>
 #include "Framebuffer.hpp"
+#include <FreeImage.h>
 
 FUSIONCORE::Texture2D::Texture2D()
 {
@@ -16,10 +17,71 @@ FUSIONCORE::Texture2D::Texture2D()
 	IsResident = false;
 }
 
+FUSIONCORE::Texture2D::Texture2D(const unsigned char* data, const int& Width, const int& Height, const int& ChannelCount, const char* FilePath,
+	                             GLuint Wrap_S_filter, GLuint Wrap_T_filter, GLenum TextureType, GLenum PixelType, GLuint Mag_filter, GLuint Min_filter, bool Flip)
+{
+	PathData = std::string(FilePath);
+	this->PixelType = PixelType;
+	this->TextureType = TextureType;
+	TextureHandle = 0;
+	IsResident = false;
+
+	glGenTextures(1, &id);
+	glBindTexture(TextureType, id);
+
+	if (!data)
+	{
+		TextureState = FF_TEXTURE_ERROR;
+		LOG_ERR("Error importing the texture! :: " << FilePath);
+		return;
+	}
+
+	channels = ChannelCount;
+	width = Width;
+	height = Height;
+
+	GLenum format;
+	if (channels == 1)
+	{
+		format = GL_RED;
+	}
+	else if (channels == 2)
+	{
+		format = GL_RG;
+	}
+	else if (channels == 3)
+	{
+		format = GL_RGB;
+	}
+	else if (channels == 4)
+	{
+		format = GL_RGBA;
+	}
+	else
+	{
+		TextureState = FF_TEXTURE_ERROR;
+		LOG_ERR("Unrecognised texture format! :: " << FilePath);
+		return;
+	}
+
+	this->InternalFormat = format;
+
+	glTexImage2D(TextureType, 0, format, width, height, 0, format, PixelType, data);
+	glTextureParameteri(TextureType, GL_TEXTURE_MAG_FILTER, Mag_filter);
+	glTextureParameteri(TextureType, GL_TEXTURE_MIN_FILTER, Min_filter);
+	glTextureParameteri(TextureType, GL_TEXTURE_WRAP_S, Wrap_S_filter);
+	glTextureParameteri(TextureType, GL_TEXTURE_WRAP_T, Wrap_T_filter);
+
+	glGenerateMipmap(TextureType);
+
+	glBindTexture(TextureType, 0);
+
+	LOG_INF("Texture Imported : " << PathData);
+	TextureState = FF_TEXTURE_SUCCESS;
+}
+
 FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuint Wrap_T_filter,GLenum TextureType , GLenum PixelType , GLuint Mag_filter , GLuint Min_filter, bool Flip)
 {
-	static uint TextureIDIterator = 0;
-
 	PathData = std::string(filePath);
 	this->PixelType = PixelType;
 	this->TextureType = TextureType;
@@ -29,10 +91,28 @@ FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuin
 	glGenTextures(1, &id);
 	glBindTexture(TextureType, id);
 
-	stbi_set_flip_vertically_on_load(Flip);
+	bool IsDDS = PathData.find(".dds") != std::string::npos;
 
-	unsigned char* data = stbi_load(filePath, &width, &height, &channels, NULL);
-	if (!data)
+	unsigned char* data;
+	FIBITMAP* bitmap;
+
+	if (!IsDDS)
+	{
+		stbi_set_flip_vertically_on_load(Flip);
+		data = stbi_load(filePath, &width, &height, &channels, NULL);
+	}
+	else
+	{
+		bitmap = FreeImage_Load(FIF_DDS,filePath, DDS_DEFAULT);
+		data = FreeImage_GetBits(bitmap);
+
+		width = FreeImage_GetWidth(bitmap);
+	    height = FreeImage_GetHeight(bitmap);
+		int bpp = FreeImage_GetBPP(bitmap);
+		channels = (bpp == 32) ? 4 : ((bpp == 24) ? 3 : 1);
+	}
+
+	if (!data || (IsDDS && !bitmap))
 	{
 		TextureState = FF_TEXTURE_ERROR;
 		LOG_ERR("Error importing the texture! :: " << filePath);
@@ -73,12 +153,20 @@ FUSIONCORE::Texture2D::Texture2D(const char* filePath,GLuint Wrap_S_filter,GLuin
 
 	glGenerateMipmap(TextureType);
 
-	stbi_image_free(data);
 	glBindTexture(TextureType, 0);
 
-	if (Flip)
+	if (IsDDS && bitmap)
 	{
-		stbi_set_flip_vertically_on_load(false);
+		FreeImage_Unload(bitmap);
+	}
+	else
+	{
+		stbi_image_free(data);
+
+		if (Flip)
+		{
+			stbi_set_flip_vertically_on_load(false);
+		}
 	}
 
 	LOG_INF("Texture Imported : " << PathData);

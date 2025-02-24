@@ -1,20 +1,19 @@
 #include "PathTracer.hpp"
 #include <glew.h>
 #include <glfw3.h>
-#include "../../FusionUtility/Log.h"
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
-#include "../../FusionUtility/StopWatch.h"
 #include <algorithm>
-#include "../../FusionCore/Color.hpp"
-#include "../../FusionCore/Light.hpp"
-#include "../../FusionCore/Decal.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_internal.h"
 #include <omp.h>
+#include <ImGuizmo.h>
+
+template <typename T>
+using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;
 
 inline glm::vec3 MinVec3(const glm::vec3& input0,const glm::vec3& input1)
 {
@@ -155,7 +154,7 @@ inline float ComputeSAHcost(const float& LeftNodeArea, const float& RightNodeAre
 }
 
 inline float EstimateSplitTopDown(BVHnode& Node, const int& Axis, const float& SplitPosition,
-					FUSIONUTIL::AlignedBuffer<glm::vec3>& TriangleCenters,
+					AlignedBuffer<glm::vec3>& TriangleCenters,
 					std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
 {
 	BVHnode Child0;
@@ -211,7 +210,7 @@ inline float EstimateSplitBottomUp(BVHnode& Node, const int& Axis, const float& 
 }
 
 inline void SplitTopDown(int &BestAxis,float& BestPos,float& BestCost,BVHnode& Node,
-	              FUSIONUTIL::AlignedBuffer<glm::vec3>& TriangleCenters,
+	              AlignedBuffer<glm::vec3>& TriangleCenters,
 	              std::vector<std::pair<glm::vec3, glm::vec3>>& TriangleMinMax)
 {
 	constexpr int TestCountPerAXis = 35;
@@ -277,12 +276,12 @@ inline void SplitBottomUp(int& BestAxis, float& BestPos, float& BestCost, BVHnod
 
 inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 						int ModelBoundingBoxIndex,
-						FUSIONUTIL::AlignedBuffer<glm::vec4>& TrianglePositions,
-						FUSIONUTIL::AlignedBuffer<glm::vec4>& TriangleNormals,
-						FUSIONUTIL::AlignedBuffer<glm::vec2>& TriangleUVs,
-						FUSIONUTIL::AlignedBuffer<glm::vec3> &TriangleCenters,
-						FUSIONUTIL::AlignedBuffer<glm::vec4> &TriangleTangentsBitangents,
-						std::map<unsigned int, unsigned int> &EmissiveObjectIndices,
+						AlignedBuffer<glm::vec4>& TrianglePositions,
+						AlignedBuffer<glm::vec4>& TriangleNormals,
+						AlignedBuffer<glm::vec2>& TriangleUVs,
+						AlignedBuffer<glm::vec3> &TriangleCenters,
+						AlignedBuffer<glm::vec4> &TriangleTangentsBitangents,
+						std::map<unsigned int, std::pair<unsigned int, float>> &EmissiveObjectIndices,
 						std::vector<std::pair<glm::vec3, glm::vec3>> &TriangleMinMax,
 	                    int MaxDepth)
 {
@@ -346,12 +345,12 @@ inline void ConstructTopDownBVH(std::vector<BVHnode> &BVHNodes,
 				{
 					if (Indexi && !IndexSwap)
 					{
-						EmissiveObjectIndices[swap] = swap;
+						EmissiveObjectIndices[swap] = { swap,EmissiveObjectIndices[i].second };
 						EmissiveObjectIndices.erase(i);
 					}
 					else if (IndexSwap && !Indexi)
 					{
-						EmissiveObjectIndices[i] = i;
+						EmissiveObjectIndices[i] = {i,EmissiveObjectIndices[swap].second };
 						EmissiveObjectIndices.erase(swap);
 					}
 				}
@@ -451,13 +450,13 @@ inline void ConstructBottomUpBVH(std::vector<BVHnode>& BVHNodes,
 }
 
 bool ProcessMaterial(FUSIONCORE::Material*& material,
-					FUSIONUTIL::AlignedBuffer<GLuint64> &TextureHandles,
-					FUSIONUTIL::AlignedBuffer<glm::vec4> &ModelAlbedos,
-					FUSIONUTIL::AlignedBuffer<float> &ModelRoughness,
-					FUSIONUTIL::AlignedBuffer<float> &ModelMetallic,
-					FUSIONUTIL::AlignedBuffer<glm::vec2> &ModelAlphas,
-					FUSIONUTIL::AlignedBuffer<glm::vec4>& ModelEmissives,
-					FUSIONUTIL::AlignedBuffer<glm::vec2>& ModelClearCoats)
+					AlignedBuffer<GLuint64> &TextureHandles,
+					AlignedBuffer<glm::vec4> &ModelAlbedos,
+					AlignedBuffer<float> &ModelRoughness,
+					AlignedBuffer<float> &ModelMetallic,
+					AlignedBuffer<glm::vec2> &ModelAlphas,
+					AlignedBuffer<glm::vec4>& ModelEmissives,
+	                AlignedBuffer<glm::vec2>& ModelClearCoats)
 {
 	auto AlbedoTexture = material->GetTextureMap(FF_TEXTURE_DIFFUSE);
 	auto NormalTexture = material->GetTextureMap(FF_TEXTURE_NORMAL);
@@ -499,11 +498,21 @@ FUSIONCORE::PathTracer::PathTracer(const unsigned int& width, const unsigned int
 	ConstructBVH(ModelsToTrace,Shaders);
 
 	ShouldDisplayTheEnv = false;
+	EnableDenoising = true;
 	TargetBounceCount = 15;
 	EnvironmentLightIntensity = 1.0f;
+	//bool value to turn on/off - Distance - Intensity - Secondary paths bounce count
+	DoFattributes = { 0.0f,5.0f,0.01f,10 };
+	IsDoFenabled = false;
+	DoFbounceCount = 10;
+
+	PreviouslyUsedCubeMap = nullptr;
+	PreviousImportedHDRIcount = 0;
+
+	RandomSeed = std::make_unique<std::uniform_real_distribution<float>>(0.01f, 1.0f);
 }
 
-void FUSIONCORE::PathTracer::PathTracerDashBoard(std::function<void()> OnImportModel)
+void FUSIONCORE::PathTracer::PathTracerDashBoard(std::function<void()> OnImportModel, std::function<void()> OnSaveScreen, std::function<void()> AdditionalFunctionality)
 {
 	ImGui::Begin("Path Tracer Settings");
 	ImGui::Text(("Sample: " + std::to_string(std::max(this->ProgressiveRenderedFrameCount,0)) + " / " + std::to_string(this->TargetSampleCount)).c_str());
@@ -511,20 +520,42 @@ void FUSIONCORE::PathTracer::PathTracerDashBoard(std::function<void()> OnImportM
 	{
 		ShouldRestart = true;
 	}
+	ImGui::SameLine();
 	if (ImGui::Button("Import Model"))
 	{
 		OnImportModel();
 		ShouldRestart = true;
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("Save Screen"))
+	{
+		OnSaveScreen();
+	}
+	ImGui::SameLine();
 	if (ImGui::Button("Conclude Rendering"))
 	{
 		TargetSampleCount = ProgressiveRenderedFrameCount;
 	}
-	if (ImGui::SliderInt("Bounce Count", &TargetBounceCount, 1, 20)) ShouldRestart = true;
-	if (ImGui::SliderInt("Sample Count", &TargetSampleCount, 1, 10000)) ShouldRestart = true;
+	ImGui::SeparatorText("Parameters");
+	if (ImGui::SliderInt("Bounce Count", &TargetBounceCount, 1, 100)) ShouldRestart = true;
+	if (ImGui::SliderInt("Sample Count", &TargetSampleCount, 1, 15000)) ShouldRestart = true;
 	if (ImGui::SliderFloat("Environment Light Intensity", &EnvironmentLightIntensity, 0.0f , 10.0f)) ShouldRestart = true;
 	if (ImGui::Checkbox("Display BVH", &ShouldDisplayBVHv));
-	if (ImGui::Checkbox("Display Environment Map", &ShouldDisplayTheEnv)) ShouldRestart = true;;
+	if (ImGui::Checkbox("Display Environment Map", &ShouldDisplayTheEnv)) ShouldRestart = true;
+	if (ImGui::Checkbox("Enable Denoising", &EnableDenoising)) ShouldRestart = true;
+	if (ImGui::Checkbox("Enable DoF", &IsDoFenabled))
+	{
+		ShouldRestart = true;
+		DoFattributes.x = (int)IsDoFenabled;
+	}
+	if (ImGui::SliderFloat("DoF distance", &DoFattributes.y, 0.0f, 100.0f)) ShouldRestart = true;
+	if (ImGui::SliderFloat("DoF intensity", &DoFattributes.z, 0.0f, 2.0f)) ShouldRestart = true;
+	if (ImGui::SliderInt("DoF Bounce Count", &DoFbounceCount, 1, 50))
+	{
+		ShouldRestart = true;
+		DoFattributes.w = DoFbounceCount;
+	}
+	AdditionalFunctionality();
 	ImGui::End();
 }
 
@@ -540,19 +571,22 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	glm::vec2 WindowSize = window.GetWindowSize(); 
 	shader.use();
 
-	if (ShouldRestart || camera.IsCameraMovedf() || window.IsWindowResizedf() || shader.IsRecompiled())
+	if (ShouldRestart || camera.IsCameraMovedf() || window.IsWindowResizedf() || shader.IsRecompiled() ||  
+		PreviouslyUsedCubeMap != Cubemap || PreviousImportedHDRIcount != Cubemap->GetImportedHDRICount())
 	{
 		ProgressiveRenderedFrameCount = -1;
 		IsDenoised = false;
 		ShouldRestart = false;
 		shader.setVec2("WindowSize", WindowSize);
 		shader.setVec3("CameraPosition", camera.Position);
+		shader.setVec4("DoFattributes", DoFattributes);
 		shader.setMat4("ProjectionViewMat", camera.ProjectionViewMat);
 		shader.setInt("ModelCount", ModelCount);
 		shader.setInt("AlbedoCount", AlbedoCount);
 		shader.setInt("NodeCount", NodeCount);
 		shader.setInt("TriangleCount", TriangleCount);
 		shader.setFloat("EnvironmentLightIntensity", EnvironmentLightIntensity);
+		shader.setFloat("TotalEmissiveArea", TotalEmissiveArea);
 		shader.setBool("ShouldDisplayTheEnv", ShouldDisplayTheEnv);
 		shader.setInt("BounceCount", TargetBounceCount);
 		BVHvec4Data.BindSSBO(20);
@@ -560,7 +594,22 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 		MaterialFloatValuesData.BindSSBO(17);
 		MeshData.BindSSBO(18);
 
+		PreviouslyUsedCubeMap = Cubemap;
+		PreviousImportedHDRIcount = Cubemap->GetImportedHDRICount();
+
+		if (Cubemap != nullptr)
+		{
+			glActiveTexture(GL_TEXTURE18);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
+			shader.setInt("EnvironmentCubeMap", 18);
+
+			glActiveTexture(GL_TEXTURE19);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetConvDiffCubeMap());
+			shader.setInt("ConvolutedEnvironmentCubeMap", 19);
+		}
+
 		timer.Set();
+		InitialTime = FUSIONUTIL::GetTime();
 	}
 	else if(ProgressiveRenderedFrameCount < TargetSampleCount) ProgressiveRenderedFrameCount++;
 	
@@ -584,21 +633,14 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	if (ProgressiveRenderedFrameCount < TargetSampleCount)
 	{
 		float Time = glfwGetTime();
-		std::uniform_real_distribution<float> RandomSeed(0.01f, 1.0f);
+
 		std::default_random_engine engine(Time);
 
 		shader.setFloat("Time", Time);
 		shader.setFloat("CameraPlaneDistance", camera.FarPlane - camera.NearPlane);
-		shader.setFloat("RandomSeed", RandomSeed(engine));
+		shader.setFloat("RandomSeed", (*RandomSeed)(engine));
 		shader.setInt("TargetSampleCount", TargetSampleCount);
 
-		if (Cubemap != nullptr)
-		{
-			glActiveTexture(GL_TEXTURE8);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, Cubemap->GetCubeMapTexture());
-			shader.setInt("EnvironmentCubeMap", 8);
-		}
-	    
 		GLuint workGroupSizeX = 32;
 		GLuint workGroupSizeY = 32;
 
@@ -611,7 +653,7 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 	}
 	else
 	{
-		if (!IsDenoised)
+		if (!IsDenoised && EnableDenoising)
 		{
 			IsDenoised = true;
 
@@ -636,13 +678,11 @@ void FUSIONCORE::PathTracer::Render(Window& window,Shader& shader,Camera3D& came
 			
 			LOG_INF("----------------- Path tracing meta data -----------------" << "\n"
 				<<
-				"Render time (seconds): " << timer.GetSeconds() << "\n" 
+				"Render time (seconds): " <<  FUSIONUTIL::GetTime() - InitialTime << "\n"
 				<<
 				"Sample count: " << TargetSampleCount << "\n"
 				<<
 				"BVH node count: " << this->NodeCount << "\n"
-				//<<
-				//"Model count: " << this->Models.size() << "\n"
 			);
 		}
 	}
@@ -669,25 +709,25 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	this->TopDownBVHnodes.clear();
 	this->BottomUpBVHNodes.clear();
 
-	FUSIONUTIL::AlignedBuffer<glm::mat4> ModelMatrixes;
-	FUSIONUTIL::AlignedBuffer<glm::vec3> TriangleCenters;
-	FUSIONUTIL::AlignedBuffer<glm::vec4> TrianglePositions;
-	FUSIONUTIL::AlignedBuffer<glm::vec4> TriangleNormals;
-	FUSIONUTIL::AlignedBuffer<glm::vec4> TriangleTangentsBitangents;
-	FUSIONUTIL::AlignedBuffer<glm::vec2> TriangleUVs;
+	AlignedBuffer<glm::mat4> ModelMatrixes;
+	AlignedBuffer<glm::vec3> TriangleCenters;
+	AlignedBuffer<glm::vec4> TrianglePositions;
+	AlignedBuffer<glm::vec4> TriangleNormals;
+	AlignedBuffer<glm::vec4> TriangleTangentsBitangents;
+	AlignedBuffer<glm::vec2> TriangleUVs;
 
 	int TextureMapTypeCount = 6;
 
 	//Albedo-Normal-Roughness-Metallic-Alpha-Emissive
-	FUSIONUTIL::AlignedBuffer<GLuint64> TextureHandles;
+	AlignedBuffer<GLuint64> TextureHandles;
 
-	FUSIONUTIL::AlignedBuffer<glm::vec4> ModelAlbedos;
-	FUSIONUTIL::AlignedBuffer<float> ModelRoughness;
-	FUSIONUTIL::AlignedBuffer<float> ModelMetallic;
-	FUSIONUTIL::AlignedBuffer<glm::vec2> ModelAlphas;
-	FUSIONUTIL::AlignedBuffer<glm::vec4> ModelEmissives;
-	FUSIONUTIL::AlignedBuffer<glm::vec2> ModelClearCoats;
-	std::map<unsigned int, unsigned int> EmissiveObjectIndices;
+	AlignedBuffer<glm::vec4> ModelAlbedos;
+	AlignedBuffer<float> ModelRoughness;
+	AlignedBuffer<float> ModelMetallic;
+	AlignedBuffer<glm::vec2> ModelAlphas;
+	AlignedBuffer<glm::vec4> ModelEmissives;
+	AlignedBuffer<glm::vec2> ModelClearCoats;
+	std::map<unsigned int, std::pair<unsigned int,float>> EmissiveObjectIndices;
 	int MaterialIndex = -1;
 
 	std::vector<std::pair<glm::vec3, glm::vec3>> TriangleMinMax;
@@ -732,6 +772,7 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	TriangleMinMax.reserve(ReserveCount / 3);
 
 	int CurrentVertexIndex = 0;
+	TotalEmissiveArea = 0.0f;
 
 	for (int i = 0; i < ModelCount; i++)
 	{
@@ -774,11 +815,8 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 				auto& index1 = indices[y + 1];
 				auto& index2 = indices[y + 2];
 				auto& Vertex0 = vertices[index0];
-
-				if (IsMaterialEmissive)
-				{
-					EmissiveObjectIndices[CurrentVertexIndex] = CurrentVertexIndex;
-				}
+				auto& Vertex1 = vertices[index1];
+				auto& Vertex2 = vertices[index2];
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex0->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
@@ -790,7 +828,6 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex0->TexCoords);
 
-				auto& Vertex1 = vertices[index1];
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex1->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
@@ -802,7 +839,6 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex1->TexCoords);
 
-				auto& Vertex2 = vertices[index2];
 
 				TempPosition = glm::vec3(ModelMatrix * glm::vec4(Vertex2->Position, 1.0f));
 				CompareVec3MinMax(TriangleMin, TriangleMax, TempPosition);
@@ -813,6 +849,17 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 				TriangleTangentsBitangents.push_back(glm::vec4(glm::normalize(NormalMatrix * Vertex2->Bitangent), 0.0f));
 				TrianglePositions.push_back(glm::vec4(TempPosition, MaterialIndex));
 				TriangleUVs.push_back(Vertex2->TexCoords);
+
+				if (IsMaterialEmissive)
+				{
+					glm::vec4& VertexPos0 = TrianglePositions.at(TrianglePositions.size() - 1);
+					glm::vec3 Edge0 = glm::vec3(TrianglePositions.at(TrianglePositions.size() - 2)) - glm::vec3(VertexPos0);
+					glm::vec3 Edge1 = glm::vec3(TrianglePositions.at(TrianglePositions.size() - 3)) - glm::vec3(VertexPos0);
+					float TriangleArea = 0.5f * glm::length(glm::cross(Edge0, Edge1));
+					TotalEmissiveArea += TriangleArea;
+					EmissiveObjectIndices[CurrentVertexIndex] = { CurrentVertexIndex,TriangleArea };
+					//LOG(TriangleArea << " " << TotalEmissiveArea << " " << Vec3<float>(Edge0) << " " << Vec3<float>(Edge1));
+				}
 
 				TriangleCenter *= inv_three;
 
@@ -838,7 +885,6 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	std::cout << "\033[2K\rConstructing the BVH... Progress: " << 40 << "%" << std::flush;
 
 	this->EmissiveObjectCount = EmissiveObjectIndices.size();
-
 	ConstructBottomUpBVH(BottomUpBVHNodes, BoundingBoxes, min, max);
 
 	TopDownBVHnodes.insert(TopDownBVHnodes.end(), BottomUpBVHNodes.begin(), BottomUpBVHNodes.end());
@@ -849,7 +895,7 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 		{
 			ConstructTopDownBVH(TopDownBVHnodes, i, TrianglePositions, TriangleNormals,
 				TriangleUVs, TriangleCenters, TriangleTangentsBitangents,
-				EmissiveObjectIndices, TriangleMinMax, 27);
+				EmissiveObjectIndices, TriangleMinMax,27);
 		}
 		std::cout << "\033[2K\rConstructing the BVH... Progress: " << 40.0f + ((30.0f / BottomUpBVHNodes.size()) * (i + 1)) << "%" << std::flush;
 	}
@@ -858,14 +904,14 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	std::cout << "\033[2K\rConstructing the BVH... Progress: " << 70 << "%" << std::flush;
 
 	NodeCount = TopDownBVHnodes.size();
-	FUSIONUTIL::AlignedBuffer<glm::vec4> Bounds;
-	FUSIONUTIL::AlignedBuffer<int> ChildIndicesTriIndicesCounts;
+	AlignedBuffer<glm::vec4> Bounds;
+	AlignedBuffer<int> ChildIndicesTriIndicesCounts;
 
-	std::vector<float> EmissiveIndices;
+	std::vector<glm::vec2> EmissiveIndices;
 
 	EmissiveIndices.reserve(EmissiveObjectIndices.size());
 	for (const auto& index : EmissiveObjectIndices) {
-		EmissiveIndices.push_back(index.second);
+		EmissiveIndices.push_back({ index.second.first,index.second.second });
 	}
 
 	size_t sizeOfBounds = 2 * NodeCount * sizeof(glm::vec4);
@@ -893,7 +939,7 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	BVHfloatData.BindSSBO(21);
 	BVHfloatData.Unbind();
 
-	FUSIONUTIL::AlignedBuffer<char> CombinedMeshvec4data;
+	AlignedBuffer<char> CombinedMeshvec4data;
 	size_t sizeOfTriangleNormals = TriangleNormals.size() * sizeof(glm::vec4);
 	size_t sizeOfTriangleTangentBitangentNormals = TriangleTangentsBitangents.size() * sizeof(glm::vec4);
 	size_t sizeOfTrianglePositions = TrianglePositions.size() * sizeof(glm::vec4);
@@ -965,8 +1011,8 @@ void FUSIONCORE::PathTracer::ConstructBVH(std::vector<std::pair<Model*, Material
 	{
 		SetTBOTextureData(EmissiveObjectsData,
 			EmissiveObjectsTexture,
-			GL_R32F,
-			EmissiveIndices.size() * sizeof(float),
+			GL_RG32F,
+			EmissiveIndices.size() * sizeof(glm::vec2),
 			EmissiveIndices.data(),
 			GL_STATIC_DRAW);
 	}

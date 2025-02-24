@@ -90,7 +90,7 @@ namespace FUSIONCORE
 		void SetZoomSensitivity(float Speed);
 #endif
 		void Matrix(const GLuint& shaderprogram, const char* uniform);
-		void HandleInputs(GLFWwindow* window, const glm::ivec2& WindowSize,const int& CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON,float speed = 0.03f);
+		void HandleInputs(GLFWwindow* window, const glm::vec2& WindowSize,const int& CameraLayout = FF_CAMERA_LAYOUT_FIRST_PERSON,float speed = 0.03f);
 		const glm::vec3 GetUpVector() { return this->Up; };
 		inline const float& GetCameraFOV() { return this->FOV; };
 		inline const float& GetCameraAspectRatio() { return this->Aspect; };

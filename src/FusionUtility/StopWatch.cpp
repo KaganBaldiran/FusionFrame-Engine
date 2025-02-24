@@ -13,14 +13,12 @@ void FUSIONUTIL::Timer::Set()
 template<typename T>
 T FUSIONUTIL::Timer::GetCurrentTime()
 {
-	return duration_cast<T>((std::chrono::steady_clock::now() - start));
+	return std::chrono::duration_cast<T>(std::chrono::steady_clock::now() - start);
 }
 
 int FUSIONUTIL::Timer::GetSeconds()
 {
-	auto duration = std::chrono::steady_clock::now() - start;
-	seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-	return seconds;
+	return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start).count();
 }
 
 int FUSIONUTIL::Timer::GetMinutes()
@@ -59,3 +57,4 @@ void FUSIONUTIL::Timer::Reset()
 {
 	Set();
 }
+

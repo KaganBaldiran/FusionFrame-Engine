@@ -62,6 +62,11 @@ namespace FUSIONCORE
 		inline void SetBinned(const bool& isBinned) { this->isBinned = isBinned; };
 		inline glm::ivec2 GetBinningSize() { return BinningSize; };
 
+		//Used to increase the count of HDRIs imported over the current instance of cubemap.
+		inline void BookKeepImportedHDRI() { ImportedHDRCount++; };
+		//Used to indicate the count of HDRIs imported over the current instance of cubemap.
+		inline unsigned int GetImportedHDRICount() { return ImportedHDRCount; };
+
 		SSBO RadianceBuffer;
 		SSBO RadianceSumBuffer;
 		SSBO SummedWorkgroupBuffer;
@@ -77,6 +82,7 @@ namespace FUSIONCORE
 		GLuint ConvDiffCubeMap;
 		glm::ivec2 BinningSize;
 		bool isBinned;
+		unsigned int ImportedHDRCount;
 
 		void InitializeRadianceBuffers();
 	};

@@ -1,15 +1,5 @@
 #pragma once
-#include "../../FusionUtility/Definitions.hpp"
-#include "../../FusionUtility/StopWatch.h"
-#include "../Buffer.h"
-#include "../Shader.h"
-#include "../Camera.h"
-#include "../Model.hpp"
-#include "../../FusionPhysics/Physics.hpp"
-#include "../Texture.h"
-#include "../Window.hpp"
-#include "../../FusionUtility/Hashing.hpp"
-#include "../../FusionUtility/Initialize.h"
+#include <FusionFrame.h>
 #include <OpenImageDenoise/oidn.hpp>
 
 static struct BVHnode;
@@ -27,7 +17,7 @@ namespace FUSIONCORE
 		PathTracer(const unsigned int& width, const unsigned int& height,std::vector<std::pair<Model*,Material*>>& ModelsToTrace, FUSIONUTIL::DefaultShaders& Shaders);
 		inline GLuint GetTracedImage() { return image; };
 		
-		void PathTracerDashBoard(std::function<void()> OnImportModel);
+		void PathTracerDashBoard(std::function<void()> OnImportModel, std::function<void()> OnSaveScreen,std::function<void()> AdditionalFunctionality);
 		~PathTracer();
 		void VisualizeBVH(FUSIONCORE::Camera3D& Camera, FUSIONCORE::Shader& Shader, glm::vec3 NodeColor);
 		void Render(Window& window,Shader& shader,Camera3D& camera, CubeMap* Cubemap = nullptr,unsigned int DenoiseSampleCount = 60);
@@ -41,6 +31,9 @@ namespace FUSIONCORE
 		void InitializeImages(const unsigned int& width, const unsigned int& height);
 
 		FUSIONUTIL::Timer timer;
+		double InitialTime;
+
+		float TotalEmissiveArea = 0.0f;
 
 		oidn::DeviceRef device;
 		oidn::FilterRef filter;
@@ -91,7 +84,15 @@ namespace FUSIONCORE
 		bool IsInitialized;
 		bool ShouldRestart;
 		bool ShouldDisplayBVHv;
+		bool EnableDenoising;
 		int EmissiveObjectCount;
+
+		FUSIONCORE::CubeMap* PreviouslyUsedCubeMap;
+		unsigned int PreviousImportedHDRIcount;
+
+		glm::vec4 DoFattributes;
+		bool IsDoFenabled;
+		int DoFbounceCount;
 
 		int TargetBounceCount;
 		float EnvironmentLightIntensity;
@@ -101,6 +102,8 @@ namespace FUSIONCORE
 		int TargetSampleCount;
 		bool IsDenoised;
 		int ProgressiveRenderedFrameCount;
+
+		std::unique_ptr<std::uniform_real_distribution<float>> RandomSeed;
 
 		std::vector<BVHnode> TopDownBVHnodes;
 		std::vector<BVHnode> BottomUpBVHNodes;

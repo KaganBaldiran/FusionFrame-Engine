@@ -535,7 +535,7 @@ int Application::Run()
 
 	FUSIONPHYSICS::QuadNode headNode;
 
-	FUSIONPHYSICS::ParticleEmitter emitter0(10000, *Shaders.ParticleInitializeShader,
+	FUSIONPHYSICS::ParticleEmitter emitter0(1000, *Shaders.ParticleInitializeShader,
 		glm::vec4(1.0f, 1.0f, 1.0f, 0.9f),
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
 		glm::vec3(-30.3f, 10.0f, -30.3f),
@@ -636,7 +636,6 @@ int Application::Run()
 				FirstFloorTouch = false;
 			}
 		}
-
 
 		auto Front = glm::normalize(glm::vec3(camera3d.Orientation.x, 0.0f, camera3d.Orientation.z));
 		auto Back = -Front;
@@ -923,7 +922,7 @@ int Application::Run()
 		//LOG("CAMERA POSITION : " << Vec3<float>(camera3d.Position));
 		//camera3d.UpdateCameraMatrix(45.0f, (float)WindowSize.x / (float)WindowSize.y, CAMERA_CLOSE_PLANE, CAMERA_FAR_PLANE, WindowSize);
 		camera3d.SetTarget(&animationModel, 7.0f, { 0.0f,1.0f,0.0f });
-		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_INDUSTRY_STANDARD,0.1f);
+		camera3d.HandleInputs(window, WindowSize, FF_CAMERA_LAYOUT_FIRST_PERSON,0.1f);
 
 		camera2d.UpdateCameraMatrix({ 0.0f,0.0f,0.0f }, 1.0f, WindowSize);
 		//LOG("MAX: " << FUSIONUTIL::GetMaxUniformBlockSize());

@@ -8,6 +8,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include "stb_image.h"
 
 unsigned int counter = 1;
 std::unordered_map<unsigned int, FUSIONCORE::Model*> IDmodelMap;
@@ -756,6 +757,9 @@ void FUSIONCORE::Model::ProcessMeshMaterial(aiMaterial* material,FUSIONCORE::Mat
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, value)) {
         TempMaterial.Alpha = value;
     }
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_TRANSMISSION_FACTOR, value)) {
+        TempMaterial.Alpha = value;
+    }
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_REFRACTI, value)) {
         TempMaterial.IOR = value;
     }
@@ -916,7 +920,6 @@ void FUSIONCORE::Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type
     {
         aiString str;
         mat->GetTexture(type, i, &str);
-        
         bool skip = false;
         if (textures_loaded.find(str.C_Str()) != textures_loaded.end())
         {
@@ -926,24 +929,50 @@ void FUSIONCORE::Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type
         }
         if (!skip)
         {
-            std::string FilePath;
-            if (directory.find('\\') != std::string::npos)
-            {
-                FilePath = directory.substr(0, directory.find_last_of('\\'));
-                FilePath += "\\" + std::string(str.C_Str());
-            }
-            else if (directory.find('/') != std::string::npos)
-            {
-                FilePath = directory.substr(0, directory.find_last_of('/'));
-                FilePath += "/" + std::string(str.C_Str());
-            }
-            
-            auto SharedTexture = std::make_shared<Texture2D>(FilePath.c_str(), GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
-            if (SharedTexture->GetTextureState() == FF_TEXTURE_ERROR) continue;
-            SharedTexture->PbrMapType = typeName;
+            if (auto texture = scene->GetEmbeddedTexture(str.C_Str())) {
+                int Width = texture->mWidth;
+                int Height = texture->mHeight;
+                int ChannelCount = 4;
 
-            DestinationMaterial.PushTextureMap(TextureKey,SharedTexture.get());
-            textures_loaded[str.C_Str()] = SharedTexture;
+                unsigned char* TextureData = nullptr;
+                if (Height == 0)
+                {
+                    TextureData = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth, &Width, &Height, &ChannelCount, 0);
+                }
+                else
+                {
+                    TextureData = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth * texture->mHeight, &Width, &Height, &ChannelCount, 0);
+                }
+                const char* TexturePath = texture->mFilename.C_Str();
+
+                auto SharedTexture = std::make_shared<Texture2D>(TextureData, Width, Height, ChannelCount, TexturePath, GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
+                if (SharedTexture->GetTextureState() == FF_TEXTURE_ERROR) continue;
+                SharedTexture->PbrMapType = typeName;
+
+                DestinationMaterial.PushTextureMap(TextureKey, SharedTexture.get());
+                textures_loaded[str.C_Str()] = SharedTexture;
+            }
+            else
+            {
+                std::string FilePath;
+                if (directory.find('\\') != std::string::npos)
+                {
+                    FilePath = directory.substr(0, directory.find_last_of('\\'));
+                    FilePath += "\\" + std::string(str.C_Str());
+                }
+                else if (directory.find('/') != std::string::npos)
+                {
+                    FilePath = directory.substr(0, directory.find_last_of('/'));
+                    FilePath += "/" + std::string(str.C_Str());
+                }
+
+                auto SharedTexture = std::make_shared<Texture2D>(FilePath.c_str(), GL_REPEAT, GL_REPEAT, GL_TEXTURE_2D, GL_UNSIGNED_BYTE, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, true);
+                if (SharedTexture->GetTextureState() == FF_TEXTURE_ERROR) continue;
+                SharedTexture->PbrMapType = typeName;
+
+                DestinationMaterial.PushTextureMap(TextureKey, SharedTexture.get());
+                textures_loaded[str.C_Str()] = SharedTexture;
+            }
         }
     }
 }

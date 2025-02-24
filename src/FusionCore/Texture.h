@@ -40,6 +40,8 @@ namespace FUSIONCORE
 	{
 	public:
 		Texture2D();
+		Texture2D(const unsigned char* data,const int& Width, const int& Height,const int& ChannelCount,const char* FilePath = 0, GLuint Wrap_S_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLuint Wrap_T_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLenum TextureType = FF_TEXTURE_TARGET_GL_TEXTURE_2D,
+			GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_BYTE, GLuint Mag_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR, GLuint Min_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR, bool Flip = true);
 		Texture2D(const char* filePath, GLuint Wrap_S_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE, GLuint Wrap_T_filter = FF_TEXTURE_WRAP_MODE_GL_CLAMP_TO_EDGE,GLenum TextureType = FF_TEXTURE_TARGET_GL_TEXTURE_2D, 
 			     GLenum PixelType = FF_DATA_TYPE_GL_UNSIGNED_BYTE,GLuint Mag_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR, GLuint Min_filter = FF_TEXTURE_FILTER_MODE_GL_LINEAR_MIPMAP_LINEAR,bool Flip = true);
 		Texture2D(const GLuint SourceTexture, const GLenum SourceTextureInternalFormat, const glm::vec2 SourceTextureSize, 

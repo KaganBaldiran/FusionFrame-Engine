@@ -3,7 +3,6 @@
 #include <glew.h>
 #include <glfw3.h>
 #include "../FusionUtility/Initialize.h"
-#include "../FusionUtility/Hashing.hpp"
 
 namespace FUSIONCORE
 {

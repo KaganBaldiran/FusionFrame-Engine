@@ -29,16 +29,17 @@ Also planning to implement a voxel based GI soon.
 Also using half-edge data structure , wrote couple of premature mesh algorithms like subdivision for triangular meshes. 
 Mesh utility algorithms like quickhull to create collision boxes are also in the TO-DO list
 
-# Ray/Path Tracing
+# Path Tracing
 
-Currently has a ray/path tracer with reflections , indirect lighting and shadows.
-Ray tracing is done on a compute shader using a hybrid BVH(top and bottom) for acceleration. 
+It has a monte-carlo path tracer that's compatible with rest of the engine.
+Path tracing is done on a compute shader using a hybrid BVH(top and bottom) for acceleration.
+Currently the BVH construction done on the CPU but GPU based construction is in the bucket list for the future.
+The estimator can sample emissive lights using NEE(Next Even Estimation) and the analytical lights used in the rastered scenes alike. 
 
-Here are quick demo scenes and visualization of the BVH structure.
-Scenes don't belong to me.
-![image](https://github.com/user-attachments/assets/e217924b-7cb2-4766-95a9-f997fbae3700)
-![image](https://github.com/user-attachments/assets/883806a4-f773-4f22-9669-4146204dc09a)
-![image](https://github.com/user-attachments/assets/5e7880c7-eed3-4109-b36e-4b581e3b795d)
+Here are quick demo scenes. Scenes don't belong to me.
+![Car](https://github.com/user-attachments/assets/50cce874-e4d4-4e7e-9244-6c9e3ab3dbd2)
+![Renderman](https://github.com/user-attachments/assets/c821722c-6099-4c40-98eb-9f566bb88b0b)
+![Canons](https://github.com/user-attachments/assets/2704193f-8df0-4c66-b50d-52de6465b900)
 
 ## Documentation
 The overall API is pretty simple and user friendly.

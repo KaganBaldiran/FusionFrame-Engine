@@ -10,7 +10,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_internal.h"
 #include <omp.h>
-#include <ImGuizmo.h>
 
 template <typename T>
 using AlignedBuffer = std::vector<T, FUSIONUTIL::AlignedAllocator<T, 16>>;

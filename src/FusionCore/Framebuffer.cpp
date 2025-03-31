@@ -156,7 +156,7 @@ void FUSIONCORE::ScreenFrameBuffer::Draw(Camera3D& camera, Shader& shader,std::f
 	glEnable(GL_DEPTH_TEST);
 }
 
-void FUSIONCORE::DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader, float Gamma, float Exposure) {
+void FUSIONCORE::DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader,const glm::vec2& SampleMultiplier, float Gamma, float Exposure) {
 	glViewport(LocalQuadPosition.x,LocalQuadPosition.y, QuadSizeInPixel.x, QuadSizeInPixel.y);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -167,6 +167,7 @@ void FUSIONCORE::DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& L
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, TargetImage);
 	shader.setInt("Viewport", 0);
+	shader.setVec2("SampleMultiplier", SampleMultiplier);
 
 	shader.setFloat("Gamma", Gamma);
 	shader.setFloat("Exposure", Exposure);

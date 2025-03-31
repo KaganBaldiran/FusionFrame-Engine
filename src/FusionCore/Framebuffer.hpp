@@ -21,7 +21,7 @@
 
 namespace FUSIONCORE
 {
-	void DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader,float Gamma = 0.9f, float Exposure = 1.0f);
+	void DrawTextureOnQuad(const GLuint& TargetImage, const glm::vec2& LocalQuadPosition, const glm::vec2& QuadSizeInPixel, FUSIONCORE::Camera3D& camera, FUSIONCORE::Shader& shader, const glm::vec2& SampleMultiplier = {1.0f,1.0f}, float Gamma = 0.9f, float Exposure = 1.0f);
 
 	enum FBOattachmentType
 	{

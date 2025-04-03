@@ -10,7 +10,6 @@
 #include "../FusionPhysics/ParticleSystem.hpp"
 
 static std::pair<bool, bool> BaseSystemsInitialised;
-
 void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
 FUSIONCORE::Window::Window()
@@ -21,7 +20,7 @@ FUSIONCORE::Window::Window()
 	WindowName = "";
 }
 
-int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion,
+int FUSIONCORE::Window::InitializeWindowGL(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion,
 	                          bool EnableGLdebug, const char* WindowName){
 	if (!BaseSystemsInitialised.first && !glfwInit())
 	{
@@ -46,7 +45,6 @@ int FUSIONCORE::Window::InitializeWindow(int width, int height, unsigned int Maj
 	}
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 	window = glfwCreateWindow(width, height, WindowName, NULL, NULL);
 
 	if (window == NULL)

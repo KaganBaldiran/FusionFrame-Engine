@@ -10,21 +10,23 @@ namespace FUSIONCORE
 {
 	class FUSIONFRAME_EXPORT Window
 	{
+		friend class Renderer;
 	public:
 		Window();
-		int InitializeWindow(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
-		void TerminateWindow();
-		bool ShouldClose();
-		void SwapBuffers();
-		void PollEvents();
-		void UpdateWindow();
-		void MakeWindowContextCurrent();
 		inline const glm::ivec2& GetInitialWindowSize() { return this->InitialWindowSize; };
 		inline const glm::ivec2& GetWindowSize() { return this->WindowSize; };
 		inline const std::string& GetWindowName() { return this->WindowName; };
 		inline GLFWwindow* GetWindow() { return this->window; };
 		inline bool IsWindowResizedf() { return IsWindowResized; };
 	private:
+		void TerminateWindow();
+		bool ShouldClose();
+		void SwapBuffers();
+		void PollEvents();
+		void UpdateWindow();
+		void MakeWindowContextCurrent();
+
+		int InitializeWindowGL(int width, int height, unsigned int MajorGLversion, unsigned int MinorGLversion, bool EnableGLdebug, const char* WindowName);
 		GLFWwindow* window;
 		glm::ivec2 InitialWindowSize;
 		glm::ivec2 WindowSize;

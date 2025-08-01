@@ -41,36 +41,6 @@ Here are quick demo scenes. Scenes don't belong to me.
 ![Renderman](https://github.com/user-attachments/assets/c821722c-6099-4c40-98eb-9f566bb88b0b)
 ![Canons](https://github.com/user-attachments/assets/2704193f-8df0-4c66-b50d-52de6465b900)
 
-## Documentation
-The overall API is pretty simple and user friendly.
-I'll try to demonstrate some of the functionality to get you started
-
-- Initializing the window and the resources
-```cpp
-const int width = 1000;
-const int height = 1000;
-
-FUSIONCORE::Window ApplicationWindow;
-ApplicationWindow.InitializeWindow(width, height, 4, 6, false, "FusionFrame Engine");
-
-FUSIONUTIL::InitializeEngineBuffers();
-FUSIONUTIL::DefaultShaders Shaders;
-FUSIONUTIL::InitializeDefaultShaders(Shaders);
-```
-
-- Importing a HDRI
-```cpp
-FUSIONCORE::CubeMap cubemap(*Shaders.CubeMapShader);
-FUSIONCORE::ImportCubeMap("Resources/rustig_koppie_puresky_2k.hdr", 1024, cubemap, Shaders);
-```
-
-- Engine supports both deferred and forward rendering so you can use a gbuffer to use deferred rendering.
-```cpp
-const FUSIONUTIL::VideoMode mode = FUSIONUTIL::GetVideoMode(FUSIONUTIL::GetPrimaryMonitor());
-FUSIONCORE::Gbuffer Gbuffer(mode.width, mode.height);
-FUSIONCORE::FrameBuffer ScreenFrameBuffer(mode.width, mode.height);
-```
-
 ## Current Look
 
 ![winter_scene_fusion_frame](https://github.com/KaganBaldiran/FusionFrame-Engine/assets/80681941/d25d1d46-5a58-4e8b-a983-e5c705a62c44)

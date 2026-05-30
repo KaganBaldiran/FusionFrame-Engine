@@ -3,7 +3,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/KaganBaldiran/FusionFrame-Engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 # FusionFrame-Engine
-Fusion Frame engine is a OpenGL based 3D pbr renderer written in c++. It also supports different physics algorithms to speed up the game development.
+Fusion Frame engine is an OpenGL based 3D pbr renderer written in c++. It also supports different physics algorithms to speed up the game development.
 
 # Rendering Abilities
 
